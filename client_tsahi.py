@@ -1,5 +1,6 @@
 import socketio
 import requests
+import json
 
 # standard Python
 sio = socketio.Client()
@@ -8,10 +9,9 @@ my_name = "Tsahi"
 
 sio.connect('http://localhost:5000')
 
-contacts_list = {
-    "Lisa": "lisa&tsahi",
-    "Avi": "avi&tsahi"
-}
+response = requests.get(f"http://localhost:5000/get_contacts_list/{my_name}")
+
+contacts_list = json.loads(response.text)
 
 # Establishing contacts with all persons from the Contacts List
 for contact in contacts_list:
@@ -22,7 +22,8 @@ for contact in contacts_list:
 # 'conversation_room' is selected.
 
 # Choosing who do we want to talk with (message target, can be different for each message)
-conversation_room = contacts_list["Lisa"]
+conversation_room = contacts_list["lisa"]
+
 
 while True:
 
@@ -32,6 +33,5 @@ while True:
         if my_name != message['sender']:
             print(f"{message['sender']}: {message['content']}")
 
-
     message = input()
-    sio.emit('client_sends_message', {'sender': my_name, "content": message, "conversation_room": conversation_room})
+    sio.emit('client_sends_message', {'sender':my_name, "content":message, "conversation_room": conversation_room})

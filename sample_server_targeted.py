@@ -11,9 +11,13 @@ app = Flask(__name__)
 #app.config['SECRET_KEY'] = 'vnkdjnfjknfl1232#'
 socketio = SocketIO(app)
 
-@app.route('/')
-def sessions():
-    return render_template('session.html')
+# @app.route('/')
+# def sessions():
+#     return render_template('session.html')
+
+@app.route("/get_contacts_list/<username>", methods=['GET'])
+def get_rooms_list(username):
+    return prepare_rooms_for(username)
 
 def messageReceived(methods=['GET', 'POST']):
     print('message was received!!!')
@@ -66,6 +70,7 @@ def prepare_rooms_for(username: str):
 
     return result
 
+# API METHOD that will return this in response to GET request with a param (username)
+
 if __name__ == '__main__':
-    print(prepare_rooms_for("Tsahi"))
-    #socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
+    socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
