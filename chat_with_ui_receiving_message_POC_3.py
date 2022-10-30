@@ -110,7 +110,7 @@ class ChatRoom:
         # SEND button - the text from the entry box will be packed to a WS message and the former will be
         # emitted to the conversation room. (Remove 'not my message' validation?)
         button_send = Button(message_box_window, text="Send", bg="purple", fg="white", height="2", width="30",
-                             command=lambda :self.handle_send(created_entry, messages_box, "Test destination"))
+                             command=lambda :self.handle_send(created_entry, messages_box, message_sender.lower()))
         button_send.place(x=240, y=380)
 
         # CLEAR button - clears the entry box
@@ -139,6 +139,8 @@ class ChatRoom:
         message_content = target_entry.get()
         print(f"Handling SEND {message_content} to {destination}")
 
+        conversation_room_ = contacts_list[destination]
+
         # CLEAR the ENTRY FIELD
         target_entry.delete(0, 'end')
 
@@ -150,7 +152,7 @@ class ChatRoom:
         # SEND the message to the server
         sio.emit('client_sends_message', {'sender': my_name,
                                           "content": message_content,
-                                          "conversation_room": conversation_room})
+                                          "conversation_room": conversation_room_})
 
     def handle_clear(self):
         print("Handling CLEAR")
