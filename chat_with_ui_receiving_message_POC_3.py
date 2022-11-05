@@ -161,9 +161,42 @@ class ChatRoom:
 
 
 
-
-
-
 if __name__ == '__main__':
-    chtr = ChatRoom()
+    #chtr = ChatRoom()
+
+    # Window size
+    hight = 600
+    width = 279
+    size = '%sx%s' % (width, hight)
+
+    # Window
+    message_box_window = Tk()
+    message_box_window.geometry(size)
+    message_box_window.resizable(0, 0)
+
+    # LOG IN button
+    button_login = Button(message_box_window, text="Login", bg="RoyalBlue4", fg="cyan", height="1", width="36")
+    button_login.place(x=8, y=6)
+
+    # CONNECT button
+    button_login = Button(message_box_window, text="Connect", bg="RoyalBlue4", fg="cyan", height="1", width="36")
+    button_login.place(x=8, y=37)
+
+    # Used listbox - for tables presentation and selection
+    contacts_list = Listbox(message_box_window, selectmode=SINGLE, width=43, yscrollcommand=True)
+    contacts_list.place(x=8, y=68)
+
+    # self.tables_list.grid(row=5, column=0)
+    # self.tables_list.grid(rowspan=10)
+
+
+    # Handling WINDOW CLOSED - the value related to current message sender in the ADDRESS BOOK is NONE again,
+    # so a NEW WINDOW will be opened once a message from that sender is received
+    def on_closing():
+        print("Window closed!")
+        message_box_window.destroy()
+
+
+    message_box_window.protocol("WM_DELETE_WINDOW", on_closing)
+    message_box_window.mainloop()
 
