@@ -214,8 +214,16 @@ if __name__ == '__main__':
     contacts_list.insert(3, "Era")
 
     # CHAT WITH button
-    chat_with = Button(message_box_window, text="Chat With", bg="RoyalBlue4", fg="cyan", height="1", width="36")
+    chat_with = Button(message_box_window, text="Chat With", bg="SteelBlue4", fg="cyan", height="1", width="36")
     chat_with.place(x=11, y=490)
+
+    # OPTIONS button
+    options = Button(message_box_window, text="Options", bg="SteelBlue4", fg="cyan", height="1", width="36")
+    options.place(x=11, y=520)
+
+    # DISCONNECT button
+    disconnect = Button(message_box_window, text="Disconnect", bg="SteelBlue4", fg="cyan", height="1", width="36")
+    disconnect.place(x=11, y=550)
 
 
     # Handling WINDOW CLOSED - the value related to current message sender in the ADDRESS BOOK is NONE again,
