@@ -139,6 +139,7 @@ class ChatRoom:
         message_content = target_entry.get()
         print(f"Handling SEND {message_content} to {destination}")
 
+        # Sending the message to the chat room, so the person defined as "destination" will receive it.
         conversation_room_ = contacts_list[destination]
 
         # CLEAR the ENTRY FIELD
