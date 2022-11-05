@@ -1,6 +1,8 @@
 import time
 from tkinter import *
 from tkinter import ttk
+from tkinter import font
+from PIL import ImageTk, Image
 
 import socketio
 import requests
@@ -174,26 +176,46 @@ if __name__ == '__main__':
     message_box_window.geometry(size)
     message_box_window.resizable(0, 0)
 
+    # Header #1 - Label "I See Cubes"
+    head_label = Label(message_box_window, text="I See Cubes", fg="white", bg="PaleGreen1", font=("", 20), width=16)
+    head_label.place(x=11, y=3)
+
+    # Header #2 - ICQ Image (or Kubernetes Image, or Custom Image)
+    frame = Frame(message_box_window, width=30, height=20)
+    frame.place(x=93, y=50)
+
+    # Create an object of tkinter ImageTk
+    img = ImageTk.PhotoImage(Image.open("flower_blue.png"))
+
+    # Create a Label Widget to display the text or Image
+    label = Label(frame, image=img)
+    label.pack()
+
+    # Header #3 - Personal greetings, something like "Hi, Lisa!"
+
+
     # LOG IN button
     button_login = Button(message_box_window, text="Login", bg="RoyalBlue4", fg="cyan", height="1", width="36")
-    button_login.place(x=11, y=9)
+    button_login.place(x=11, y=155)
 
-    # CONNECT button
+    # CONNECT button :#chtr = ChatRoom(), perhaps in a separate thread,
+    # so the clicked CONNECT button won't block all the other buttons
     button_login = Button(message_box_window, text="Connect", bg="RoyalBlue4", fg="cyan", height="1", width="36")
-    button_login.place(x=11, y=40)
+    button_login.place(x=11, y=183)
 
-    # Used listbox - for tables presentation and selection
-    contacts_list = Listbox(message_box_window, selectmode=SINGLE, width=43, height=22, yscrollcommand=True,
-                            bd=3, selectbackground="LightSky Blue3")
-    contacts_list.place(x=11, y=74)
+    # Used listbox - for tables presentation and selection : selecting a person to chat with from the Contacts List
+    contacts_list = Listbox(message_box_window, selectmode=SINGLE, width=27, height=12, yscrollcommand=True,
+                            bd=3, selectbackground="LightSky Blue3", font="Times 13 italic bold")
+    contacts_list.place(x=17, y=220)
 
     # Filling the Contact List with contacts - a STUB, eventually the contacts will be taken from the server feed
     contacts_list.insert(1, "Avi")
     contacts_list.insert(2, "Tsahi")
     contacts_list.insert(3, "Era")
 
-
-
+    # CHAT WITH button
+    chat_with = Button(message_box_window, text="Chat With", bg="RoyalBlue4", fg="cyan", height="1", width="36")
+    chat_with.place(x=11, y=490)
 
 
     # Handling WINDOW CLOSED - the value related to current message sender in the ADDRESS BOOK is NONE again,
