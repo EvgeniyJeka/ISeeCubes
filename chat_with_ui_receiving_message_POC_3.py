@@ -166,7 +166,7 @@ if __name__ == '__main__':
 
     # Window size
     hight = 600
-    width = 279
+    width = 285
     size = '%sx%s' % (width, hight)
 
     # Window
@@ -176,18 +176,24 @@ if __name__ == '__main__':
 
     # LOG IN button
     button_login = Button(message_box_window, text="Login", bg="RoyalBlue4", fg="cyan", height="1", width="36")
-    button_login.place(x=8, y=6)
+    button_login.place(x=11, y=9)
 
     # CONNECT button
     button_login = Button(message_box_window, text="Connect", bg="RoyalBlue4", fg="cyan", height="1", width="36")
-    button_login.place(x=8, y=37)
+    button_login.place(x=11, y=40)
 
     # Used listbox - for tables presentation and selection
-    contacts_list = Listbox(message_box_window, selectmode=SINGLE, width=43, yscrollcommand=True)
-    contacts_list.place(x=8, y=68)
+    contacts_list = Listbox(message_box_window, selectmode=SINGLE, width=43, height=22, yscrollcommand=True,
+                            bd=3, selectbackground="LightSky Blue3")
+    contacts_list.place(x=11, y=74)
 
-    # self.tables_list.grid(row=5, column=0)
-    # self.tables_list.grid(rowspan=10)
+    # Filling the Contact List with contacts - a STUB, eventually the contacts will be taken from the server feed
+    contacts_list.insert(1, "Avi")
+    contacts_list.insert(2, "Tsahi")
+    contacts_list.insert(3, "Era")
+
+
+
 
 
     # Handling WINDOW CLOSED - the value related to current message sender in the ADDRESS BOOK is NONE again,
