@@ -48,6 +48,7 @@ class ChatRoom:
     cnt = 0
     contacts_list = None
     sio = None
+    connected = False
 
     address_book = {
         "Avi": None,
@@ -56,7 +57,8 @@ class ChatRoom:
     }
 
     def __init__(self, non_loop_flag=False):
-        # standard Python
+
+        # CONNECT method
         self.sio = socketio.Client()
 
         self.my_name = "Lisa"
@@ -72,6 +74,8 @@ class ChatRoom:
             conversation_room = self.contacts_list[contact]
             self.sio.emit('join', {"room": conversation_room})
 
+
+        # LISTENING LOOP method (remove flag!)
         while non_loop_flag is False:
 
             @self.sio.on('received_message')
@@ -101,6 +105,7 @@ class ChatRoom:
             self.sio.emit('client_sends_message', {'sender': self.my_name, "content": message, "conversation_room": conversation_room})
 
 
+    # OPEN MESSAGE BOX (method in use)
     def show_message_box(self, first_mesage, message_sender):
 
         # Window size
