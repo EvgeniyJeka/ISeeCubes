@@ -64,9 +64,13 @@ class ChatClient:
         contacts_list.insert(2, "Tsahi")
         contacts_list.insert(3, "Era")
 
-        # CHAT WITH button - MAKE ENABLED ONLY AFTER CONNECTION IS ESTABLISHED !! 
+        # CHAT WITH button - MAKE ENABLED ONLY AFTER CONNECTION IS ESTABLISHED !!
+        def take_selected_chat_partner_from_ui():
+            selected_contact = contacts_list.curselection()
+            self.handle_chat_with(contacts_list.get(selected_contact[0]))
+
         button_chat_with = Button(message_box_window, text="Chat With", bg="SteelBlue4", fg="cyan", height="1", width="36",
-                                  command=lambda: self.handle_chat_with())
+                                  command=lambda: take_selected_chat_partner_from_ui())
         button_chat_with.place(x=11, y=490)
 
         # OPTIONS button
@@ -91,16 +95,16 @@ class ChatClient:
         t1 = threading.Thread(target=ChatRoom)
         t1.start()
 
-    def handle_chat_with(self):
+    def handle_chat_with(self, target_contact):
         print("Button clicked: CHAT WITH")
         # TAKE ARGS !!
-        t2 = threading.Thread(target=self.start_chat_thread)
+        t2 = threading.Thread(target=self.start_chat_thread, args=(target_contact,))
         t2.start()
 
     # PASS ARGS !!
     def start_chat_thread(self, target_contact=None):
         chat_room = ChatRoom(non_loop_flag=True)
-        chat_room.show_message_box(" ", "Avi")
+        chat_room.show_message_box(" ", target_contact)
 
 
 if __name__ == '__main__':
