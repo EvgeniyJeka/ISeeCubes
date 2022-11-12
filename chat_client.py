@@ -14,12 +14,16 @@ import threading
 class ChatClient:
 
     chat_room = None
+    connection_status = False
+    contacts_list = None
 
     def __init__(self):
         # Window size
         hight = 600
         width = 285
         size = '%sx%s' % (width, hight)
+
+        self.chat_room = ChatRoom()
 
         # Window
         message_box_window = Tk()
@@ -55,19 +59,21 @@ class ChatClient:
         button_connect.place(x=11, y=183)
 
         # Used listbox - for tables presentation and selection : selecting a person to chat with from the Contacts List
-        contacts_list = Listbox(message_box_window, selectmode=SINGLE, width=27, height=12, yscrollcommand=True,
+        self.contacts_list = Listbox(message_box_window, selectmode=SINGLE, width=27, height=12, yscrollcommand=True,
                                 bd=3, selectbackground="LightSky Blue3", font="Times 13 italic bold")
-        contacts_list.place(x=17, y=220)
+        self.contacts_list.place(x=17, y=220)
+
+
 
         # Filling the Contact List with contacts - a STUB, eventually the contacts will be taken from the server feed
-        contacts_list.insert(1, "Avi")
-        contacts_list.insert(2, "Tsahi")
-        contacts_list.insert(3, "Era")
+        self.contacts_list.insert(1, "Avi")
+        self.contacts_list.insert(2, "Tsahi")
+        self.contacts_list.insert(3, "Era")
 
         # CHAT WITH button - MAKE ENABLED ONLY AFTER CONNECTION IS ESTABLISHED !!
         def take_selected_chat_partner_from_ui():
-            selected_contact = contacts_list.curselection()
-            self.handle_chat_with(contacts_list.get(selected_contact[0]))
+            selected_contact = self.contacts_list.curselection()
+            self.handle_chat_with(self.contacts_list.get(selected_contact[0]))
 
         button_chat_with = Button(message_box_window, text="Chat With", bg="SteelBlue4", fg="cyan", height="1", width="36",
                                   command=lambda: take_selected_chat_partner_from_ui())
@@ -92,19 +98,19 @@ class ChatClient:
 
     def handle_connect(self):
         print("Button clicked: CONNECT")
-        t1 = threading.Thread(target=ChatRoom)
+        self.connection_status = self.chat_room.initiate_connection()
+
+        print("Starting Listening Loop")
+        t1 = threading.Thread(target=self.chat_room.start_listening_loop)
         t1.start()
 
     def handle_chat_with(self, target_contact):
         print("Button clicked: CHAT WITH")
-        # TAKE ARGS !!
         t2 = threading.Thread(target=self.start_chat_thread, args=(target_contact,))
         t2.start()
 
-    # PASS ARGS !!
     def start_chat_thread(self, target_contact=None):
-        chat_room = ChatRoom(non_loop_flag=True)
-        chat_room.show_message_box(" ", target_contact)
+        self.chat_room.show_message_box(" ", target_contact)
 
 
 if __name__ == '__main__':
