@@ -14,12 +14,15 @@ import threading
 class ChatClient:
 
     chat_room = None
+    connection_status = False
 
     def __init__(self):
         # Window size
         hight = 600
         width = 285
         size = '%sx%s' % (width, hight)
+
+        self.chat_room = ChatRoom()
 
         # Window
         message_box_window = Tk()
@@ -92,7 +95,10 @@ class ChatClient:
 
     def handle_connect(self):
         print("Button clicked: CONNECT")
-        t1 = threading.Thread(target=ChatRoom)
+        self.connection_status = self.chat_room.initiate_connection()
+
+        print("Starting Listening Loop")
+        t1 = threading.Thread(target=self.chat_room.start_listening_loop)
         t1.start()
 
     def handle_chat_with(self, target_contact):
@@ -103,8 +109,7 @@ class ChatClient:
 
     # PASS ARGS !!
     def start_chat_thread(self, target_contact=None):
-        chat_room = ChatRoom(non_loop_flag=True)
-        chat_room.show_message_box(" ", target_contact)
+        self.chat_room.show_message_box(" ", target_contact)
 
 
 if __name__ == '__main__':

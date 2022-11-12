@@ -56,53 +56,79 @@ class ChatRoom:
         "Era": None
     }
 
-    def __init__(self, non_loop_flag=False):
+    def __init__(self):
+        pass
 
+        # # CONNECT method
+        # self.sio = socketio.Client()
+        #
+        # self.my_name = "Lisa"
+        #
+        # self.sio.connect('http://localhost:5000')
+        #
+        # response = requests.get(f"http://localhost:5000/get_contacts_list/{self.my_name}")
+        #
+        # self.contacts_list = json.loads(response.text)
+        #
+        # # Establishing contacts with all persons from the Contacts List
+        # for contact in self.contacts_list:
+        #     conversation_room = self.contacts_list[contact]
+        #     self.sio.emit('join', {"room": conversation_room})
+
+
+    def initiate_connection(self):
         # CONNECT method
-        self.sio = socketio.Client()
+        try:
+            self.sio = socketio.Client()
 
-        self.my_name = "Lisa"
+            self.my_name = "Lisa"
 
-        self.sio.connect('http://localhost:5000')
+            self.sio.connect('http://localhost:5000')
 
-        response = requests.get(f"http://localhost:5000/get_contacts_list/{self.my_name}")
+            response = requests.get(f"http://localhost:5000/get_contacts_list/{self.my_name}")
 
-        self.contacts_list = json.loads(response.text)
+            self.contacts_list = json.loads(response.text)
 
-        # Establishing contacts with all persons from the Contacts List
-        for contact in self.contacts_list:
-            conversation_room = self.contacts_list[contact]
-            self.sio.emit('join', {"room": conversation_room})
+            # Establishing contacts with all persons from the Contacts List
+            for contact in self.contacts_list:
+                conversation_room = self.contacts_list[contact]
+                self.sio.emit('join', {"room": conversation_room})
 
+            return True
+
+        except Exception:
+            return False
+
+
+    def start_listening_loop(self):
 
         # LISTENING LOOP method (remove flag!)
-        while non_loop_flag is False:
 
-            @self.sio.on('received_message')
-            def handle_my_custom_event(message):
+        @self.sio.on('received_message')
+        def handle_my_custom_event(message):
 
-                # Remove this validation? All messages shall be eventually printed to the TEXT Messages Box
-                if self.my_name != message['sender']:
-                    print(f"{message['sender']}: {message['content']}")
-                    first_message_conversation = f"{message['sender']}: {message['content']}"
+            # Remove this validation? All messages shall be eventually printed to the TEXT Messages Box
+            if self.my_name != message['sender']:
+                print(f"{message['sender']}: {message['content']}")
+                first_message_conversation = f"{message['sender']}: {message['content']}"
 
-                    current_messages_box = self.address_book[message['sender']]
+                current_messages_box = self.address_book[message['sender']]
 
-                    # First message from given user
-                    if current_messages_box is None:
-                        t1 = threading.Thread(target=self.show_message_box, args=(first_message_conversation, message['sender']))
-                        t1.start()
-                        time.sleep(6)
+                # First message from given user
+                if current_messages_box is None:
+                    t1 = threading.Thread(target=self.show_message_box, args=(first_message_conversation, message['sender']))
+                    t1.start()
+                    time.sleep(6)
 
-                    # The conversation with the given user is going on, and a Chat Room is already open
-                    else:
-                        current_messages_box.insert(INSERT, "\n")
-                        current_messages_box.insert(INSERT, f"{message['sender']}: {message['content']}")
+                # The conversation with the given user is going on, and a Chat Room is already open
+                else:
+                    current_messages_box.insert(INSERT, "\n")
+                    current_messages_box.insert(INSERT, f"{message['sender']}: {message['content']}")
 
-            message = input()
-
-            # Move to a separate method and link to the 'SEND' button.
-            self.sio.emit('client_sends_message', {'sender': self.my_name, "content": message, "conversation_room": conversation_room})
+        # message = input()
+        #
+        # # Move to a separate method and link to the 'SEND' button.
+        # self.sio.emit('client_sends_message', {'sender': self.my_name, "content": message, "conversation_room": conversation_room})
 
 
     # OPEN MESSAGE BOX (method in use)
