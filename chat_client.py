@@ -19,6 +19,7 @@ width = 285
 # connection status indicator
 # chat box size and design
 # sending 'disconnect' event
+# think of - client is to be notified if new user was connected or disconnected
 #
 # Server side:
 # keep a list of all CONNECTED clients (handle 'on_connect' & 'on_disconnect')
