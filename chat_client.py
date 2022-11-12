@@ -103,11 +103,9 @@ class ChatClient:
 
     def handle_chat_with(self, target_contact):
         print("Button clicked: CHAT WITH")
-        # TAKE ARGS !!
         t2 = threading.Thread(target=self.start_chat_thread, args=(target_contact,))
         t2.start()
 
-    # PASS ARGS !!
     def start_chat_thread(self, target_contact=None):
         self.chat_room.show_message_box(" ", target_contact)
 
