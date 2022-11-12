@@ -11,23 +11,32 @@ import requests
 import json
 import threading
 
+hight = 600
+width = 285
+
+# TO DO:
+# Client, UI:
+# connection status indicator
+# chat box size and design
+# sending 'disconnect' event
+#
+# Server side:
+# keep a list of all CONNECTED clients (handle 'on_connect' & 'on_disconnect')
+# note: at this point a conversation is possible only if both users are connected,
+
 class ChatClient:
 
     chat_room = None
     connection_status = False
-    contacts_list = None
+    contacts_list_ui_element = None
 
     def __init__(self):
         # Window size
-        hight = 600
-        width = 285
-        size = '%sx%s' % (width, hight)
-
         self.chat_room = ChatRoom()
 
         # Window
         message_box_window = Tk()
-        message_box_window.geometry(size)
+        message_box_window.geometry(f"{width}x{hight}")
         message_box_window.resizable(0, 0)
 
         # Header #1 - Label "I See Cubes"
@@ -59,24 +68,13 @@ class ChatClient:
         button_connect.place(x=11, y=183)
 
         # Used listbox - for tables presentation and selection : selecting a person to chat with from the Contacts List
-        self.contacts_list = Listbox(message_box_window, selectmode=SINGLE, width=27, height=12, yscrollcommand=True,
+        self.contacts_list_ui_element = Listbox(message_box_window, selectmode=SINGLE, width=27, height=12, yscrollcommand=True,
                                 bd=3, selectbackground="LightSky Blue3", font="Times 13 italic bold")
-        self.contacts_list.place(x=17, y=220)
+        self.contacts_list_ui_element.place(x=17, y=220)
 
-
-
-        # Filling the Contact List with contacts - a STUB, eventually the contacts will be taken from the server feed
-        self.contacts_list.insert(1, "Avi")
-        self.contacts_list.insert(2, "Tsahi")
-        self.contacts_list.insert(3, "Era")
-
-        # CHAT WITH button - MAKE ENABLED ONLY AFTER CONNECTION IS ESTABLISHED !!
-        def take_selected_chat_partner_from_ui():
-            selected_contact = self.contacts_list.curselection()
-            self.handle_chat_with(self.contacts_list.get(selected_contact[0]))
-
+        # CHAT WITH button
         button_chat_with = Button(message_box_window, text="Chat With", bg="SteelBlue4", fg="cyan", height="1", width="36",
-                                  command=lambda: take_selected_chat_partner_from_ui())
+                                  command=lambda: self.take_selected_chat_partner_from_ui())
         button_chat_with.place(x=11, y=490)
 
         # OPTIONS button
@@ -96,9 +94,23 @@ class ChatClient:
         message_box_window.protocol("WM_DELETE_WINDOW", on_closing)
         message_box_window.mainloop()
 
+    # CHAT WITH button - MAKE ENABLED ONLY AFTER CONNECTION IS ESTABLISHED !!
+    def take_selected_chat_partner_from_ui(self):
+        selected_contact = self.contacts_list_ui_element.curselection()
+        self.handle_chat_with(self.contacts_list_ui_element.get(selected_contact[0]))
+
     def handle_connect(self):
         print("Button clicked: CONNECT")
-        self.connection_status = self.chat_room.initiate_connection()
+        # When connection is initiated the list of the available contacts is fetched from the server
+        contacts_list = self.chat_room.initiate_connection()
+        if contacts_list:
+            self.connection_status = True
+        else:
+            print("Failed to connect!")
+
+        # Inserting the list of contacts that was fetched into the 'Contact List' UI Element
+        self.contacts_list_ui_element.delete(0, END)
+        self.contacts_list_ui_element.insert(END, *contacts_list)
 
         print("Starting Listening Loop")
         t1 = threading.Thread(target=self.chat_room.start_listening_loop)
