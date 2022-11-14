@@ -24,6 +24,7 @@ width = 285
 # Server side:
 # keep a list of all CONNECTED clients (handle 'on_connect' & 'on_disconnect')
 # note: at this point a conversation is possible only if both users are connected,
+# chat box - don't open a new one if already exists (chatting with given customer)
 
 class ChatClient:
 

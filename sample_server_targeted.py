@@ -7,6 +7,8 @@ from flask_socketio import join_room, leave_room
 # Will be taken from SQL DB
 users_list = ["Lisa", "Avi", "Tsahi", "Era"]
 
+users_currently_online = []
+
 app = Flask(__name__)
 socketio = SocketIO(app)
 
@@ -20,7 +22,13 @@ def messageReceived(methods=['GET', 'POST']):
 
 @socketio.on('join')
 def on_join(data):
-    print(data)
+
+    client_name = data['client']
+    if client_name not in users_currently_online:
+        users_currently_online.append(client_name)
+
+    print(f"Users currently online: {users_currently_online}")
+
     room = data['room']
     print(f"Adding a customer to a room: {data['room']}")
     join_room(room)
@@ -36,6 +44,12 @@ def handle_client_message(json_):
 @socketio.on('client_disconnection')
 def handle_client_disconnection(json_):
     print(f"Client disconnection: {json_}")
+
+    client_name = json_['client']
+    if client_name in users_currently_online:
+        users_currently_online.remove(client_name)
+
+    print(f"Users currently online: {users_currently_online}")
 
 
 def room_names_generator(users_list: list)-> list:

@@ -5,7 +5,7 @@ import json
 # standard Python
 sio = socketio.Client()
 
-my_name = "Avi"
+my_name = "avi"
 
 sio.connect('http://localhost:5000')
 
@@ -16,7 +16,7 @@ contacts_list = json.loads(response.text)
 # Establishing contacts with all persons from the Contacts List
 for contact in contacts_list:
     conversation_room = contacts_list[contact]
-    sio.emit('join', {"room": conversation_room})
+    sio.emit('join', {"room": conversation_room, "client": my_name})
 
 # When choosing the contact we want to converse with
 # 'conversation_room' is selected.

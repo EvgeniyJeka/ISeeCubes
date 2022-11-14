@@ -9,8 +9,6 @@ import requests
 import json
 import threading
 
-# TO DO:
-# Add handling ON CONNECT & ON DISCONNECT. KEEP A LIST/DICT OF USERS THAT ARE CURRENTLY CONNECTED.
 
 # Default window size when there are no bookmarks
 height = 475
@@ -25,9 +23,9 @@ class ChatRoom:
     connected = False
 
     address_book = {
-        "Avi": None,
-        "Tsahi": None,
-        "Era": None
+        "avi": None,
+        "tsahi": None,
+        "era": None
     }
 
 
@@ -36,7 +34,7 @@ class ChatRoom:
         try:
             self.sio = socketio.Client()
 
-            self.my_name = "Lisa"
+            self.my_name = "lisa"
 
             self.sio.connect('http://localhost:5000')
             response = requests.get(f"http://localhost:5000/get_contacts_list/{self.my_name}")
