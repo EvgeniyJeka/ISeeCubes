@@ -88,7 +88,8 @@ class ChatClient:
         button_options.place(x=11, y=520)
 
         # DISCONNECT button
-        button_disconnect = Button(message_box_window, text="Disconnect", bg="SteelBlue4", fg="cyan", height="1", width="36")
+        button_disconnect = Button(message_box_window, text="Disconnect", bg="SteelBlue4", fg="cyan", height="1", width="36",
+                                   command=lambda: self.handle_disconnect())
         button_disconnect.place(x=11, y=550)
 
         # Handling WINDOW CLOSED - the value related to current message sender in the ADDRESS BOOK is NONE again,
@@ -122,6 +123,18 @@ class ChatClient:
         print("Starting Listening Loop")
         t1 = threading.Thread(target=self.chat_room.start_listening_loop)
         t1.start()
+
+    def handle_disconnect(self):
+        print("Button clicked: DISCONNECT")
+        if self.connection_status is False:
+            print("NOT CONNECTED")
+            return
+
+        self.connection_status = False
+        # Modifying UI on disconnection
+        self.connection_indicator_ui_element.config(text="Offline", fg="red")
+        self.contacts_list_ui_element.delete(0, END)
+
 
     def handle_chat_with(self, target_contact):
         print("Button clicked: CHAT WITH")
