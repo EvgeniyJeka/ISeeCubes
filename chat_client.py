@@ -16,7 +16,8 @@ width = 285
 
 # TO DO:
 # Client, UI:
-# connection status indicator
+# connection status indicator D
+# if the client is ALREADY CONNECTED the CONNECT button should DO NOTHING, OR BE DISABLED
 # chat box size and design
 # sending 'disconnect' event
 # think of - client is to be notified if new user was connected or disconnected
@@ -33,6 +34,7 @@ class ChatClient:
     listening_loop_thread = None
 
     contacts_list_ui_element = None
+    connect_button_ui_element = None
     connection_indicator_ui_element = None
 
     def __init__(self):

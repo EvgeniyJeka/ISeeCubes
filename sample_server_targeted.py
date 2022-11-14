@@ -7,12 +7,13 @@ from flask_socketio import join_room, leave_room
 # Will be taken from SQL DB
 users_list = ["Lisa", "Avi", "Tsahi", "Era"]
 
+# Will be in service cache AND in DB (Redis DB?)
 users_currently_online = []
 
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-
+# This method should return only users that are currently ONLINE - separate ROOM PREPARATION  from CONTACTS LIST feed(?)
 @app.route("/get_contacts_list/<username>", methods=['GET'])
 def get_rooms_list(username):
     return prepare_rooms_for(username)
