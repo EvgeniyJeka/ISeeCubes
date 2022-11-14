@@ -135,6 +135,11 @@ class ChatClient:
         self.connection_indicator_ui_element.config(text="Offline", fg="red")
         self.contacts_list_ui_element.delete(0, END)
 
+        # Emitting 'client_disconnection' event to the server
+        self.chat_room.sio.emit('client_disconnection', {"client": self.chat_room.my_name})
+
+        # Stopping the Listening Loop thread
+        # ...
 
     def handle_chat_with(self, target_contact):
         print("Button clicked: CHAT WITH")

@@ -8,12 +8,8 @@ from flask_socketio import join_room, leave_room
 users_list = ["Lisa", "Avi", "Tsahi", "Era"]
 
 app = Flask(__name__)
-#app.config['SECRET_KEY'] = 'vnkdjnfjknfl1232#'
 socketio = SocketIO(app)
 
-# @app.route('/')
-# def sessions():
-#     return render_template('session.html')
 
 @app.route("/get_contacts_list/<username>", methods=['GET'])
 def get_rooms_list(username):
@@ -30,12 +26,15 @@ def on_join(data):
 
 
 @socketio.on('client_sends_message')
-def handle_my_custom_event(json_):
+def handle_client_message(json_):
     print('server responds to: ' + str(json_))
     response = json_
-    # response['source'] = "server"
 
     socketio.emit('received_message', response, callback=messageReceived, to=response["conversation_room"])
+
+@socketio.on('client_disconnection')
+def handle_client_disconnection(json_):
+    print(f"Client disconnection: {json_}")
 
 
 def room_names_generator(users_list: list)-> list:
