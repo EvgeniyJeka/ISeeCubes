@@ -29,7 +29,9 @@ class ChatClient:
 
     chat_room = None
     connection_status = False
+
     contacts_list_ui_element = None
+    connection_indicator_ui_element = None
 
     def __init__(self):
         # Window size
@@ -52,11 +54,14 @@ class ChatClient:
         img = ImageTk.PhotoImage(Image.open("flower_blue.png"))
 
         # Create a Label Widget to display the text or Image
-        label = Label(frame, image=img)
-        label.pack()
+        picture_label = Label(frame, image=img)
+        picture_label.pack()
 
         # Header #3 - Username: Lisa, Status: Connected
-        # .. T.B.D.
+        connection_status_label = Label(message_box_window, text="Connection status:", fg="blue", font=("", 13), width=15)
+        connection_status_label.place(x=29, y=125)
+        self.connection_indicator_ui_element = Label(message_box_window, text="Offline", fg="red", font=("", 13), width=10)
+        self.connection_indicator_ui_element.place(x=165, y=125)
 
         # LOG IN button
         button_login = Button(message_box_window, text="Login", bg="RoyalBlue4", fg="cyan", height="1", width="36")
@@ -106,6 +111,7 @@ class ChatClient:
         contacts_list = self.chat_room.initiate_connection()
         if contacts_list:
             self.connection_status = True
+            self.connection_indicator_ui_element.config(text="Online", fg="green")
         else:
             print("Failed to connect!")
 
