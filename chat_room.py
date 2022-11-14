@@ -16,32 +16,6 @@ import threading
 height = 475
 width = 220
 
-# # standard Python
-# sio = socketio.Client()
-#
-# my_name = "Lisa"
-#
-# sio.connect('http://localhost:5000')
-#
-# response = requests.get(f"http://localhost:5000/get_contacts_list/{my_name}")
-#
-# contacts_list = json.loads(response.text)
-#
-# # Establishing contacts with all persons from the Contacts List
-# for contact in contacts_list:
-#     conversation_room = contacts_list[contact]
-#     sio.emit('join', {"room": conversation_room})
-
-# When choosing the contact we want to converse with
-# 'conversation_room' is selected.
-
-# Choosing who do we want to talk with (message target, can be different for each message)
-# THINK HOW TO PREVENT THE CONVERSATION ROOM FROM BEING HARDCODED!
-# LISA CAN ADDRESS ANY PERSON FROM THE CONTACT LIST, BUT WHEN SHE IS ADDRESSED BY ANOTHER CONTACT
-# SHE SHOULD REPLY TO THAT CONTACT.
-#conversation_room = contacts_list["tsahi"]
-
-
 class ChatRoom:
 
     entry = None
@@ -73,7 +47,9 @@ class ChatRoom:
                 conversation_room = self.contacts_list[contact]
                 self.sio.emit('join', {"room": conversation_room})
 
-            return True
+            # Returning the list of all available contacts received from the server
+            print(f"Contacts list received from the server: {self.contacts_list}")
+            return self.contacts_list
 
         except Exception:
             return False
