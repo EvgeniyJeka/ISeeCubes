@@ -45,7 +45,7 @@ class ChatRoom:
             # Establishing contacts with all persons from the Contacts List
             for contact in self.contacts_list:
                 conversation_room = self.contacts_list[contact]
-                self.sio.emit('join', {"room": conversation_room})
+                self.sio.emit('join', {"room": conversation_room, "client": self.my_name})
 
             # Returning the list of all available contacts received from the server
             print(f"Contacts list received from the server: {self.contacts_list}")

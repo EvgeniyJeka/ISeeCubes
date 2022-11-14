@@ -29,6 +29,7 @@ class ChatClient:
 
     chat_room = None
     connection_status = False
+    listening_loop_thread = None
 
     contacts_list_ui_element = None
     connection_indicator_ui_element = None
@@ -121,8 +122,8 @@ class ChatClient:
         self.contacts_list_ui_element.insert(END, *contacts_list)
 
         print("Starting Listening Loop")
-        t1 = threading.Thread(target=self.chat_room.start_listening_loop)
-        t1.start()
+        self.listening_loop_thread = threading.Thread(target=self.chat_room.start_listening_loop)
+        self.listening_loop_thread.start()
 
     def handle_disconnect(self):
         print("Button clicked: DISCONNECT")
@@ -139,7 +140,7 @@ class ChatClient:
         self.chat_room.sio.emit('client_disconnection', {"client": self.chat_room.my_name})
 
         # Stopping the Listening Loop thread
-        # ...
+        self.listening_loop_thread.join(timeout=2)
 
     def handle_chat_with(self, target_contact):
         print("Button clicked: CHAT WITH")

@@ -20,6 +20,7 @@ def messageReceived(methods=['GET', 'POST']):
 
 @socketio.on('join')
 def on_join(data):
+    print(data)
     room = data['room']
     print(f"Adding a customer to a room: {data['room']}")
     join_room(room)
