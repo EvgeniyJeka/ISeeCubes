@@ -153,8 +153,7 @@ class ChatClient:
     def start_chat_thread(self, target_contact=None):
         self.chat_room.show_message_box(" ", target_contact)
 
-
-    def color_online_offline_contacts(self, currenly_online_contacts_list: list, contacts_list_ui_element):
+    def color_online_offline_contacts(self, currenly_online_contacts_list: list):
         """
         This method is used to color all contacts in CONTACTS LIST UI ELEMENT that are currently ONLINE
         in GREEN, and all other contacts - in RED.
@@ -162,7 +161,14 @@ class ChatClient:
         :param contacts_list_ui_element: tkinter ui element
         :return: True on success
         """
-        pass
+        for i in range(0, self.contacts_list_ui_element.size()):
+            current_item = self.contacts_list_ui_element.get(i)
+            # Online
+            if current_item in currenly_online_contacts_list:
+                self.contacts_list_ui_element.itemconfig(i, fg='green')
+            # Offline
+            else:
+                self.contacts_list_ui_element.itemconfig(i, fg='red')
 
 
 if __name__ == '__main__':
