@@ -154,5 +154,16 @@ class ChatClient:
         self.chat_room.show_message_box(" ", target_contact)
 
 
+    def color_online_offline_contacts(self, currenly_online_contacts_list: list, contacts_list_ui_element):
+        """
+        This method is used to color all contacts in CONTACTS LIST UI ELEMENT that are currently ONLINE
+        in GREEN, and all other contacts - in RED.
+        :param currenly_online_contacts_list: list of str
+        :param contacts_list_ui_element: tkinter ui element
+        :return: True on success
+        """
+        pass
+
+
 if __name__ == '__main__':
     client = ChatClient()

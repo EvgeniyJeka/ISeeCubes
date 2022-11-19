@@ -18,6 +18,7 @@ class ChatRoom:
 
     entry = None
     contacts_list = None
+    currently_online_contacts = None
 
     sio = None
     connected = False
@@ -36,9 +37,14 @@ class ChatRoom:
 
             self.my_name = "lisa"
 
+            # GET ALL CONTACTS request
             self.sio.connect('http://localhost:5000')
             response = requests.get(f"http://localhost:5000/get_contacts_list/{self.my_name}")
             self.contacts_list = json.loads(response.text)
+
+            # GET ONLINE CONTACTS request
+            # response = requests.get(f"http://localhost:5000/get_online_contacts_list/{self.my_name}")
+            # self.currently_online_contacts =  json.loads(response.text)
 
             # Establishing contacts with all persons from the Contacts List
             for contact in self.contacts_list:
@@ -47,6 +53,8 @@ class ChatRoom:
 
             # Returning the list of all available contacts received from the server
             print(f"Contacts list received from the server: {self.contacts_list}")
+
+            # SHOULD RETURN A TUPPLE - 'all contacts' and 'currently online contacts'
             return self.contacts_list
 
         except Exception:
