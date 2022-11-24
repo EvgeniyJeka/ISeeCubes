@@ -16,7 +16,8 @@ width = 285
 
 # TO DO:
 # Client, UI:
-# connection status indicator
+# connection status indicator D
+# if the client is ALREADY CONNECTED the CONNECT button should DO NOTHING, OR BE DISABLED
 # chat box size and design
 # sending 'disconnect' event
 # think of - client is to be notified if new user was connected or disconnected
@@ -24,12 +25,17 @@ width = 285
 # Server side:
 # keep a list of all CONNECTED clients (handle 'on_connect' & 'on_disconnect')
 # note: at this point a conversation is possible only if both users are connected,
+# chat box - don't open a new one if already exists (chatting with given customer)
 
 class ChatClient:
 
     chat_room = None
     connection_status = False
+    listening_loop_thread = None
+
     contacts_list_ui_element = None
+    connect_button_ui_element = None
+    connection_indicator_ui_element = None
 
     def __init__(self):
         # Window size
@@ -52,11 +58,14 @@ class ChatClient:
         img = ImageTk.PhotoImage(Image.open("flower_blue.png"))
 
         # Create a Label Widget to display the text or Image
-        label = Label(frame, image=img)
-        label.pack()
+        picture_label = Label(frame, image=img)
+        picture_label.pack()
 
         # Header #3 - Username: Lisa, Status: Connected
-        # .. T.B.D.
+        connection_status_label = Label(message_box_window, text="Connection status:", fg="blue", font=("", 13), width=15)
+        connection_status_label.place(x=29, y=125)
+        self.connection_indicator_ui_element = Label(message_box_window, text="Offline", fg="red", font=("", 13), width=10)
+        self.connection_indicator_ui_element.place(x=165, y=125)
 
         # LOG IN button
         button_login = Button(message_box_window, text="Login", bg="RoyalBlue4", fg="cyan", height="1", width="36")
@@ -83,7 +92,8 @@ class ChatClient:
         button_options.place(x=11, y=520)
 
         # DISCONNECT button
-        button_disconnect = Button(message_box_window, text="Disconnect", bg="SteelBlue4", fg="cyan", height="1", width="36")
+        button_disconnect = Button(message_box_window, text="Disconnect", bg="SteelBlue4", fg="cyan", height="1", width="36",
+                                   command=lambda: self.handle_disconnect())
         button_disconnect.place(x=11, y=550)
 
         # Handling WINDOW CLOSED - the value related to current message sender in the ADDRESS BOOK is NONE again,
@@ -103,9 +113,14 @@ class ChatClient:
     def handle_connect(self):
         print("Button clicked: CONNECT")
         # When connection is initiated the list of the available contacts is fetched from the server
-        contacts_list = self.chat_room.initiate_connection()
+        server_initiate_feed = self.chat_room.initiate_connection()
+
+        contacts_list = server_initiate_feed['contacts']
+        online_contacts = server_initiate_feed["currently_online"]
+
         if contacts_list:
             self.connection_status = True
+            self.connection_indicator_ui_element.config(text="Online", fg="green")
         else:
             print("Failed to connect!")
 
@@ -113,9 +128,29 @@ class ChatClient:
         self.contacts_list_ui_element.delete(0, END)
         self.contacts_list_ui_element.insert(END, *contacts_list)
 
+        # Color the 'online' contacts in Green (and all others in Red)
+        self.color_online_offline_contacts(online_contacts)
+
         print("Starting Listening Loop")
-        t1 = threading.Thread(target=self.chat_room.start_listening_loop)
-        t1.start()
+        self.listening_loop_thread = threading.Thread(target=self.chat_room.start_listening_loop)
+        self.listening_loop_thread.start()
+
+    def handle_disconnect(self):
+        print("Button clicked: DISCONNECT")
+        if self.connection_status is False:
+            print("NOT CONNECTED")
+            return
+
+        self.connection_status = False
+        # Modifying UI on disconnection
+        self.connection_indicator_ui_element.config(text="Offline", fg="red")
+        self.contacts_list_ui_element.delete(0, END)
+
+        # Emitting 'client_disconnection' event to the server
+        self.chat_room.sio.emit('client_disconnection', {"client": self.chat_room.my_name})
+
+        # Stopping the Listening Loop thread
+        self.listening_loop_thread.join(timeout=2)
 
     def handle_chat_with(self, target_contact):
         print("Button clicked: CHAT WITH")
@@ -124,6 +159,29 @@ class ChatClient:
 
     def start_chat_thread(self, target_contact=None):
         self.chat_room.show_message_box(" ", target_contact)
+
+    def color_online_offline_contacts(self, currenly_online_contacts_list: list):
+        """
+        This method is used to color all contacts in CONTACTS LIST UI ELEMENT that are currently ONLINE
+        in GREEN, and all other contacts - in RED.
+        :param currenly_online_contacts_list: list of str
+        :param contacts_list_ui_element: tkinter ui element
+        :return: True on success
+        """
+        try:
+            for i in range(0, self.contacts_list_ui_element.size()):
+                current_item = self.contacts_list_ui_element.get(i)
+                # Online
+                if current_item in currenly_online_contacts_list:
+                    self.contacts_list_ui_element.itemconfig(i, fg='green')
+                # Offline
+                else:
+                    self.contacts_list_ui_element.itemconfig(i, fg='red')
+
+            return True
+
+        except Exception:
+            return False
 
 
 if __name__ == '__main__':

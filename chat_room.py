@@ -9,8 +9,9 @@ import requests
 import json
 import threading
 
+
 # TO DO:
-# Add handling ON CONNECT & ON DISCONNECT. KEEP A LIST/DICT OF USERS THAT ARE CURRENTLY CONNECTED.
+# Address Book - create an empty dict, fill it with DATA RECEIVED FROM THE SERVER ON CONNECTION
 
 # Default window size when there are no bookmarks
 height = 475
@@ -20,14 +21,16 @@ class ChatRoom:
 
     entry = None
     contacts_list = None
+    currently_online_contacts = None
 
     sio = None
     connected = False
 
     address_book = {
-        "Avi": None,
-        "Tsahi": None,
-        "Era": None
+        "avi": None,
+        "tsahi": None,
+        "era": None,
+        "bravo": None
     }
 
 
@@ -36,24 +39,31 @@ class ChatRoom:
         try:
             self.sio = socketio.Client()
 
-            self.my_name = "Lisa"
+            # Will be replace with the username from the 'Log In' form
+            self.my_name = "lisa"
 
+            # GET CONTACTS request
             self.sio.connect('http://localhost:5000')
             response = requests.get(f"http://localhost:5000/get_contacts_list/{self.my_name}")
-            self.contacts_list = json.loads(response.text)
+            server_contacts_data = json.loads(response.text)
+
+            # All existing contacts
+            self.contacts_list = server_contacts_data["contacts"]
+            # Contacts that are currently online
+            self.currently_online_contacts = server_contacts_data["currently_online"]
 
             # Establishing contacts with all persons from the Contacts List
             for contact in self.contacts_list:
                 conversation_room = self.contacts_list[contact]
-                self.sio.emit('join', {"room": conversation_room})
+                self.sio.emit('join', {"room": conversation_room, "client": self.my_name})
 
             # Returning the list of all available contacts received from the server
             print(f"Contacts list received from the server: {self.contacts_list}")
-            return self.contacts_list
+            print(f"Online contacts list received: {self.currently_online_contacts}")
+            return {"contacts": self.contacts_list, "currently_online": self.currently_online_contacts}
 
         except Exception:
             return False
-
 
     def start_listening_loop(self):
 
@@ -161,75 +171,3 @@ class ChatRoom:
 
 if __name__ == '__main__':
     chtr = ChatRoom()
-
-    # Window size
-    # hight = 600
-    # width = 285
-    # size = '%sx%s' % (width, hight)
-    #
-    # # Window
-    # message_box_window = Tk()
-    # message_box_window.geometry(size)
-    # message_box_window.resizable(0, 0)
-    #
-    # # Header #1 - Label "I See Cubes"
-    # head_label = Label(message_box_window, text="I See Cubes", fg="white", bg="PaleGreen1", font=("", 20), width=16)
-    # head_label.place(x=11, y=3)
-    #
-    # # Header #2 - ICQ Image (or Kubernetes Image, or Custom Image)
-    # frame = Frame(message_box_window, width=30, height=20)
-    # frame.place(x=93, y=50)
-    #
-    # # Create an object of tkinter ImageTk
-    # img = ImageTk.PhotoImage(Image.open("flower_blue.png"))
-    #
-    # # Create a Label Widget to display the text or Image
-    # label = Label(frame, image=img)
-    # label.pack()
-    #
-    # # Header #3 - Username: Lisa, Status: Connected
-    # #.. T.B.D.
-    #
-    #
-    # # LOG IN button
-    # button_login = Button(message_box_window, text="Login", bg="RoyalBlue4", fg="cyan", height="1", width="36")
-    # button_login.place(x=11, y=155)
-    #
-    # # CONNECT button :#chtr = ChatRoom(), perhaps in a separate thread,
-    # # so the clicked CONNECT button won't block all the other buttons
-    # button_login = Button(message_box_window, text="Connect", bg="RoyalBlue4", fg="cyan", height="1", width="36")
-    # button_login.place(x=11, y=183)
-    #
-    # # Used listbox - for tables presentation and selection : selecting a person to chat with from the Contacts List
-    # contacts_list = Listbox(message_box_window, selectmode=SINGLE, width=27, height=12, yscrollcommand=True,
-    #                         bd=3, selectbackground="LightSky Blue3", font="Times 13 italic bold")
-    # contacts_list.place(x=17, y=220)
-    #
-    # # Filling the Contact List with contacts - a STUB, eventually the contacts will be taken from the server feed
-    # contacts_list.insert(1, "Avi")
-    # contacts_list.insert(2, "Tsahi")
-    # contacts_list.insert(3, "Era")
-    #
-    # # CHAT WITH button
-    # chat_with = Button(message_box_window, text="Chat With", bg="SteelBlue4", fg="cyan", height="1", width="36")
-    # chat_with.place(x=11, y=490)
-    #
-    # # OPTIONS button
-    # options = Button(message_box_window, text="Options", bg="SteelBlue4", fg="cyan", height="1", width="36")
-    # options.place(x=11, y=520)
-    #
-    # # DISCONNECT button
-    # disconnect = Button(message_box_window, text="Disconnect", bg="SteelBlue4", fg="cyan", height="1", width="36")
-    # disconnect.place(x=11, y=550)
-    #
-    #
-    # # Handling WINDOW CLOSED - the value related to current message sender in the ADDRESS BOOK is NONE again,
-    # # so a NEW WINDOW will be opened once a message from that sender is received
-    # def on_closing():
-    #     print("Window closed!")
-    #     message_box_window.destroy()
-    #
-    #
-    # message_box_window.protocol("WM_DELETE_WINDOW", on_closing)
-    # message_box_window.mainloop()
-

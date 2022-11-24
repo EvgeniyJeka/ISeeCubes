@@ -5,37 +5,53 @@ from flask_socketio import SocketIO
 from flask_socketio import join_room, leave_room
 
 # Will be taken from SQL DB
-users_list = ["Lisa", "Avi", "Tsahi", "Era"]
+users_list = ["Lisa", "Avi", "Tsahi", "Era", "Bravo"]
+
+# Will be in service cache AND in DB (Redis DB?)
+users_currently_online = []
 
 app = Flask(__name__)
-#app.config['SECRET_KEY'] = 'vnkdjnfjknfl1232#'
 socketio = SocketIO(app)
 
-# @app.route('/')
-# def sessions():
-#     return render_template('session.html')
 
 @app.route("/get_contacts_list/<username>", methods=['GET'])
 def get_rooms_list(username):
-    return prepare_rooms_for(username)
+    contacts_data = {"contacts": prepare_rooms_for(username), "currently_online": users_currently_online}
+    return contacts_data
 
 def messageReceived(methods=['GET', 'POST']):
     print('message was received!!!')
 
 @socketio.on('join')
 def on_join(data):
+
+    client_name = data['client']
+    if client_name not in users_currently_online:
+        users_currently_online.append(client_name)
+
+    print(f"Users currently online: {users_currently_online}")
+
     room = data['room']
     print(f"Adding a customer to a room: {data['room']}")
     join_room(room)
 
 
 @socketio.on('client_sends_message')
-def handle_my_custom_event(json_):
+def handle_client_message(json_):
     print('server responds to: ' + str(json_))
     response = json_
-    # response['source'] = "server"
 
     socketio.emit('received_message', response, callback=messageReceived, to=response["conversation_room"])
+
+@socketio.on('client_disconnection')
+def handle_client_disconnection(json_):
+    print(f"Client disconnection: {json_}")
+
+    client_name = json_['client']
+    if client_name in users_currently_online:
+        users_currently_online.remove(client_name)
+
+    print(f"Users currently online: {users_currently_online}")
 
 
 def room_names_generator(users_list: list)-> list:
