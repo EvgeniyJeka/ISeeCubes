@@ -5,7 +5,7 @@ import json
 # standard Python
 sio = socketio.Client()
 
-my_name = "Lisa"
+my_name = "era"
 
 sio.connect('http://localhost:5000')
 
@@ -22,7 +22,7 @@ for contact in contacts_list:
 # 'conversation_room' is selected.
 
 # Choosing who do we want to talk with (message target, can be different for each message)
-conversation_room = contacts_list["tsahi"]
+conversation_room = contacts_list["lisa"]
 
 
 while True:

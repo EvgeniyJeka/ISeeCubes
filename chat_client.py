@@ -113,7 +113,11 @@ class ChatClient:
     def handle_connect(self):
         print("Button clicked: CONNECT")
         # When connection is initiated the list of the available contacts is fetched from the server
-        contacts_list = self.chat_room.initiate_connection()
+        server_initiate_feed = self.chat_room.initiate_connection()
+
+        contacts_list = server_initiate_feed['contacts']
+        online_contacts = server_initiate_feed["currently_online"]
+
         if contacts_list:
             self.connection_status = True
             self.connection_indicator_ui_element.config(text="Online", fg="green")
@@ -123,6 +127,9 @@ class ChatClient:
         # Inserting the list of contacts that was fetched into the 'Contact List' UI Element
         self.contacts_list_ui_element.delete(0, END)
         self.contacts_list_ui_element.insert(END, *contacts_list)
+
+        # Color the 'online' contacts in Green (and all others in Red)
+        self.color_online_offline_contacts(online_contacts)
 
         print("Starting Listening Loop")
         self.listening_loop_thread = threading.Thread(target=self.chat_room.start_listening_loop)
@@ -161,14 +168,20 @@ class ChatClient:
         :param contacts_list_ui_element: tkinter ui element
         :return: True on success
         """
-        for i in range(0, self.contacts_list_ui_element.size()):
-            current_item = self.contacts_list_ui_element.get(i)
-            # Online
-            if current_item in currenly_online_contacts_list:
-                self.contacts_list_ui_element.itemconfig(i, fg='green')
-            # Offline
-            else:
-                self.contacts_list_ui_element.itemconfig(i, fg='red')
+        try:
+            for i in range(0, self.contacts_list_ui_element.size()):
+                current_item = self.contacts_list_ui_element.get(i)
+                # Online
+                if current_item in currenly_online_contacts_list:
+                    self.contacts_list_ui_element.itemconfig(i, fg='green')
+                # Offline
+                else:
+                    self.contacts_list_ui_element.itemconfig(i, fg='red')
+
+            return True
+
+        except Exception:
+            return False
 
 
 if __name__ == '__main__':

@@ -11,7 +11,7 @@ sio.connect('http://localhost:5000')
 
 response = requests.get(f"http://localhost:5000/get_contacts_list/{my_name}")
 
-contacts_list = json.loads(response.text)
+contacts_list = json.loads(response.text)["contacts"]
 
 # Establishing contacts with all persons from the Contacts List
 for contact in contacts_list:

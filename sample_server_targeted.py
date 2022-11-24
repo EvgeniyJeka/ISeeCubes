@@ -5,7 +5,7 @@ from flask_socketio import SocketIO
 from flask_socketio import join_room, leave_room
 
 # Will be taken from SQL DB
-users_list = ["Lisa", "Avi", "Tsahi", "Era"]
+users_list = ["Lisa", "Avi", "Tsahi", "Era", "Bravo"]
 
 # Will be in service cache AND in DB (Redis DB?)
 users_currently_online = []
@@ -16,12 +16,8 @@ socketio = SocketIO(app)
 
 @app.route("/get_contacts_list/<username>", methods=['GET'])
 def get_rooms_list(username):
-    return prepare_rooms_for(username)
-
-@app.route("/get_online_contacts_list/<username>", methods=['GET'])
-def get_online_contacts_list(username):
-    # Add validation for username (?)
-    return users_currently_online
+    contacts_data = {"contacts": prepare_rooms_for(username), "currently_online": users_currently_online}
+    return contacts_data
 
 def messageReceived(methods=['GET', 'POST']):
     print('message was received!!!')
