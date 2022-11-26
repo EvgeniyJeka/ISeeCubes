@@ -35,6 +35,9 @@ def on_join(data):
     print(f"Adding a customer to a room: {data['room']}")
     join_room(room)
 
+    # Emit 'new_user_online' to ALL (with current client username)
+    # socketio.emit('received_message', response, callback=messageReceived, to=response["conversation_room"])
+
 
 @socketio.on('client_sends_message')
 def handle_client_message(json_):
@@ -52,6 +55,8 @@ def handle_client_disconnection(json_):
         users_currently_online.remove(client_name)
 
     print(f"Users currently online: {users_currently_online}")
+
+    # Emit 'user_has_gone_offline' to ALL (with current client username)
 
 
 def room_names_generator(users_list: list)-> list:

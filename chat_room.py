@@ -26,6 +26,8 @@ class ChatRoom:
     sio = None
     connected = False
 
+    contacts_list_ui_element = None
+
     address_book = {
         "avi": None,
         "tsahi": None,
@@ -33,6 +35,8 @@ class ChatRoom:
         "bravo": None
     }
 
+    def __init__(self, contacts_list_ui_element):
+        self.contacts_list_ui_element = contacts_list_ui_element
 
     def initiate_connection(self):
         # CONNECT method
@@ -60,6 +64,7 @@ class ChatRoom:
             # Returning the list of all available contacts received from the server
             print(f"Contacts list received from the server: {self.contacts_list}")
             print(f"Online contacts list received: {self.currently_online_contacts}")
+
             return {"contacts": self.contacts_list, "currently_online": self.currently_online_contacts}
 
         except Exception:
@@ -86,6 +91,16 @@ class ChatRoom:
                 else:
                     current_messages_box.insert(INSERT, "\n")
                     current_messages_box.insert(INSERT, f"{message['sender']}: {message['content']}")
+
+        @self.sio.on('new_user_online')
+        def handle_new_user_online(message):
+            # Color the username in 'self.contacts_list_ui_element' in GREEN
+            pass
+
+        @self.sio.on('user_has_gone_offline')
+        def handle_new_user_online(message):
+            # Color the username in 'self.contacts_list_ui_element' in RED
+            pass
 
 
     # OPEN MESSAGE BOX (method in use)
@@ -166,8 +181,42 @@ class ChatRoom:
     def handle_clear(self):
         print("Handling CLEAR")
 
+    def color_online_offline_contacts(self, currently_online_contacts_list: list):
+        """
+        This method is used to color all contacts in CONTACTS LIST UI ELEMENT that are currently ONLINE
+        in GREEN, and all other contacts - in RED.
+        :param currently_online_contacts_list: list of str
+        :param contacts_list_ui_element: tkinter ui element
+        :return: True on success
+        """
+        try:
+            for i in range(0, self.contacts_list_ui_element.size()):
+                current_item = self.contacts_list_ui_element.get(i)
+                # Online
+                if current_item in currently_online_contacts_list:
+                    self.contacts_list_ui_element.itemconfig(i, fg='green')
+                # Offline
+                else:
+                    self.contacts_list_ui_element.itemconfig(i, fg='red')
+
+            return True
+
+        except Exception:
+            return False
+
+    def color_selected_contact(self, selected_contact, color):
+        try:
+            for i in range(0, self.contacts_list_ui_element.size()):
+                current_item = self.contacts_list_ui_element.get(i)
+
+                if current_item == selected_contact:
+                    self.contacts_list_ui_element.itemconfig(i, fg=color)
+
+            return True
+
+        except Exception:
+            return False
 
 
-
-if __name__ == '__main__':
-    chtr = ChatRoom()
+# if __name__ == '__main__':
+#     chtr = ChatRoom()
