@@ -16,16 +16,9 @@ width = 285
 
 # TO DO:
 # Client, UI:
-# connection status indicator D
 # if the client is ALREADY CONNECTED the CONNECT button should DO NOTHING, OR BE DISABLED
 # chat box size and design
-# sending 'disconnect' event
-# think of - client is to be notified if new user was connected or disconnected
-#
-# Server side:
-# keep a list of all CONNECTED clients (handle 'on_connect' & 'on_disconnect')
-# note: at this point a conversation is possible only if both users are connected,
-# chat box - don't open a new one if already exists (chatting with given customer)
+# Custom 'keep alive' logic both on server and on client side
 
 class ChatClient:
 
@@ -38,8 +31,6 @@ class ChatClient:
     connection_indicator_ui_element = None
 
     def __init__(self):
-        # Window size
-        self.chat_room = ChatRoom()
 
         # Window
         message_box_window = Tk()
@@ -81,6 +72,9 @@ class ChatClient:
         self.contacts_list_ui_element = Listbox(message_box_window, selectmode=SINGLE, width=27, height=12, yscrollcommand=True,
                                 bd=3, selectbackground="LightSky Blue3", font="Times 13 italic bold")
         self.contacts_list_ui_element.place(x=17, y=220)
+
+        # Window size
+        self.chat_room = ChatRoom(self.contacts_list_ui_element)
 
         # CHAT WITH button
         button_chat_with = Button(message_box_window, text="Chat With", bg="SteelBlue4", fg="cyan", height="1", width="36",
@@ -129,7 +123,7 @@ class ChatClient:
         self.contacts_list_ui_element.insert(END, *contacts_list)
 
         # Color the 'online' contacts in Green (and all others in Red)
-        self.color_online_offline_contacts(online_contacts)
+        self.chat_room.color_online_offline_contacts(online_contacts)
 
         print("Starting Listening Loop")
         self.listening_loop_thread = threading.Thread(target=self.chat_room.start_listening_loop)
@@ -160,28 +154,6 @@ class ChatClient:
     def start_chat_thread(self, target_contact=None):
         self.chat_room.show_message_box(" ", target_contact)
 
-    def color_online_offline_contacts(self, currenly_online_contacts_list: list):
-        """
-        This method is used to color all contacts in CONTACTS LIST UI ELEMENT that are currently ONLINE
-        in GREEN, and all other contacts - in RED.
-        :param currenly_online_contacts_list: list of str
-        :param contacts_list_ui_element: tkinter ui element
-        :return: True on success
-        """
-        try:
-            for i in range(0, self.contacts_list_ui_element.size()):
-                current_item = self.contacts_list_ui_element.get(i)
-                # Online
-                if current_item in currenly_online_contacts_list:
-                    self.contacts_list_ui_element.itemconfig(i, fg='green')
-                # Offline
-                else:
-                    self.contacts_list_ui_element.itemconfig(i, fg='red')
-
-            return True
-
-        except Exception:
-            return False
 
 
 if __name__ == '__main__':

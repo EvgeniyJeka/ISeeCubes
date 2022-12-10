@@ -1,5 +1,24 @@
 import json
 
+# TO DO:
+# 1.  Custom 'keep alive' logic both on server and on client side
+#
+# 1.1 Client - while connected, will emit 'connection_alive' event every X seconds (will contain the username)
+#
+# 1.2 Server - will keep a dict of all online users and the time when the last 'connection_alive' event was received
+#
+# 1.3 Sever - on 'connection_alive' event the dict will be updated (the time)
+#
+# 1.4 Server - while the app is running each X seconds the method 'connection_checker' that is running in a separate
+# thread will check for each user in the 'online users' dict (see 1.2) if CURRENT_TIME - LAST_TIME_CONNECTION_ALIVE_WAS_RECEVED < T,
+# while 'T' is configurable.  If CURRENT_TIME - LAST_TIME_CONNECTION_ALIVE_WAS_RECEVED => T, the connection will be
+# considered as DEAD - the user will be removed from the 'online users' list and an 'user_has_gone_offline' event will
+# be published for all other users.
+
+
+import threading
+import time
+
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 from flask_socketio import join_room, leave_room
@@ -9,6 +28,13 @@ users_list = ["Lisa", "Avi", "Tsahi", "Era", "Bravo"]
 
 # Will be in service cache AND in DB (Redis DB?)
 users_currently_online = []
+
+# Mapping active users against the last time the 'connection_alive' event was received from each
+connection_keep_alive = {}
+
+
+# Config
+CONNECTIONS_VERIFICATION_INTERVAL = 10
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -22,12 +48,18 @@ def get_rooms_list(username):
 def messageReceived(methods=['GET', 'POST']):
     print('message was received!!!')
 
+def user_joined():
+    print(f"User joined!")
+
 @socketio.on('join')
 def on_join(data):
-
     client_name = data['client']
+
+    # Perform only once on each connection
     if client_name not in users_currently_online:
         users_currently_online.append(client_name)
+        # Emit 'new_user_online' to ALL (with current client username)
+        socketio.emit('new_user_online', {"username": client_name}, callback=user_joined)
 
     print(f"Users currently online: {users_currently_online}")
 
@@ -50,6 +82,7 @@ def handle_client_disconnection(json_):
     client_name = json_['client']
     if client_name in users_currently_online:
         users_currently_online.remove(client_name)
+        socketio.emit('user_has_gone_offline', {"username": client_name})
 
     print(f"Users currently online: {users_currently_online}")
 
@@ -86,7 +119,15 @@ def prepare_rooms_for(username: str):
 
     return result
 
+def connection_checker():
+    while True:
+        # IN PROGRESS - SEE
+        time.sleep(CONNECTIONS_VERIFICATION_INTERVAL)
+        print("Verifying active connections..")
+
 # API METHOD that will return this in response to GET request with a param (username)
 
 if __name__ == '__main__':
+    connection_verification_thread = threading.Thread(target=connection_checker)
+    connection_verification_thread.start()
     socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
