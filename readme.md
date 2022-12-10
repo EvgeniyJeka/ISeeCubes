@@ -1,5 +1,8 @@
-Events:
+Logic:
+..
 
+
+Events:
 
 Client - to - server:
 
@@ -11,6 +14,9 @@ Server - to - client:
 
 1. 'received_message' - a message was received fro one of the clients, will be published by the server to the selected chat room
 2. 'new_user_online' - new client has connected, all clients that are currently online are notified
+3. 'user_has_gone_offline' - user has decided to disconnect (deliberately)
+
+
 
 
 

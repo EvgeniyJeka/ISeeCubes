@@ -1,5 +1,9 @@
 import json
 
+# TO DO:
+# 1.  Custom 'keep alive' logic both on server and on client side
+
+
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 from flask_socketio import join_room, leave_room
@@ -56,10 +60,9 @@ def handle_client_disconnection(json_):
     client_name = json_['client']
     if client_name in users_currently_online:
         users_currently_online.remove(client_name)
+        socketio.emit('user_has_gone_offline', {"username": client_name})
 
     print(f"Users currently online: {users_currently_online}")
-
-    # Emit 'user_has_gone_offline' to ALL (with current client username)
 
 
 def room_names_generator(users_list: list)-> list:

@@ -16,16 +16,9 @@ width = 285
 
 # TO DO:
 # Client, UI:
-# connection status indicator D
 # if the client is ALREADY CONNECTED the CONNECT button should DO NOTHING, OR BE DISABLED
 # chat box size and design
-# sending 'disconnect' event
-# think of - client is to be notified if new user was connected or disconnected
-#
-# Server side:
-# keep a list of all CONNECTED clients (handle 'on_connect' & 'on_disconnect')
-# note: at this point a conversation is possible only if both users are connected,
-# chat box - don't open a new one if already exists (chatting with given customer)
+# Custom 'keep alive' logic both on server and on client side
 
 class ChatClient:
 

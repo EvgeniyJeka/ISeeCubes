@@ -34,4 +34,9 @@ while True:
             print(f"{message['sender']}: {message['content']}")
 
     message = input()
+    if message == 'disconnect':
+        sio.emit('client_disconnection', {"client": my_name})
+        print("Disconnecting")
+        break
+
     sio.emit('client_sends_message', {'sender':my_name, "content":message, "conversation_room": conversation_room})

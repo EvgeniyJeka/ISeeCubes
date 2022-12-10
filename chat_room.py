@@ -103,10 +103,14 @@ class ChatRoom:
                     print(f"Warning: failed to color contact {user_name} in GREEN")
 
         @self.sio.on('user_has_gone_offline')
-        def handle_new_user_online(message):
-            # Color the username in 'self.contacts_list_ui_element' in RED
-            pass
+        def user_has_gone_offline(message):
+            user_name = message["username"]
 
+            if user_name != self.my_name:
+                print(f"Handling: user has gone offline: {user_name}")
+                # Color the username in 'self.contacts_list_ui_element' in RED
+                if not self.color_selected_contact(user_name, "red"):
+                    print(f"Warning: failed to color contact {user_name} in RED")
 
     # OPEN MESSAGE BOX (method in use)
     def show_message_box(self, first_mesage, message_sender):
