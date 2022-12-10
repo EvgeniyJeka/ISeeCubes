@@ -22,21 +22,24 @@ def get_rooms_list(username):
 def messageReceived(methods=['GET', 'POST']):
     print('message was received!!!')
 
+def user_joined():
+    print(f"User joined!")
+
 @socketio.on('join')
 def on_join(data):
-
     client_name = data['client']
+
+    # Perform only once on each connection
     if client_name not in users_currently_online:
         users_currently_online.append(client_name)
+        # Emit 'new_user_online' to ALL (with current client username)
+        socketio.emit('new_user_online', {"username": client_name}, callback=user_joined)
 
     print(f"Users currently online: {users_currently_online}")
 
     room = data['room']
     print(f"Adding a customer to a room: {data['room']}")
     join_room(room)
-
-    # Emit 'new_user_online' to ALL (with current client username)
-    # socketio.emit('received_message', response, callback=messageReceived, to=response["conversation_room"])
 
 
 @socketio.on('client_sends_message')

@@ -94,8 +94,13 @@ class ChatRoom:
 
         @self.sio.on('new_user_online')
         def handle_new_user_online(message):
-            # Color the username in 'self.contacts_list_ui_element' in GREEN
-            pass
+            user_name = message["username"]
+
+            if user_name != self.my_name:
+                print(f"Handling: new user is now online: {user_name}")
+                # Color the username in 'self.contacts_list_ui_element' in GREEN
+                if not self.color_selected_contact(user_name, "green"):
+                    print(f"Warning: failed to color contact {user_name} in GREEN")
 
         @self.sio.on('user_has_gone_offline')
         def handle_new_user_online(message):
