@@ -142,7 +142,7 @@ class ChatRoom:
         # SEND button - the text from the entry box will be packed to a WS message and the former will be
         # emitted to the conversation room. (Remove 'not my message' validation?)
         button_send = Button(message_box_window, text="Send", bg="purple", fg="white", height="2", width="30",
-                             command=lambda :self.handle_send(created_entry, messages_box, message_sender.lower()))
+                             command=lambda: self.handle_send(created_entry, messages_box, message_sender.lower()))
         button_send.place(x=240, y=380)
 
         # CLEAR button - clears the entry box
