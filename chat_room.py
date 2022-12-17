@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 from tkinter import *
 from tkinter import ttk
 from tkinter import font
@@ -16,6 +17,9 @@ import threading
 # Default window size when there are no bookmarks
 height = 475
 width = 220
+
+# Move to config
+keep_alive_delay_between_events = 6
 
 class ChatRoom:
 
@@ -111,6 +115,17 @@ class ChatRoom:
                 # Color the username in 'self.contacts_list_ui_element' in RED
                 if not self.color_selected_contact(user_name, "red"):
                     print(f"Warning: failed to color contact {user_name} in RED")
+
+
+    def sending_keep_alive_loop(self):
+        print(f"SENDING KEEP ALIVE SIGNALS EVERY {keep_alive_delay_between_events} seconds")
+
+        while True:
+            now = datetime.now()
+            self.sio.emit('connection_alive', {'client': self.my_name,
+                                               "time": now.strftime("%H:%M:%S")})
+
+            time.sleep(keep_alive_delay_between_events)
 
     # OPEN MESSAGE BOX (method in use)
     def show_message_box(self, first_mesage, message_sender):

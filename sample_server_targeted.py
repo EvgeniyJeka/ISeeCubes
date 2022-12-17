@@ -75,6 +75,7 @@ def handle_client_message(json_):
 
     socketio.emit('received_message', response, callback=messageReceived, to=response["conversation_room"])
 
+
 @socketio.on('client_disconnection')
 def handle_client_disconnection(json_):
     print(f"Client disconnection: {json_}")
@@ -85,6 +86,15 @@ def handle_client_disconnection(json_):
         socketio.emit('user_has_gone_offline', {"username": client_name})
 
     print(f"Users currently online: {users_currently_online}")
+
+
+@socketio.on('connection_alive')
+def processing_keep_alive_signals(json_):
+    client_name = json_['client']
+    message_time = json_['time']
+
+    print(f"Client {client_name} sent 'keep alive' signal at {message_time}")
+    # IN PROGRESS
 
 
 def room_names_generator(users_list: list)-> list:

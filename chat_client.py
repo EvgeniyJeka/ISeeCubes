@@ -25,6 +25,7 @@ class ChatClient:
     chat_room = None
     connection_status = False
     listening_loop_thread = None
+    sending_keep_alive_thread = None
 
     contacts_list_ui_element = None
     connect_button_ui_element = None
@@ -129,6 +130,10 @@ class ChatClient:
         self.listening_loop_thread = threading.Thread(target=self.chat_room.start_listening_loop)
         self.listening_loop_thread.start()
 
+        print("Starting Sending Keep Alive Loop")
+        self.sending_keep_alive_thread = threading.Thread(target=self.chat_room.sending_keep_alive_loop)
+        self.sending_keep_alive_thread.start()
+
     def handle_disconnect(self):
         print("Button clicked: DISCONNECT")
         if self.connection_status is False:
@@ -145,6 +150,11 @@ class ChatClient:
 
         # Stopping the Listening Loop thread
         self.listening_loop_thread.join(timeout=2)
+
+        # Stopping the Sending Keep Alive Loop thread
+        self.sending_keep_alive_thread.join(timeout=2)
+
+
 
     def handle_chat_with(self, target_contact):
         print("Button clicked: CHAT WITH")
