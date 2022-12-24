@@ -123,7 +123,7 @@ class ChatRoom:
         while True:
             now = datetime.now()
             self.sio.emit('connection_alive', {'client': self.my_name,
-                                               "time": now.strftime("%H:%M:%S")})
+                                               "time": now.strftime('%m/%d/%y %H:%M:%S')})
 
             time.sleep(keep_alive_delay_between_events)
 

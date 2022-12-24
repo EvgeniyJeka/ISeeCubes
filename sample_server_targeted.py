@@ -18,6 +18,7 @@ import json
 
 import threading
 import time
+from datetime import datetime
 
 from flask import Flask, render_template
 from flask_socketio import SocketIO
@@ -25,6 +26,8 @@ from flask_socketio import join_room, leave_room
 
 # Will be taken from SQL DB
 users_list = ["Lisa", "Avi", "Tsahi", "Era", "Bravo"]
+
+keep_alive_tracking = {}
 
 # Will be in service cache AND in DB (Redis DB?)
 users_currently_online = []
@@ -94,7 +97,10 @@ def processing_keep_alive_signals(json_):
     message_time = json_['time']
 
     print(f"Client {client_name} sent 'keep alive' signal at {message_time}")
-    # IN PROGRESS
+
+    # Updating the time at which the 'keep alive' signal was last time received for given user
+    keep_alive_tracking[client_name] = datetime.strptime(message_time, '%m/%d/%y %H:%M:%S')
+    print(f"Server Side Keep Alive Time Table Updated: {keep_alive_tracking}")
 
 
 def room_names_generator(users_list: list)-> list:

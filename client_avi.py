@@ -1,3 +1,6 @@
+import time
+from datetime import datetime
+
 import socketio
 import requests
 import json
@@ -40,3 +43,10 @@ while True:
         break
 
     sio.emit('client_sends_message', {'sender':my_name, "content":message, "conversation_room": conversation_room})
+
+
+    now = datetime.now()
+    sio.emit('connection_alive', {'client': my_name,
+                                  "time": now.strftime('%m/%d/%y %H:%M:%S')})
+
+    time.sleep(6)
