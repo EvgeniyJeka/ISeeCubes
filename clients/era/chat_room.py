@@ -35,7 +35,7 @@ class ChatRoom:
     address_book = {
         "avi": None,
         "tsahi": None,
-        "era": None,
+        "lisa": None,
         "bravo": None
     }
 
@@ -48,7 +48,7 @@ class ChatRoom:
             self.sio = socketio.Client()
 
             # Will be replace with the username from the 'Log In' form
-            self.my_name = "lisa"
+            self.my_name = "era"
 
             # GET CONTACTS request
             self.sio.connect('http://localhost:5000')

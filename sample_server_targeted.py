@@ -1,7 +1,7 @@
 import json
 
 # TO DO:
-# 1.  Custom 'keep alive' logic both on server and on client side
+# 1.  Custom 'keep alive' logic both on server and on client side // TEST AGAINST 2-3 CLIENTS, NOT EMULATIONS
 #
 # 1.1 Client - while connected, will emit 'connection_alive' event every X seconds (will contain the username)
 #
@@ -18,6 +18,7 @@ import json
 
 import threading
 import time
+from datetime import datetime, timedelta
 
 from flask import Flask, render_template
 from flask_socketio import SocketIO
@@ -26,15 +27,16 @@ from flask_socketio import join_room, leave_room
 # Will be taken from SQL DB
 users_list = ["Lisa", "Avi", "Tsahi", "Era", "Bravo"]
 
+# Mapping active users against the last time the 'connection_alive' event was received from each
+keep_alive_tracking = {}
+
 # Will be in service cache AND in DB (Redis DB?)
 users_currently_online = []
-
-# Mapping active users against the last time the 'connection_alive' event was received from each
-connection_keep_alive = {}
 
 
 # Config
 CONNECTIONS_VERIFICATION_INTERVAL = 10
+KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 8
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -75,6 +77,7 @@ def handle_client_message(json_):
 
     socketio.emit('received_message', response, callback=messageReceived, to=response["conversation_room"])
 
+
 @socketio.on('client_disconnection')
 def handle_client_disconnection(json_):
     print(f"Client disconnection: {json_}")
@@ -85,6 +88,18 @@ def handle_client_disconnection(json_):
         socketio.emit('user_has_gone_offline', {"username": client_name})
 
     print(f"Users currently online: {users_currently_online}")
+
+
+@socketio.on('connection_alive')
+def processing_keep_alive_signals(json_):
+    client_name = json_['client']
+    message_time = json_['time']
+
+    print(f"Client {client_name} sent 'keep alive' signal at {message_time}")
+
+    # Updating the time at which the 'keep alive' signal was last time received for given user
+    keep_alive_tracking[client_name] = datetime.strptime(message_time, '%m/%d/%y %H:%M:%S')
+    print(f"Server Side Keep Alive Time Table Updated: {keep_alive_tracking}")
 
 
 def room_names_generator(users_list: list)-> list:
@@ -119,11 +134,32 @@ def prepare_rooms_for(username: str):
 
     return result
 
+
 def connection_checker():
     while True:
         # IN PROGRESS - SEE
         time.sleep(CONNECTIONS_VERIFICATION_INTERVAL)
         print("Verifying active connections..")
+
+        users_to_disconnect = []
+
+        for client_name in keep_alive_tracking:
+            last_time_keep_alive_message_received = keep_alive_tracking[client_name]
+
+            print(f"User: {client_name}, current time: {datetime.now()}, last time keep alive message was received:"
+                  f" {last_time_keep_alive_message_received}, delta: {datetime.now() - last_time_keep_alive_message_received} ")
+
+            # Consider the user as disconnected if no 'keep alive' was received for more than X seconds (configurable)
+            if datetime.now() - last_time_keep_alive_message_received > timedelta(seconds=KEEP_ALIVE_DELAY_BETWEEN_EVENTS):
+                users_to_disconnect.append(client_name)
+
+        print(f"Disconnecting users: {users_to_disconnect}")
+        for user in users_to_disconnect:
+            if user in users_currently_online:
+                users_currently_online.remove(user)
+
+            keep_alive_tracking.pop(user)
+            socketio.emit('user_has_gone_offline', {"username": user})
 
 # API METHOD that will return this in response to GET request with a param (username)
 
