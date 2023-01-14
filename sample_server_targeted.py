@@ -36,7 +36,7 @@ users_currently_online = []
 
 # Config
 CONNECTIONS_VERIFICATION_INTERVAL = 10
-KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 6
+KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 8
 
 app = Flask(__name__)
 socketio = SocketIO(app)

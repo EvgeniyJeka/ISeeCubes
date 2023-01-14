@@ -19,8 +19,6 @@ width = 285
 # if the client is ALREADY CONNECTED the CONNECT button should DO NOTHING, OR BE DISABLED
 # chat box size and design
 # Custom 'keep alive' logic both on server and on client side
-#
-# Client UI, chatroom header - add the current user name
 
 class ChatClient:
 
