@@ -19,6 +19,8 @@ width = 285
 # if the client is ALREADY CONNECTED the CONNECT button should DO NOTHING, OR BE DISABLED
 # chat box size and design
 # Custom 'keep alive' logic both on server and on client side
+#
+# Client UI, chatroom header - add the current user name
 
 class ChatClient:
 
@@ -95,6 +97,7 @@ class ChatClient:
         # so a NEW WINDOW will be opened once a message from that sender is received
         def on_closing():
             print("Window closed!")
+            self.handle_disconnect()
             message_box_window.destroy()
 
         message_box_window.protocol("WM_DELETE_WINDOW", on_closing)

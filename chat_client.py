@@ -97,6 +97,7 @@ class ChatClient:
         # so a NEW WINDOW will be opened once a message from that sender is received
         def on_closing():
             print("Window closed!")
+            self.handle_disconnect()
             message_box_window.destroy()
 
         message_box_window.protocol("WM_DELETE_WINDOW", on_closing)
