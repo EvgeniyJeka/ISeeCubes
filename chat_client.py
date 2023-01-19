@@ -23,6 +23,7 @@ width = 285
 # Custom 'keep alive' logic both on server and on client side D
 #
 # Client UI, chatroom header - add the current user name D
+# Client UI, chat box header - add the current user name
 
 class ChatClient:
 
@@ -36,6 +37,8 @@ class ChatClient:
     connection_indicator_ui_element = None
 
     message_box_window = None
+
+    button_connect = None
 
     def __init__(self):
 
@@ -71,9 +74,9 @@ class ChatClient:
 
         # CONNECT button :#chtr = ChatRoom(), perhaps in a separate thread,
         # so the clicked CONNECT button won't block all the other buttons
-        button_connect = Button(self.message_box_window, text="Connect", bg="RoyalBlue4", fg="cyan", height="1", width="36",
+        self.button_connect = Button(self.message_box_window, text="Connect", bg="RoyalBlue4", fg="cyan", height="1", width="36",
                               command=lambda: self.handle_connect())
-        button_connect.place(x=11, y=183)
+        self.button_connect.place(x=11, y=183)
 
         # Used listbox - for tables presentation and selection : selecting a person to chat with from the Contacts List
         self.contacts_list_ui_element = Listbox(self.message_box_window, selectmode=SINGLE, width=27, height=12, yscrollcommand=True,
@@ -140,6 +143,8 @@ class ChatClient:
         # Color the 'online' contacts in Green (and all others in Red)
         self.chat_room.color_online_offline_contacts(online_contacts)
 
+        self.button_connect["state"] = DISABLED
+
         print("Starting Listening Loop")
         self.listening_loop_thread = threading.Thread(target=self.chat_room.start_listening_loop)
         self.listening_loop_thread.start()
@@ -153,6 +158,8 @@ class ChatClient:
         if self.connection_status is False:
             print("NOT CONNECTED")
             return
+
+        self.button_connect["state"] = NORMAL
 
         self.connection_status = False
         # Modifying UI on disconnection
@@ -170,7 +177,6 @@ class ChatClient:
 
         # Stopping the Sending Keep Alive Loop thread
         self.sending_keep_alive_thread.join(timeout=2)
-
 
 
     def handle_chat_with(self, target_contact):

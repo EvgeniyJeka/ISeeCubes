@@ -17,6 +17,7 @@ import json
 #
 # Document methods & events
 # Make the server run in a Docker container
+# CASE ISSUE - Server and Client side
 
 
 import threading
