@@ -69,7 +69,7 @@ class ChatRoom:
             print(f"Contacts list received from the server: {self.contacts_list}")
             print(f"Online contacts list received: {self.currently_online_contacts}")
 
-            return {"contacts": self.contacts_list, "currently_online": self.currently_online_contacts}
+            return {"contacts": self.contacts_list, "currently_online": self.currently_online_contacts, "my_name": self.my_name}
 
         except Exception:
             return False

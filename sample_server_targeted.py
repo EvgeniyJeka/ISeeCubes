@@ -14,6 +14,9 @@ import json
 # while 'T' is configurable.  If CURRENT_TIME - LAST_TIME_CONNECTION_ALIVE_WAS_RECEVED => T, the connection will be
 # considered as DEAD - the user will be removed from the 'online users' list and an 'user_has_gone_offline' event will D
 # be published for all other users D
+#
+# Document methods & events
+# Make the server run in a Docker container
 
 
 import threading
