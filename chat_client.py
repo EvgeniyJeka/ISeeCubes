@@ -16,11 +16,14 @@ width = 285
 
 # TO DO:
 # Client, UI:
-# if the client is ALREADY CONNECTED the CONNECT button should DO NOTHING, OR BE DISABLED
+# if the client is ALREADY CONNECTED the CONNECT button should DO NOTHING, OR BE DISABLED (
 # chat box size and design
-# Custom 'keep alive' logic both on server and on client side
+# chat box 'clear' button
+# chat box - current user name needs to be colored with green
+# Custom 'keep alive' logic both on server and on client side D
 #
-# Client UI, chatroom header - add the current user name
+# Client UI, chatroom header - add the current user name D
+# Client UI, chat box header - add the current user name
 
 class ChatClient:
 
@@ -33,19 +36,23 @@ class ChatClient:
     connect_button_ui_element = None
     connection_indicator_ui_element = None
 
+    message_box_window = None
+
+    button_connect = None
+
     def __init__(self):
 
         # Window
-        message_box_window = Tk()
-        message_box_window.geometry(f"{width}x{hight}")
-        message_box_window.resizable(0, 0)
+        self.message_box_window = Tk()
+        self.message_box_window.geometry(f"{width}x{hight}")
+        self.message_box_window.resizable(0, 0)
 
         # Header #1 - Label "I See Cubes"
-        head_label = Label(message_box_window, text="I See Cubes", fg="white", bg="PaleGreen1", font=("", 20), width=16)
+        head_label = Label(self.message_box_window, text="I See Cubes", fg="white", bg="PaleGreen1", font=("", 20), width=16)
         head_label.place(x=11, y=3)
 
         # Header #2 - ICQ Image (or Kubernetes Image, or Custom Image)
-        frame = Frame(message_box_window, width=30, height=20)
+        frame = Frame(self.message_box_window, width=30, height=20)
         frame.place(x=93, y=50)
 
         # Create an object of tkinter ImageTk
@@ -56,40 +63,43 @@ class ChatClient:
         picture_label.pack()
 
         # Header #3 - Username: Lisa, Status: Connected
-        connection_status_label = Label(message_box_window, text="Connection status:", fg="blue", font=("", 13), width=15)
+        connection_status_label = Label(self.message_box_window, text="Connection status:", fg="blue", font=("", 13), width=15)
         connection_status_label.place(x=29, y=125)
-        self.connection_indicator_ui_element = Label(message_box_window, text="Offline", fg="red", font=("", 13), width=10)
+        self.connection_indicator_ui_element = Label(self.message_box_window, text="Offline", fg="red", font=("", 13), width=10)
         self.connection_indicator_ui_element.place(x=165, y=125)
 
         # LOG IN button
-        button_login = Button(message_box_window, text="Login", bg="RoyalBlue4", fg="cyan", height="1", width="36")
+        button_login = Button(self.message_box_window, text="Login", bg="RoyalBlue4", fg="cyan", height="1", width="36")
         button_login.place(x=11, y=155)
 
         # CONNECT button :#chtr = ChatRoom(), perhaps in a separate thread,
         # so the clicked CONNECT button won't block all the other buttons
-        button_connect = Button(message_box_window, text="Connect", bg="RoyalBlue4", fg="cyan", height="1", width="36",
+        self.button_connect = Button(self.message_box_window, text="Connect", bg="RoyalBlue4", fg="cyan", height="1", width="36",
                               command=lambda: self.handle_connect())
-        button_connect.place(x=11, y=183)
+        self.button_connect.place(x=11, y=183)
 
         # Used listbox - for tables presentation and selection : selecting a person to chat with from the Contacts List
-        self.contacts_list_ui_element = Listbox(message_box_window, selectmode=SINGLE, width=27, height=12, yscrollcommand=True,
+        self.contacts_list_ui_element = Listbox(self.message_box_window, selectmode=SINGLE, width=27, height=12, yscrollcommand=True,
                                 bd=3, selectbackground="LightSky Blue3", font="Times 13 italic bold")
         self.contacts_list_ui_element.place(x=17, y=220)
 
         # Window size
         self.chat_room = ChatRoom(self.contacts_list_ui_element)
 
+        # Default windows header
+        self.message_box_window.title(f"Disconnected")
+
         # CHAT WITH button
-        button_chat_with = Button(message_box_window, text="Chat With", bg="SteelBlue4", fg="cyan", height="1", width="36",
+        button_chat_with = Button(self.message_box_window, text="Chat With", bg="SteelBlue4", fg="cyan", height="1", width="36",
                                   command=lambda: self.take_selected_chat_partner_from_ui())
         button_chat_with.place(x=11, y=490)
 
         # OPTIONS button
-        button_options = Button(message_box_window, text="Options", bg="SteelBlue4", fg="cyan", height="1", width="36")
+        button_options = Button(self.message_box_window, text="Options", bg="SteelBlue4", fg="cyan", height="1", width="36")
         button_options.place(x=11, y=520)
 
         # DISCONNECT button
-        button_disconnect = Button(message_box_window, text="Disconnect", bg="SteelBlue4", fg="cyan", height="1", width="36",
+        button_disconnect = Button(self.message_box_window, text="Disconnect", bg="SteelBlue4", fg="cyan", height="1", width="36",
                                    command=lambda: self.handle_disconnect())
         button_disconnect.place(x=11, y=550)
 
@@ -97,10 +107,11 @@ class ChatClient:
         # so a NEW WINDOW will be opened once a message from that sender is received
         def on_closing():
             print("Window closed!")
-            message_box_window.destroy()
+            self.handle_disconnect()
+            self.message_box_window.destroy()
 
-        message_box_window.protocol("WM_DELETE_WINDOW", on_closing)
-        message_box_window.mainloop()
+        self.message_box_window.protocol("WM_DELETE_WINDOW", on_closing)
+        self.message_box_window.mainloop()
 
     # CHAT WITH button - MAKE ENABLED ONLY AFTER CONNECTION IS ESTABLISHED !!
     def take_selected_chat_partner_from_ui(self):
@@ -114,6 +125,10 @@ class ChatClient:
 
         contacts_list = server_initiate_feed['contacts']
         online_contacts = server_initiate_feed["currently_online"]
+        my_name = server_initiate_feed['my_name']
+
+        # Putting the user name in window header
+        self.message_box_window.title(f"Hello, {my_name}")
 
         if contacts_list:
             self.connection_status = True
@@ -127,6 +142,8 @@ class ChatClient:
 
         # Color the 'online' contacts in Green (and all others in Red)
         self.chat_room.color_online_offline_contacts(online_contacts)
+
+        self.button_connect["state"] = DISABLED
 
         print("Starting Listening Loop")
         self.listening_loop_thread = threading.Thread(target=self.chat_room.start_listening_loop)
@@ -142,10 +159,15 @@ class ChatClient:
             print("NOT CONNECTED")
             return
 
+        self.button_connect["state"] = NORMAL
+
         self.connection_status = False
         # Modifying UI on disconnection
         self.connection_indicator_ui_element.config(text="Offline", fg="red")
         self.contacts_list_ui_element.delete(0, END)
+
+        # Removing the user name in window header
+        self.message_box_window.title(f"Disconnected")
 
         # Emitting 'client_disconnection' event to the server
         self.chat_room.sio.emit('client_disconnection', {"client": self.chat_room.my_name})
@@ -155,7 +177,6 @@ class ChatClient:
 
         # Stopping the Sending Keep Alive Loop thread
         self.sending_keep_alive_thread.join(timeout=2)
-
 
 
     def handle_chat_with(self, target_contact):

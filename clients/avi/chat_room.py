@@ -12,7 +12,7 @@ import threading
 
 
 # TO DO:
-# Address Book - create an empty dict, fill it with DATA RECEIVED FROM THE SERVER ON CONNECTION
+# Address Book - create an empty dict, fill it with DATA RECEIVED FROM THE SERVER ON CONNECTION D
 
 # Default window size when there are no bookmarks
 height = 475
@@ -32,12 +32,7 @@ class ChatRoom:
 
     contacts_list_ui_element = None
 
-    address_book = {
-        "lisa": None,
-        "tsahi": None,
-        "era": None,
-        "bravo": None
-    }
+    address_book = {}
 
     def __init__(self, contacts_list_ui_element):
         self.contacts_list_ui_element = contacts_list_ui_element
@@ -57,6 +52,11 @@ class ChatRoom:
 
             # All existing contacts
             self.contacts_list = server_contacts_data["contacts"]
+            contacts_names = server_contacts_data["all_existing_contacts"]
+
+            for contact in contacts_names:
+                self.address_book[contact.lower()] = None
+
             # Contacts that are currently online
             self.currently_online_contacts = server_contacts_data["currently_online"]
 
@@ -69,7 +69,7 @@ class ChatRoom:
             print(f"Contacts list received from the server: {self.contacts_list}")
             print(f"Online contacts list received: {self.currently_online_contacts}")
 
-            return {"contacts": self.contacts_list, "currently_online": self.currently_online_contacts}
+            return {"contacts": self.contacts_list, "currently_online": self.currently_online_contacts, "my_name": self.my_name}
 
         except Exception:
             return False
@@ -139,6 +139,7 @@ class ChatRoom:
         message_box_window = Tk()
         message_box_window.geometry(size)
         message_box_window.resizable(0, 0)
+        message_box_window.title(f"Messages for {self.my_name}")
 
         # Messages Box - TK 'Text' object
         messages_box = Text(message_box_window, height=20, width=105)

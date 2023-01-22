@@ -1,19 +1,23 @@
 import json
 
 # TO DO:
-# 1.  Custom 'keep alive' logic both on server and on client side // TEST AGAINST 2-3 CLIENTS, NOT EMULATIONS
+# 1.  Custom 'keep alive' logic both on server and on client side // TEST AGAINST 2-3 CLIENTS, NOT EMULATIONS D
 #
-# 1.1 Client - while connected, will emit 'connection_alive' event every X seconds (will contain the username)
+# 1.1 Client - while connected, will emit 'connection_alive' event every X seconds (will contain the username) D
 #
-# 1.2 Server - will keep a dict of all online users and the time when the last 'connection_alive' event was received
+# 1.2 Server - will keep a dict of all online users and the time when the last 'connection_alive' event was received D
 #
-# 1.3 Sever - on 'connection_alive' event the dict will be updated (the time)
+# 1.3 Sever - on 'connection_alive' event the dict will be updated (the time) D
 #
 # 1.4 Server - while the app is running each X seconds the method 'connection_checker' that is running in a separate
 # thread will check for each user in the 'online users' dict (see 1.2) if CURRENT_TIME - LAST_TIME_CONNECTION_ALIVE_WAS_RECEVED < T,
 # while 'T' is configurable.  If CURRENT_TIME - LAST_TIME_CONNECTION_ALIVE_WAS_RECEVED => T, the connection will be
-# considered as DEAD - the user will be removed from the 'online users' list and an 'user_has_gone_offline' event will
-# be published for all other users.
+# considered as DEAD - the user will be removed from the 'online users' list and an 'user_has_gone_offline' event will D
+# be published for all other users D
+#
+# Document methods & events
+# Make the server run in a Docker container
+# CASE ISSUE - Server and Client side
 
 
 import threading
@@ -25,7 +29,7 @@ from flask_socketio import SocketIO
 from flask_socketio import join_room, leave_room
 
 # Will be taken from SQL DB
-users_list = ["Lisa", "Avi", "Tsahi", "Era", "Bravo"]
+users_list = ["Lisa", "Avi", "Tsahi", "Era", "Bravo", "Dariya"]
 
 # Mapping active users against the last time the 'connection_alive' event was received from each
 keep_alive_tracking = {}
@@ -44,7 +48,9 @@ socketio = SocketIO(app)
 
 @app.route("/get_contacts_list/<username>", methods=['GET'])
 def get_rooms_list(username):
-    contacts_data = {"contacts": prepare_rooms_for(username), "currently_online": users_currently_online}
+    contacts_data = {"contacts": prepare_rooms_for(username), "currently_online": users_currently_online,
+                     "all_existing_contacts": users_list}
+
     return contacts_data
 
 def messageReceived(methods=['GET', 'POST']):
