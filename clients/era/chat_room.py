@@ -139,7 +139,7 @@ class ChatRoom:
         message_box_window = Tk()
         message_box_window.geometry(size)
         message_box_window.resizable(0, 0)
-        message_box_window.title(f"Messages for {self.my_name}")
+        message_box_window.title(f"Coversation between {self.my_name} and {message_sender}")
 
         # Messages Box - TK 'Text' object
         messages_box = Text(message_box_window, height=20, width=105)
