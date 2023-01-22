@@ -43,7 +43,7 @@ class ChatRoom:
             self.sio = socketio.Client()
 
             # Will be replace with the username from the 'Log In' form
-            self.my_name = "era"
+            self.my_name = "Era"
 
             # GET CONTACTS request
             self.sio.connect('http://localhost:5000')
@@ -55,7 +55,7 @@ class ChatRoom:
             contacts_names = server_contacts_data["all_existing_contacts"]
 
             for contact in contacts_names:
-                self.address_book[contact.lower()] = None
+                self.address_book[contact] = None
 
             # Contacts that are currently online
             self.currently_online_contacts = server_contacts_data["currently_online"]
@@ -158,7 +158,7 @@ class ChatRoom:
         # SEND button - the text from the entry box will be packed to a WS message and the former will be
         # emitted to the conversation room. (Remove 'not my message' validation?)
         button_send = Button(message_box_window, text="Send", bg="purple", fg="white", height="2", width="30",
-                             command=lambda: self.handle_send(created_entry, messages_box, message_sender.lower()))
+                             command=lambda: self.handle_send(created_entry, messages_box, message_sender))
         button_send.place(x=240, y=380)
 
         # CLEAR button - clears the entry box
