@@ -108,8 +108,8 @@ def processing_keep_alive_signals(json_):
     print(f"Server Side Keep Alive Time Table Updated: {keep_alive_tracking}")
 
 
-def room_names_generator(users_list: list)-> list:
-    listed_users = [user.lower() for user in users_list]
+def room_names_generator(listed_users: list)-> list:
+    # listed_users = [user for user in users_list]
     listed_users.sort()
 
     res = []
@@ -123,11 +123,10 @@ def room_names_generator(users_list: list)-> list:
     return res
 
 
-def prepare_rooms_for(username: str):
+def prepare_rooms_for(current_username: str):
     result = {}
 
     all_available_rooms = room_names_generator(users_list)
-    current_username = username.lower()
 
     for room_name in all_available_rooms:
         if current_username in room_name:
@@ -152,8 +151,8 @@ def connection_checker():
         for client_name in keep_alive_tracking:
             last_time_keep_alive_message_received = keep_alive_tracking[client_name]
 
-            print(f"User: {client_name}, current time: {datetime.now()}, last time keep alive message was received:"
-                  f" {last_time_keep_alive_message_received}, delta: {datetime.now() - last_time_keep_alive_message_received} ")
+            # print(f"User: {client_name}, current time: {datetime.now()}, last time keep alive message was received:"
+            #       f" {last_time_keep_alive_message_received}, delta: {datetime.now() - last_time_keep_alive_message_received} ")
 
             # Consider the user as disconnected if no 'keep alive' was received for more than X seconds (configurable)
             if datetime.now() - last_time_keep_alive_message_received > timedelta(seconds=KEEP_ALIVE_DELAY_BETWEEN_EVENTS):
