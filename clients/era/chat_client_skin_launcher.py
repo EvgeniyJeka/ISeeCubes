@@ -1,15 +1,9 @@
 import time
 from tkinter import *
-from tkinter import ttk
-from tkinter import font
 from PIL import ImageTk, Image
-
-from chat_room import ChatRoom
-
-import socketio
-import requests
-import json
 import threading
+
+from clients.era.chat_client_app_core import ChatRoom
 
 hight = 600
 width = 285
@@ -23,6 +17,11 @@ width = 285
 # Custom 'keep alive' logic both on server and on client side D
 #
 # Client UI, chatroom header - add the current user name D
+# Client UI, chat box header - add the current user name D
+#
+# Log In window (can take from Bookmarker) with CANCEL and CONFIRMATION
+# Log In request (client side), response parsed. 
+# Connect button is enabled only after successful Log In
 
 class ChatClient:
 
@@ -178,14 +177,13 @@ class ChatClient:
         self.sending_keep_alive_thread.join(timeout=2)
 
 
-
     def handle_chat_with(self, target_contact):
         print("Button clicked: CHAT WITH")
         t2 = threading.Thread(target=self.start_chat_thread, args=(target_contact,))
         t2.start()
 
     def start_chat_thread(self, target_contact=None):
-        self.chat_room.show_message_box(" ", target_contact)
+        self.chat_room.message_box.show_message_box(" ", target_contact)
 
 
 

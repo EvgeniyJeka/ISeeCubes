@@ -4,12 +4,13 @@ from tkinter import ttk
 from tkinter import font
 from PIL import ImageTk, Image
 
-from chat_room import ChatRoom
 
 import socketio
 import requests
 import json
 import threading
+
+from clients.tsahi.chat_client_app_core import ChatRoom
 
 hight = 600
 width = 285
@@ -189,7 +190,7 @@ class ChatClient:
         t2.start()
 
     def start_chat_thread(self, target_contact=None):
-        self.chat_room.show_message_box(" ", target_contact)
+        self.chat_room.message_box.show_message_box(" ", target_contact)
 
 
 
