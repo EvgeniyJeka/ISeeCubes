@@ -23,7 +23,11 @@ width = 285
 # Custom 'keep alive' logic both on server and on client side D
 #
 # Client UI, chatroom header - add the current user name D
-# Client UI, chat box header - add the current user name
+# Client UI, chat box header - add the current user name D
+#
+# Log In window (can take from Bookmarker) with CANCEL and CONFIRMATION
+# Log In request (client side), response parsed. 
+# Connect button is enabled only after successful Log In
 
 class ChatClient:
 
