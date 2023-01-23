@@ -2,23 +2,18 @@ from tkinter import *
 
 
 class MessageBox:
-    """
-    This class is responsible for the Message Box window - the window that opens when
-    the conversation starts or resumes.
-    The conversation starts when the user addresses someone from his contact list or being addressed.
-    Message Box window contains the dialog window and the 'Send' button.
-    """
 
     my_name = None
     address_book = None
     contacts_list = None
     sio = None
 
-    def __init__(self, my_name, address_book, contacts_list, sio):
-        self.my_name = my_name
-        self.address_book = address_book
-        self.contacts_list = contacts_list
-        self.sio = sio
+    def __init__(self, client_app_core):
+
+        self.my_name = client_app_core.my_name
+        self.address_book = client_app_core.address_book
+        self.contacts_list = client_app_core.contacts_list
+        self.sio = client_app_core.sio
 
 
     # OPEN MESSAGE BOX (method in use)

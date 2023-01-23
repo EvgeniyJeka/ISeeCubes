@@ -29,19 +29,40 @@ class ClientAppCore:
 
     sio = None
     connected = False
+    my_name = None
 
     contacts_list_ui_element = None
+    current_auth_token = None
 
     address_book = {}
 
     def __init__(self, contacts_list_ui_element):
         self.contacts_list_ui_element = contacts_list_ui_element
 
+    def send_log_in_request(self, username, password):
+        # IN PROGRESS! #
+
+        print(f"App Core: sending a sign in request to the server, username: {username}, password: {password}")
+        response = json.dumps({'result': 'success', 'key': '1245Test'}) # Temporary stub for client side
+        sign_in_data = json.loads(response)
+
+        if 'result' in sign_in_data.keys():
+            if sign_in_data['result'] == 'success':
+                self.my_name = username
+                self.current_auth_token = sign_in_data['key']
+                return {"result": "success"}
+
+            elif sign_in_data['result'] == 'wrong credentials':
+                return {"result": "wrong credentials"}
+        else:
+            return {"result": "server error"}
+
+
     def initiate_connection(self):
         # CONNECT method
         try:
             # Will be replace with the username from the 'Log In' form
-            self.my_name = "Lisa"
+            #self.my_name = "000"
 
             self.sio = socketio.Client()
 

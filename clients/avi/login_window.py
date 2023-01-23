@@ -22,7 +22,7 @@ class LoginWindow:
         username_entry = Entry(login_window, width="70")
 
         # TEMPORARY STUB !! Remove on Prod
-        username_entry.insert(0, "Lisa")
+        username_entry.insert(0, "Avi")
 
         label_2 = Label(login_window, text="Password: ", fg="blue", font=("", 11))
         password_entry = Entry(login_window, width="70")
