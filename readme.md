@@ -67,6 +67,43 @@ will reach its destination.
 
 
 
+### Client Side Structure
+
+The client consists of:
+
+1. ChatClient - application main GUI. Contains the app skin - the contacts list, the buttons and all the methods
+that are used to handle button clicks. Opens secondary windows on request - 
+MessageBox (when user initiates a conversation with another user) and LoginWindow (when user wishes to log in).
+
+Note - each conversation is handled in a separate thread, so the user will be able to have several conversations
+simultaneously, to each time the 'Chat With' button is clicked a new thread starts and a new MessageBox window opens. 
+
+One of the properties of the ChatClient is an instance of ClientAppCore, so the ChatClient will be able to use
+all the App Core methods and pass the instance to other components, if required. 
+
+
+2. ClientAppCore - application core methods. This class contains the methods required to communicate with the 
+server side - send a log in request, send a connection request and receive feeds from the server in the response.
+When the 'start_listening_loop' method is called the ClientAppCore starts to listen to all the incoming events (websocket messages)
+in a separate thread and handle each event accordingly. The ChatClient calls 'start_listening_loop' method
+when the 'connect' button is clicked. 
+
+Note - one of the events that can be handled in ClientAppCore is 'received_message' - in that case 
+ClientAppCore opens an instance of MessageBox in a separate thread (it happens when another user sends a message
+to the current user).
+
+While handling the events ClientAppCore is responsible to make the required adjustments in ChatClient UI elements - 
+to color usernames of  users that are currently online in green, to enable/disable buttons e.t.c. 
+
+3. MessageBox...
+
+4. LoginWindow...
+ 
+
+
+
+
+
 
 
 

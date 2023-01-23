@@ -11,6 +11,7 @@ import json
 import threading
 
 from clients.lisa.chat_client_app_core import ClientAppCore
+from clients.lisa.login_window import LoginWindow
 
 hight = 600
 width = 285
@@ -42,12 +43,11 @@ class ChatClient:
     connection_indicator_ui_element = None
 
     message_box_window = None
+    log_in_window = None
 
     button_connect = None
 
     def __init__(self):
-
-
 
         # Chat Client Main UI Window
         self.message_box_window = Tk()
@@ -72,11 +72,13 @@ class ChatClient:
         # Header #3 - Username: Lisa, Status: Connected
         connection_status_label = Label(self.message_box_window, text="Connection status:", fg="blue", font=("", 13), width=15)
         connection_status_label.place(x=29, y=125)
+
         self.connection_indicator_ui_element = Label(self.message_box_window, text="Offline", fg="red", font=("", 13), width=10)
         self.connection_indicator_ui_element.place(x=165, y=125)
 
         # LOG IN button
-        button_login = Button(self.message_box_window, text="Login", bg="RoyalBlue4", fg="cyan", height="1", width="36")
+        button_login = Button(self.message_box_window, text="Login", bg="RoyalBlue4", fg="cyan", height="1", width="36",
+                              command=lambda: self.open_login_window())
         button_login.place(x=11, y=155)
 
         # CONNECT button, the operation is handled in a separate thread,
@@ -93,7 +95,10 @@ class ChatClient:
         # This instance of ClientAppCore will be used to handle connections, disconnections and conversations
         self.client_app_core = ClientAppCore(self.contacts_list_ui_element)
 
-        # Default windows header
+        # Log In window
+        self.log_in_window = LoginWindow(self.client_app_core)
+
+        # Default message box windows header
         self.message_box_window.title(f"Disconnected")
 
         # CHAT WITH button
@@ -185,6 +190,8 @@ class ChatClient:
         # Stopping the Sending Keep Alive Loop thread
         self.sending_keep_alive_thread.join(timeout=2)
 
+    def open_login_window(self):
+        self.log_in_window.show_login_window()
 
     def handle_chat_with(self, target_contact):
         print("Button clicked: CHAT WITH")
