@@ -20,7 +20,7 @@ from clients.lisa.message_box import MessageBox
 # Move to config
 keep_alive_delay_between_events = 6
 
-class ChatRoom:
+class ClientAppCore:
 
     entry = None
     contacts_list = None
@@ -65,7 +65,7 @@ class ChatRoom:
                 conversation_room = self.contacts_list[contact]
                 self.sio.emit('join', {"room": conversation_room, "client": self.my_name})
 
-            self.message_box = MessageBox(self.my_name, self.address_book, self.contacts_list, self.sio)
+            self.message_box = MessageBox(self)
 
             # Returning the list of all available contacts received from the server
             print(f"Contacts list received from the server: {self.contacts_list}")
@@ -73,7 +73,8 @@ class ChatRoom:
 
             return {"contacts": self.contacts_list, "currently_online": self.currently_online_contacts, "my_name": self.my_name}
 
-        except Exception:
+        except Exception as e:
+            print(f"Failed to connect: {e}")
             return False
 
     def start_listening_loop(self):

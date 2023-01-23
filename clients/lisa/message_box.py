@@ -1,5 +1,7 @@
 from tkinter import *
 
+#from clients.lisa.chat_client_app_core import ClientAppCore
+
 
 class MessageBox:
 
@@ -8,11 +10,12 @@ class MessageBox:
     contacts_list = None
     sio = None
 
-    def __init__(self, my_name, address_book, contacts_list, sio):
-        self.my_name = my_name
-        self.address_book = address_book
-        self.contacts_list = contacts_list
-        self.sio = sio
+    def __init__(self, client_app_core):
+
+        self.my_name = client_app_core.my_name
+        self.address_book = client_app_core.address_book
+        self.contacts_list = client_app_core.contacts_list
+        self.sio = client_app_core.sio
 
 
     # OPEN MESSAGE BOX (method in use)

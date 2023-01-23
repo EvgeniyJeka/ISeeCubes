@@ -10,7 +10,7 @@ import requests
 import json
 import threading
 
-from clients.lisa.chat_client_app_core import ChatRoom
+from clients.lisa.chat_client_app_core import ClientAppCore
 
 hight = 600
 width = 285
@@ -32,7 +32,7 @@ width = 285
 
 class ChatClient:
 
-    chat_room = None
+    client_app_core = None
     connection_status = False
     listening_loop_thread = None
     sending_keep_alive_thread = None
@@ -47,7 +47,9 @@ class ChatClient:
 
     def __init__(self):
 
-        # Window
+
+
+        # Chat Client Main UI Window
         self.message_box_window = Tk()
         self.message_box_window.geometry(f"{width}x{hight}")
         self.message_box_window.resizable(0, 0)
@@ -77,7 +79,7 @@ class ChatClient:
         button_login = Button(self.message_box_window, text="Login", bg="RoyalBlue4", fg="cyan", height="1", width="36")
         button_login.place(x=11, y=155)
 
-        # CONNECT button :#chtr = ChatRoom(), perhaps in a separate thread,
+        # CONNECT button, the operation is handled in a separate thread,
         # so the clicked CONNECT button won't block all the other buttons
         self.button_connect = Button(self.message_box_window, text="Connect", bg="RoyalBlue4", fg="cyan", height="1", width="36",
                               command=lambda: self.handle_connect())
@@ -88,8 +90,8 @@ class ChatClient:
                                 bd=3, selectbackground="LightSky Blue3", font="Times 13 italic bold")
         self.contacts_list_ui_element.place(x=17, y=220)
 
-        # Window size
-        self.chat_room = ChatRoom(self.contacts_list_ui_element)
+        # This instance of ClientAppCore will be used to handle connections, disconnections and conversations
+        self.client_app_core = ClientAppCore(self.contacts_list_ui_element)
 
         # Default windows header
         self.message_box_window.title(f"Disconnected")
@@ -126,7 +128,7 @@ class ChatClient:
     def handle_connect(self):
         print("Button clicked: CONNECT")
         # When connection is initiated the list of the available contacts is fetched from the server
-        server_initiate_feed = self.chat_room.initiate_connection()
+        server_initiate_feed = self.client_app_core.initiate_connection()
 
         contacts_list = server_initiate_feed['contacts']
         online_contacts = server_initiate_feed["currently_online"]
@@ -146,16 +148,16 @@ class ChatClient:
         self.contacts_list_ui_element.insert(END, *contacts_list)
 
         # Color the 'online' contacts in Green (and all others in Red)
-        self.chat_room.color_online_offline_contacts(online_contacts)
+        self.client_app_core.color_online_offline_contacts(online_contacts)
 
         self.button_connect["state"] = DISABLED
 
         print("Starting Listening Loop")
-        self.listening_loop_thread = threading.Thread(target=self.chat_room.start_listening_loop)
+        self.listening_loop_thread = threading.Thread(target=self.client_app_core.start_listening_loop)
         self.listening_loop_thread.start()
 
         print("Starting Sending Keep Alive Loop")
-        self.sending_keep_alive_thread = threading.Thread(target=self.chat_room.sending_keep_alive_loop)
+        self.sending_keep_alive_thread = threading.Thread(target=self.client_app_core.sending_keep_alive_loop)
         self.sending_keep_alive_thread.start()
 
     def handle_disconnect(self):
@@ -175,7 +177,7 @@ class ChatClient:
         self.message_box_window.title(f"Disconnected")
 
         # Emitting 'client_disconnection' event to the server
-        self.chat_room.sio.emit('client_disconnection', {"client": self.chat_room.my_name})
+        self.client_app_core.sio.emit('client_disconnection', {"client": self.client_app_core.my_name})
 
         # Stopping the Listening Loop thread
         self.listening_loop_thread.join(timeout=2)
@@ -190,7 +192,7 @@ class ChatClient:
         t2.start()
 
     def start_chat_thread(self, target_contact=None):
-        self.chat_room.message_box.show_message_box(" ", target_contact)
+        self.client_app_core.message_box.show_message_box(" ", target_contact)
 
 
 
