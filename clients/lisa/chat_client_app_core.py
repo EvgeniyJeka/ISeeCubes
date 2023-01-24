@@ -14,9 +14,6 @@ import threading
 # Default window size when there are no bookmarks
 from clients.lisa.message_box import MessageBox
 
-# height = 475
-# width = 220
-
 # Move to config
 keep_alive_delay_between_events = 6
 
