@@ -27,9 +27,10 @@ width = 285
 # Client UI, chatroom header - add the current user name D
 # Client UI, chat box header - add the current user name D
 #
-# Log In window (can take from Bookmarker) with CANCEL and CONFIRMATION
-# Log In request (client side), response parsed. 
-# Connect button is enabled only after successful Log In
+# Log In window (can take from Bookmarker) with CANCEL and CONFIRMATION D
+# Log In request (client side), response parsed. D
+# Connect button is enabled only after successful Log In D
+# Log in button is disabled after successful login and re-enabled after disconnect
 
 class ChatClient:
 
@@ -46,6 +47,7 @@ class ChatClient:
     log_in_window = None
 
     button_connect = None
+    button_chat_with = None
 
     def __init__(self):
 
@@ -102,9 +104,9 @@ class ChatClient:
         self.main_ui_window.title(f"Disconnected")
 
         # CHAT WITH button
-        button_chat_with = Button(self.main_ui_window, text="Chat With", bg="SteelBlue4", fg="cyan", height="1", width="36",
+        self.button_chat_with = Button(self.main_ui_window, text="Chat With", bg="SteelBlue4", fg="cyan", height="1", width="36",
                                   command=lambda: self.take_selected_chat_partner_from_ui())
-        button_chat_with.place(x=11, y=490)
+        self.button_chat_with.place(x=11, y=490)
 
         # OPTIONS button
         button_options = Button(self.main_ui_window, text="Options", bg="SteelBlue4", fg="cyan", height="1", width="36")
@@ -116,6 +118,7 @@ class ChatClient:
         button_disconnect.place(x=11, y=550)
 
         self.button_connect["state"] = DISABLED
+        self.button_chat_with["state"] = DISABLED
 
         # Handling WINDOW CLOSED - the value related to current message sender in the ADDRESS BOOK is NONE again,
         # so a NEW WINDOW will be opened once a message from that sender is received
@@ -130,12 +133,19 @@ class ChatClient:
     # CHAT WITH button - MAKE ENABLED ONLY AFTER CONNECTION IS ESTABLISHED !!
     def take_selected_chat_partner_from_ui(self):
         selected_contact = self.contacts_list_ui_element.curselection()
-        self.handle_chat_with(self.contacts_list_ui_element.get(selected_contact[0]))
+        try:
+            self.handle_chat_with(self.contacts_list_ui_element.get(selected_contact[0]))
+        except IndexError as e:
+            print(f"No contact was selected: {e}")
 
     def handle_connect(self):
         print("Button clicked: CONNECT")
         # When connection is initiated the list of the available contacts is fetched from the server
         server_initiate_feed = self.client_app_core.initiate_connection()
+
+        if server_initiate_feed is False:
+            print("Client App Core: Error, failed to connect")
+            return
 
         contacts_list = server_initiate_feed['contacts']
         online_contacts = server_initiate_feed["currently_online"]
@@ -154,6 +164,7 @@ class ChatClient:
         self.client_app_core.color_online_offline_contacts(online_contacts)
 
         self.button_connect["state"] = DISABLED
+        self.button_chat_with["state"] = ACTIVE
 
         print("Starting Listening Loop")
         self.listening_loop_thread = threading.Thread(target=self.client_app_core.start_listening_loop)
@@ -171,7 +182,13 @@ class ChatClient:
 
         self.button_connect["state"] = NORMAL
 
+        # Connection is terminated, user is logged out
         self.connection_status = False
+        self.client_app_core.user_logged_in = False
+
+        self.button_connect["state"] = DISABLED
+        self.button_chat_with["state"] = DISABLED
+
         # Modifying UI on disconnection
         self.connection_indicator_ui_element.config(text="Offline", fg="red")
         self.contacts_list_ui_element.delete(0, END)
@@ -189,7 +206,8 @@ class ChatClient:
         self.sending_keep_alive_thread.join(timeout=2)
 
     def open_login_window(self):
-        self.log_in_window.show_login_window(self.main_ui_window, self.button_connect)
+        if self.client_app_core.user_logged_in is False:
+            self.log_in_window.show_login_window(self.main_ui_window, self.button_connect)
 
     def handle_chat_with(self, target_contact):
         print("Button clicked: CHAT WITH")

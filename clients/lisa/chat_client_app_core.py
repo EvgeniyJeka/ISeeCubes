@@ -34,6 +34,8 @@ class ClientAppCore:
     contacts_list_ui_element = None
     current_auth_token = None
 
+    user_logged_in = False
+
     address_book = {}
 
     def __init__(self, contacts_list_ui_element):
@@ -50,6 +52,7 @@ class ClientAppCore:
             if sign_in_data['result'] == 'success':
                 self.my_name = username
                 self.current_auth_token = sign_in_data['key']
+                self.user_logged_in = True
                 return {"result": "success"}
 
             elif sign_in_data['result'] == 'wrong credentials':
@@ -61,10 +64,11 @@ class ClientAppCore:
     def initiate_connection(self):
         # CONNECT method
         try:
-            # Will be replace with the username from the 'Log In' form
-            #self.my_name = "000"
-
             self.sio = socketio.Client()
+
+            if self.user_logged_in is False:
+                print("Core App: user isn't logged in, can't connect!")
+                return False
 
             # GET CONTACTS request
             self.sio.connect('http://localhost:5000')
@@ -84,7 +88,7 @@ class ClientAppCore:
             # Establishing contacts with all persons from the Contacts List
             for contact in self.contacts_list:
                 conversation_room = self.contacts_list[contact]
-                self.sio.emit('join', {"room": conversation_room, "client": self.my_name})
+                self.sio.emit('join', {"room": conversation_room, "client": self.my_name, "jwt": self.current_auth_token})
 
             self.message_box = MessageBox(self)
 

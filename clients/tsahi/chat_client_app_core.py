@@ -20,7 +20,7 @@ from clients.tsahi.message_box import MessageBox
 # Move to config
 keep_alive_delay_between_events = 6
 
-class ChatRoom:
+class ClientAppCore:
 
     entry = None
     contacts_list = None
@@ -29,21 +29,46 @@ class ChatRoom:
 
     sio = None
     connected = False
+    my_name = None
 
     contacts_list_ui_element = None
+    current_auth_token = None
+
+    user_logged_in = False
 
     address_book = {}
 
     def __init__(self, contacts_list_ui_element):
         self.contacts_list_ui_element = contacts_list_ui_element
 
+    def send_log_in_request(self, username, password):
+        # IN PROGRESS! #
+
+        print(f"App Core: sending a sign in request to the server, username: {username}, password: {password}")
+        response = json.dumps({'result': 'success', 'key': '1245Test'}) # Temporary stub for client side
+        sign_in_data = json.loads(response)
+
+        if 'result' in sign_in_data.keys():
+            if sign_in_data['result'] == 'success':
+                self.my_name = username
+                self.current_auth_token = sign_in_data['key']
+                self.user_logged_in = True
+                return {"result": "success"}
+
+            elif sign_in_data['result'] == 'wrong credentials':
+                return {"result": "wrong credentials"}
+        else:
+            return {"result": "server error"}
+
+
     def initiate_connection(self):
         # CONNECT method
         try:
-            # Will be replace with the username from the 'Log In' form
-            self.my_name = "Tsahi"
-
             self.sio = socketio.Client()
+
+            if self.user_logged_in is False:
+                print("Core App: user isn't logged in, can't connect!")
+                return False
 
             # GET CONTACTS request
             self.sio.connect('http://localhost:5000')
@@ -63,9 +88,9 @@ class ChatRoom:
             # Establishing contacts with all persons from the Contacts List
             for contact in self.contacts_list:
                 conversation_room = self.contacts_list[contact]
-                self.sio.emit('join', {"room": conversation_room, "client": self.my_name})
+                self.sio.emit('join', {"room": conversation_room, "client": self.my_name, "jwt": self.current_auth_token})
 
-            self.message_box = MessageBox(self.my_name, self.address_book, self.contacts_list, self.sio)
+            self.message_box = MessageBox(self)
 
             # Returning the list of all available contacts received from the server
             print(f"Contacts list received from the server: {self.contacts_list}")
@@ -73,7 +98,8 @@ class ChatRoom:
 
             return {"contacts": self.contacts_list, "currently_online": self.currently_online_contacts, "my_name": self.my_name}
 
-        except Exception:
+        except Exception as e:
+            print(f"Failed to connect: {e}")
             return False
 
     def start_listening_loop(self):

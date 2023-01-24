@@ -1,5 +1,7 @@
 from tkinter import *
 
+#from clients.lisa.chat_client_app_core import ClientAppCore
+
 
 class MessageBox:
 
@@ -7,6 +9,7 @@ class MessageBox:
     address_book = None
     contacts_list = None
     sio = None
+    auth_token = None
 
     def __init__(self, client_app_core):
 
@@ -14,6 +17,7 @@ class MessageBox:
         self.address_book = client_app_core.address_book
         self.contacts_list = client_app_core.contacts_list
         self.sio = client_app_core.sio
+        self.auth_token = client_app_core.current_auth_token
 
 
     # OPEN MESSAGE BOX (method in use)
@@ -82,13 +86,14 @@ class MessageBox:
 
         # ADD the message to the TEXT BOX (MESSAGE BOX)
         target_messages_box.insert(INSERT, "\n")
-        target_messages_box.insert(INSERT, f"{self.my_name}: {message_content}")
+        target_messages_box.insert(INSERT, f"Me: {message_content}")
         target_messages_box.insert(INSERT, "\n")
 
         # SEND the message to the server
         self.sio.emit('client_sends_message', {'sender': self.my_name,
                                                "content": message_content,
-                                               "conversation_room": conversation_room_})
+                                               "conversation_room": conversation_room_,
+                                               "jwt": self.auth_token})
 
     def handle_clear(self):
         print("Handling CLEAR")
