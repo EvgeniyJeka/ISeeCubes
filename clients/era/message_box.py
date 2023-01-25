@@ -41,11 +41,13 @@ class MessageBox:
         created_entry = Entry(message_box_window, width=93)
         created_entry.place(x=17, y=308)
 
+        messages_box.configure(state="normal")
         messages_box.insert(INSERT, first_mesage)
         messages_box.insert(INSERT, "\n")
-        #
+        messages_box.configure(state="disabled")
+
         self.address_book[message_sender] = messages_box
-        #
+
         # SEND button - the text from the entry box will be packed to a WS message and the former will be
         # emitted to the conversation room. (Remove 'not my message' validation?)
         button_send = Button(message_box_window, text="Send", bg='#567', fg='White', height="1", width="15",
@@ -61,7 +63,7 @@ class MessageBox:
         # Handling WINDOW CLOSED - the value related to current message sender in the ADDRESS BOOK is NONE again,
         # so a NEW WINDOW will be opened once a message from that sender is received
         def on_closing():
-            #self.address_book[message_sender] = None
+            self.address_book[message_sender] = None
             message_box_window.destroy()
 
         message_box_window.protocol("WM_DELETE_WINDOW", on_closing)
@@ -85,9 +87,11 @@ class MessageBox:
         target_entry.delete(0, 'end')
 
         # ADD the message to the TEXT BOX (MESSAGE BOX)
+        target_messages_box.configure(state="normal")
         target_messages_box.insert(INSERT, "\n")
         target_messages_box.insert(INSERT, f"Me: {message_content}")
         target_messages_box.insert(INSERT, "\n")
+        target_messages_box.configure(state="disabled")
 
         # SEND the message to the server
         self.sio.emit('client_sends_message', {'sender': self.my_name,
@@ -99,6 +103,6 @@ class MessageBox:
         print("Handling CLEAR")
 
 
-if __name__ == '__main__':
-    mb = MessageBox()
-    mb.show_message_box("11", "22")
+# if __name__ == '__main__':
+#     mb = MessageBox()
+#     mb.show_message_box("11", "22")

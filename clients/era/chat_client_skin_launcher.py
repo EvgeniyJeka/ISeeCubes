@@ -1,13 +1,5 @@
-import time
 from tkinter import *
-from tkinter import ttk
-from tkinter import font
 from PIL import ImageTk, Image
-
-
-import socketio
-import requests
-import json
 import threading
 
 from clients.era.chat_client_app_core import ClientAppCore
@@ -30,7 +22,7 @@ width = 285
 # Log In window (can take from Bookmarker) with CANCEL and CONFIRMATION D
 # Log In request (client side), response parsed. D
 # Connect button is enabled only after successful Log In D
-# Log in button is disabled after successful login and re-enabled after disconnect
+# Log in button is disabled after successful login and re-enabled after disconnect D
 
 class ChatClient:
 
@@ -145,6 +137,7 @@ class ChatClient:
 
         if server_initiate_feed is False:
             print("Client App Core: Error, failed to connect")
+            self.connection_indicator_ui_element.config(text="Error", fg="red4")
             return
 
         contacts_list = server_initiate_feed['contacts']
@@ -154,6 +147,7 @@ class ChatClient:
             self.connection_status = True
             self.connection_indicator_ui_element.config(text="Online", fg="green")
         else:
+            self.connection_indicator_ui_element.config(text="Error", fg="red4")
             print("Failed to connect!")
 
         # Inserting the list of contacts that was fetched into the 'Contact List' UI Element
