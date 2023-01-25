@@ -23,8 +23,8 @@ class MessageBox:
     # OPEN MESSAGE BOX (method in use)
     def show_message_box(self, first_mesage, message_sender):
         # Window size
-        hight = 500
-        width = 900
+        hight = 400
+        width = 600
         size = '%sx%s' % (width, hight)
 
         # Window
@@ -34,34 +34,34 @@ class MessageBox:
         message_box_window.title(f"Coversation between {self.my_name} and {message_sender}")
 
         # Messages Box - TK 'Text' object
-        messages_box = Text(message_box_window, height=20, width=105)
-        messages_box.grid(row=4, column=0, padx=25, pady=10)
-        messages_box.grid(columnspan=10)
+        messages_box = Text(message_box_window, height=18, width=70)
+        messages_box.place(x=16, y=8)
 
-        # Entry box
-        created_entry = Entry(message_box_window, width="140")
-        created_entry.grid(row=7, column=3, padx=25, pady=5, sticky=W)
+        # # Entry box
+        created_entry = Entry(message_box_window, width=93)
+        created_entry.place(x=17, y=308)
 
         messages_box.insert(INSERT, first_mesage)
         messages_box.insert(INSERT, "\n")
-
+        #
         self.address_book[message_sender] = messages_box
-
+        #
         # SEND button - the text from the entry box will be packed to a WS message and the former will be
         # emitted to the conversation room. (Remove 'not my message' validation?)
-        button_send = Button(message_box_window, text="Send", bg="purple", fg="white", height="2", width="30",
+        button_send = Button(message_box_window, text="Send", bg='#567', fg='White', height="1", width="15",
                              command=lambda: self.handle_send(created_entry, messages_box, message_sender))
-        button_send.place(x=240, y=380)
-
+        button_send.place(x=465, y=340)
+        #
         # CLEAR button - clears the entry box
-        button_clear = Button(message_box_window, text="Clear", bg="green", fg="white", height="2", width="30",
+        button_clear = Button(message_box_window, text="Clear", bg='#567', fg='White', height="1", width="15",
                               command=lambda: self.handle_clear())
-        button_clear.place(x=440, y=380)
+        button_clear.place(x=17, y=340)
+
 
         # Handling WINDOW CLOSED - the value related to current message sender in the ADDRESS BOOK is NONE again,
         # so a NEW WINDOW will be opened once a message from that sender is received
         def on_closing():
-            self.address_book[message_sender] = None
+            #self.address_book[message_sender] = None
             message_box_window.destroy()
 
         message_box_window.protocol("WM_DELETE_WINDOW", on_closing)
@@ -97,3 +97,8 @@ class MessageBox:
 
     def handle_clear(self):
         print("Handling CLEAR")
+
+
+if __name__ == '__main__':
+    mb = MessageBox()
+    mb.show_message_box("11", "22")
