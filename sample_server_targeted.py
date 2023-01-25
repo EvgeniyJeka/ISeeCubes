@@ -91,7 +91,9 @@ def handle_client_message(json_):
     # if verified_client_token(client_name, client_token):
     #     # Proceed
 
-    socketio.emit('received_message', response, to=response["conversation_room"])
+    forwarded_message = {"sender": json_['sender'], "content": json_['content']}
+
+    socketio.emit('received_message', forwarded_message, to=response["conversation_room"])
 
 
 @socketio.on('client_disconnection')
