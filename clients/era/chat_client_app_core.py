@@ -122,6 +122,7 @@ class ClientAppCore:
                     current_messages_box.insert(INSERT, "\n")
                     current_messages_box.insert(INSERT, f"{message['sender']}: {message['content']}")
                     current_messages_box.insert(INSERT, "\n")
+                    current_messages_box.see("end")
                     current_messages_box.configure(state="disabled")
 
         @self.sio.on('new_user_online')

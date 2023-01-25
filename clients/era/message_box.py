@@ -91,6 +91,7 @@ class MessageBox:
         target_messages_box.insert(INSERT, "\n")
         target_messages_box.insert(INSERT, f"Me: {message_content}")
         target_messages_box.insert(INSERT, "\n")
+        target_messages_box.see("end")
         target_messages_box.configure(state="disabled")
 
         # SEND the message to the server
