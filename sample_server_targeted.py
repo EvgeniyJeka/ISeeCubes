@@ -18,6 +18,7 @@ import json
 # Document methods & events
 # Make the server run in a Docker container
 # CASE ISSUE - Server and Client side
+# handle_client_message - avoid sending user's JWT to another user (client + server side)
 
 
 import threading
@@ -53,8 +54,8 @@ def get_rooms_list(username):
 
     return contacts_data
 
-def messageReceived(methods=['GET', 'POST']):
-    print('message was received!!!')
+# def messageReceived(methods=['GET', 'POST']):
+#     print('message was received!!!')
 
 def user_joined():
     print(f"User joined!")
@@ -62,6 +63,10 @@ def user_joined():
 @socketio.on('join')
 def on_join(data):
     client_name = data['client']
+    # client_token = data['jwt']
+    #
+    # if verified_client_token(client_name, client_token):
+    #     # Proceed
 
     # Perform only once on each connection
     if client_name not in users_currently_online:
@@ -81,7 +86,12 @@ def handle_client_message(json_):
     print('server responds to: ' + str(json_))
     response = json_
 
-    socketio.emit('received_message', response, callback=messageReceived, to=response["conversation_room"])
+    # client_token = json_['jwt']
+    #
+    # if verified_client_token(client_name, client_token):
+    #     # Proceed
+
+    socketio.emit('received_message', response, to=response["conversation_room"])
 
 
 @socketio.on('client_disconnection')
@@ -89,6 +99,11 @@ def handle_client_disconnection(json_):
     print(f"Client disconnection: {json_}")
 
     client_name = json_['client']
+    # client_token = json_['jwt']
+    #
+    # if verified_client_token(client_name, client_token):
+    #     # Proceed
+
     if client_name in users_currently_online:
         users_currently_online.remove(client_name)
         socketio.emit('user_has_gone_offline', {"username": client_name})
@@ -151,8 +166,8 @@ def connection_checker():
         for client_name in keep_alive_tracking:
             last_time_keep_alive_message_received = keep_alive_tracking[client_name]
 
-            # print(f"User: {client_name}, current time: {datetime.now()}, last time keep alive message was received:"
-            #       f" {last_time_keep_alive_message_received}, delta: {datetime.now() - last_time_keep_alive_message_received} ")
+            print(f"User: {client_name}, current time: {datetime.now()}, last time keep alive message was received:"
+                  f" {last_time_keep_alive_message_received}, delta: {datetime.now() - last_time_keep_alive_message_received} ")
 
             # Consider the user as disconnected if no 'keep alive' was received for more than X seconds (configurable)
             if datetime.now() - last_time_keep_alive_message_received > timedelta(seconds=KEEP_ALIVE_DELAY_BETWEEN_EVENTS):
