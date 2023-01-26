@@ -14,9 +14,6 @@ import threading
 # Default window size when there are no bookmarks
 from clients.era.message_box import MessageBox
 
-# height = 475
-# width = 220
-
 # Move to config
 keep_alive_delay_between_events = 6
 
@@ -121,8 +118,12 @@ class ClientAppCore:
 
                 # The conversation with the given user is going on, and a Chat Room is already open
                 else:
+                    current_messages_box.configure(state="normal")
                     current_messages_box.insert(INSERT, "\n")
                     current_messages_box.insert(INSERT, f"{message['sender']}: {message['content']}")
+                    current_messages_box.insert(INSERT, "\n")
+                    current_messages_box.see("end")
+                    current_messages_box.configure(state="disabled")
 
         @self.sio.on('new_user_online')
         def handle_new_user_online(message):
