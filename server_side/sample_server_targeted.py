@@ -29,6 +29,9 @@ from flask import Flask, render_template
 from flask_socketio import SocketIO
 from flask_socketio import join_room, leave_room
 
+# Add 2 variations of import (for Dockerization)
+from server_side.authorization_manager import AuthManager
+
 # Will be taken from SQL DB
 users_list = ["Lisa", "Avi", "Tsahi", "Era", "Bravo", "Dariya"]
 
@@ -45,6 +48,8 @@ KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 8
 
 app = Flask(__name__)
 socketio = SocketIO(app)
+
+auth_manager = AuthManager()
 
 
 @app.route("/get_contacts_list/<username>", methods=['GET'])
@@ -65,7 +70,7 @@ def on_join(data):
     client_name = data['client']
     # client_token = data['jwt']
     #
-    # if verified_client_token(client_name, client_token):
+    # if auth_manager.validate_jwt_token(client_name, client_token):
     #     # Proceed
 
     # Perform only once on each connection
