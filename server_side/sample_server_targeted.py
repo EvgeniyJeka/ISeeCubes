@@ -1,4 +1,10 @@
 import json
+import threading
+import time
+from datetime import datetime, timedelta
+from flask import Flask, request
+from flask_socketio import SocketIO, join_room
+
 
 # TO DO:
 # 1.  Custom 'keep alive' logic both on server and on client side // TEST AGAINST 2-3 CLIENTS, NOT EMULATIONS D
@@ -21,13 +27,7 @@ import json
 # handle_client_message - avoid sending user's JWT to another user (client + server side)
 
 
-import threading
-import time
-from datetime import datetime, timedelta
 
-from flask import Flask, render_template
-from flask_socketio import SocketIO
-from flask_socketio import join_room, leave_room
 
 # Add 2 variations of import (for Dockerization)
 from server_side.authorization_manager import AuthManager
@@ -58,6 +58,23 @@ def get_rooms_list(username):
                      "all_existing_contacts": users_list}
 
     return contacts_data
+
+@app.route("/log_in", methods=['POST'])
+def login_request():
+    request_content = request.get_json()
+
+    if 'username' and 'password' not in request_content.keys():
+        return {"error": "Invalid Log In request"}
+
+    username = request_content['username']
+    password = request_content['password']
+
+    print(username, password)
+
+    requested_token = auth_manager.generate_jwt_token(username, password)
+
+    return requested_token
+
 
 # def messageReceived(methods=['GET', 'POST']):
 #     print('message was received!!!')
