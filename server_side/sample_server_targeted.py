@@ -76,9 +76,6 @@ def login_request():
     return requested_token
 
 
-# def messageReceived(methods=['GET', 'POST']):
-#     print('message was received!!!')
-
 def user_joined():
     print(f"User joined!")
 
@@ -110,8 +107,11 @@ def handle_client_message(json_):
 
     # client_token = json_['jwt']
     #
-    # if verified_client_token(client_name, client_token):
+    # if auth_manager.validate_jwt_token(client_name, client_token):
     #     # Proceed
+    # else:
+    #   #find a way to notify the client on auth error!
+    #   # forwarded_message = {"sender": "admin, "content": "Error! Failed Authorization!"}
 
     forwarded_message = {"sender": json_['sender'], "content": json_['content']}
 
