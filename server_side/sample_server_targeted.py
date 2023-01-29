@@ -27,27 +27,24 @@ from flask_socketio import SocketIO, join_room
 # handle_client_message - avoid sending user's JWT to another user (client + server side)
 
 
-
-
 # Add 2 variations of import (for Dockerization)
 from server_side.authorization_manager import AuthManager
 
 
 
-
 # Config
+from server_side.chatgpt_integration import ChatGPTIntegration
+
 CONNECTIONS_VERIFICATION_INTERVAL = 10
 KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 8
 
-# app = Flask(__name__)
-# socketio = SocketIO(app)
-
-auth_manager = AuthManager()
+# Special users
+CHAT_GPT_USER = "ChatGPT"
 
 class ChatServer:
 
     # Will be taken from SQL DB
-    users_list = ["Lisa", "Avi", "Tsahi", "Era", "Bravo", "Dariya"]
+    users_list = ["Lisa", "Avi", "Tsahi", "Era", "Bravo", "Dariya", "ChatGPT"]
 
     # Mapping active users against the last time the 'connection_alive' event was received from each
     keep_alive_tracking = {}
@@ -55,12 +52,23 @@ class ChatServer:
     # Will be in service cache AND in DB (Redis DB?)
     users_currently_online = []
 
+    auth_manager = None
+    chatgpt_instance = None
+
+
     def __init__(self):
         self.app = Flask(__name__)
         self.socketio = SocketIO(self.app)
 
+        self.auth_manager = AuthManager()
+        self.chatgpt_instance = ChatGPTIntegration()
+
+        # Verifying the ChatGPT service is available
+        if self.chatgpt_instance.is_chatgpt_available():
+            self.users_currently_online.append(CHAT_GPT_USER)
+
+
     def room_names_generator(self, listed_users: list) -> list:
-        # listed_users = [user for user in users_list]
         listed_users.sort()
 
         res = []
@@ -111,7 +119,7 @@ class ChatServer:
 
             print(username, password)
 
-            requested_token = auth_manager.generate_jwt_token(username, password)
+            requested_token = self.auth_manager.generate_jwt_token(username, password)
 
             return requested_token
 
@@ -139,7 +147,6 @@ class ChatServer:
             print(f"Adding a customer to a room: {data['room']}")
             join_room(room)
 
-
         @self.socketio.on('client_sends_message')
         def handle_client_message(json_):
             print('server responds to: ' + str(json_))
@@ -153,8 +160,17 @@ class ChatServer:
             #   #find a way to notify the client on auth error!
             #   # forwarded_message = {"sender": "admin, "content": "Error! Failed Authorization!"}
 
-            forwarded_message = {"sender": json_['sender'], "content": json_['content']}
+            if CHAT_GPT_USER in json_["conversation_room"]:
+                print(f"Sending this content to ChatGPT: {json_['content']}")
 
+                chat_gpt_response = self.chatgpt_instance.send_input(json_['content'])
+                print(f"Response received from ChatGPT: {chat_gpt_response}")
+
+                forwarded_message = {"sender": CHAT_GPT_USER, "content": chat_gpt_response}
+                self.socketio.emit('ai_response_received', forwarded_message, to=response["conversation_room"])
+                return
+
+            forwarded_message = {"sender": json_['sender'], "content": json_['content']}
             self.socketio.emit('received_message', forwarded_message, to=response["conversation_room"])
 
 
@@ -215,9 +231,6 @@ def connection_checker(chat_instance: ChatServer):
 
             chat_instance.keep_alive_tracking.pop(user)
             chat_instance.socketio.emit('user_has_gone_offline', {"username": user})
-
-
-
 
 
 

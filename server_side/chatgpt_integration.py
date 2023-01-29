@@ -37,7 +37,7 @@ class ChatGPTIntegration:
             logging.warning(f"ChatGPT Integration: Can't establish communication with ChatGPT: {e}")
             return False
 
-    def send_input(self, verbal_input, model="text-babbage-001", temperature=0.7, max_tokens=256):
+    def send_input(self, verbal_input, model="text-babbage-001", temperature=0.3, max_tokens=256):
 
         response = openai.Completion.create(
             model=model,
@@ -50,8 +50,9 @@ class ChatGPTIntegration:
         )
 
         extracted_data = response["choices"][0]["text"]
+        cleared_data = extracted_data.replace("\n", "")
 
-        return extracted_data
+        return cleared_data
 
 
 if __name__ == "__main__":
