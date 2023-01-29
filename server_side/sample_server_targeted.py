@@ -124,7 +124,7 @@ class ChatServer:
             return requested_token
 
 
-        def user_joined(self):
+        def user_joined():
             print(f"User joined!")
 
         @self.socketio.on('join')

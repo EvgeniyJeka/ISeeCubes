@@ -4,6 +4,9 @@ import logging
 
 USE_TOKENS_TO_TEST_CONNECTION = False
 
+CHAT_GPT_SELECTED_MODEL = 'text-davinci-002'
+#CHAT_GPT_SELECTED_MODEL = 'text-babbage-001'
+
 class ChatGPTIntegration:
 
     def is_chatgpt_available(self):
@@ -37,7 +40,7 @@ class ChatGPTIntegration:
             logging.warning(f"ChatGPT Integration: Can't establish communication with ChatGPT: {e}")
             return False
 
-    def send_input(self, verbal_input, model="text-babbage-001", temperature=0.3, max_tokens=256):
+    def send_input(self, verbal_input, model=CHAT_GPT_SELECTED_MODEL, temperature=0.4, max_tokens=256):
 
         response = openai.Completion.create(
             model=model,
