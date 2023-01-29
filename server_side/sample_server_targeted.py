@@ -32,154 +32,165 @@ from flask_socketio import SocketIO, join_room
 # Add 2 variations of import (for Dockerization)
 from server_side.authorization_manager import AuthManager
 
-# Will be taken from SQL DB
-users_list = ["Lisa", "Avi", "Tsahi", "Era", "Bravo", "Dariya"]
 
-# Mapping active users against the last time the 'connection_alive' event was received from each
-keep_alive_tracking = {}
-
-# Will be in service cache AND in DB (Redis DB?)
-users_currently_online = []
 
 
 # Config
 CONNECTIONS_VERIFICATION_INTERVAL = 10
 KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 8
 
-app = Flask(__name__)
-socketio = SocketIO(app)
+# app = Flask(__name__)
+# socketio = SocketIO(app)
 
 auth_manager = AuthManager()
 
+class ChatServer:
 
-@app.route("/get_contacts_list/<username>", methods=['GET'])
-def get_rooms_list(username):
-    contacts_data = {"contacts": prepare_rooms_for(username), "currently_online": users_currently_online,
-                     "all_existing_contacts": users_list}
+    # Will be taken from SQL DB
+    users_list = ["Lisa", "Avi", "Tsahi", "Era", "Bravo", "Dariya"]
 
-    return contacts_data
+    # Mapping active users against the last time the 'connection_alive' event was received from each
+    keep_alive_tracking = {}
 
-@app.route("/log_in", methods=['POST'])
-def login_request():
-    request_content = request.get_json()
+    # Will be in service cache AND in DB (Redis DB?)
+    users_currently_online = []
 
-    if 'username' and 'password' not in request_content.keys():
-        return {"error": "Invalid Log In request"}
+    def __init__(self):
+        self.app = Flask(__name__)
+        self.socketio = SocketIO(self.app)
 
-    username = request_content['username']
-    password = request_content['password']
+    def room_names_generator(self, listed_users: list) -> list:
+        # listed_users = [user for user in users_list]
+        listed_users.sort()
 
-    print(username, password)
+        res = []
 
-    requested_token = auth_manager.generate_jwt_token(username, password)
+        for i in range(0, len(listed_users)):
+            current_user = listed_users[i]
 
-    return requested_token
+            for user in listed_users[i + 1:]:
+                res.append(f"{current_user}&{user}")
 
+        return res
 
-def user_joined():
-    print(f"User joined!")
+    def prepare_rooms_for(self, current_username: str):
+        result = {}
 
-@socketio.on('join')
-def on_join(data):
-    client_name = data['client']
-    # client_token = data['jwt']
-    #
-    # if auth_manager.validate_jwt_token(client_name, client_token):
-    #     # Proceed
+        all_available_rooms = self.room_names_generator(self.users_list)
 
-    # Perform only once on each connection
-    if client_name not in users_currently_online:
-        users_currently_online.append(client_name)
-        # Emit 'new_user_online' to ALL (with current client username)
-        socketio.emit('new_user_online', {"username": client_name}, callback=user_joined)
+        for room_name in all_available_rooms:
+            if current_username in room_name:
+                names = room_name.split('&')
 
-    print(f"Users currently online: {users_currently_online}")
+                if names[0] == current_username:
+                    result[names[1]] = room_name
+                elif names[1] == current_username:
+                    result[names[0]] = room_name
 
-    room = data['room']
-    print(f"Adding a customer to a room: {data['room']}")
-    join_room(room)
+        return result
 
 
-@socketio.on('client_sends_message')
-def handle_client_message(json_):
-    print('server responds to: ' + str(json_))
-    response = json_
+    def run(self):
 
-    # client_token = json_['jwt']
-    #
-    # if auth_manager.validate_jwt_token(client_name, client_token):
-    #     # Proceed
-    # else:
-    #   #find a way to notify the client on auth error!
-    #   # forwarded_message = {"sender": "admin, "content": "Error! Failed Authorization!"}
+        @self.app.route("/get_contacts_list/<username>", methods=['GET'])
+        def get_rooms_list(username):
+            contacts_data = {"contacts": self.prepare_rooms_for(username), "currently_online": self.users_currently_online,
+                             "all_existing_contacts": self.users_list}
 
-    forwarded_message = {"sender": json_['sender'], "content": json_['content']}
+            return contacts_data
 
-    socketio.emit('received_message', forwarded_message, to=response["conversation_room"])
+        @self.app.route("/log_in", methods=['POST'])
+        def login_request():
+            request_content = request.get_json()
 
+            if 'username' and 'password' not in request_content.keys():
+                return {"error": "Invalid Log In request"}
 
-@socketio.on('client_disconnection')
-def handle_client_disconnection(json_):
-    print(f"Client disconnection: {json_}")
+            username = request_content['username']
+            password = request_content['password']
 
-    client_name = json_['client']
-    # client_token = json_['jwt']
-    #
-    # if verified_client_token(client_name, client_token):
-    #     # Proceed
+            print(username, password)
 
-    if client_name in users_currently_online:
-        users_currently_online.remove(client_name)
-        socketio.emit('user_has_gone_offline', {"username": client_name})
+            requested_token = auth_manager.generate_jwt_token(username, password)
 
-    print(f"Users currently online: {users_currently_online}")
+            return requested_token
 
 
-@socketio.on('connection_alive')
-def processing_keep_alive_signals(json_):
-    client_name = json_['client']
-    message_time = json_['time']
+        def user_joined(self):
+            print(f"User joined!")
 
-    print(f"Client {client_name} sent 'keep alive' signal at {message_time}")
+        @self.socketio.on('join')
+        def on_join(data):
+            client_name = data['client']
+            # client_token = data['jwt']
+            #
+            # if auth_manager.validate_jwt_token(client_name, client_token):
+            #     # Proceed
 
-    # Updating the time at which the 'keep alive' signal was last time received for given user
-    keep_alive_tracking[client_name] = datetime.strptime(message_time, '%m/%d/%y %H:%M:%S')
-    print(f"Server Side Keep Alive Time Table Updated: {keep_alive_tracking}")
+            # Perform only once on each connection
+            if client_name not in self.users_currently_online:
+                self.users_currently_online.append(client_name)
+                # Emit 'new_user_online' to ALL (with current client username)
+                self.socketio.emit('new_user_online', {"username": client_name}, callback=user_joined)
 
+            print(f"Users currently online: {self.users_currently_online}")
 
-def room_names_generator(listed_users: list)-> list:
-    # listed_users = [user for user in users_list]
-    listed_users.sort()
-
-    res = []
-
-    for i in range(0, len(listed_users)):
-        current_user = listed_users[i]
-
-        for user in listed_users[i + 1:]:
-            res.append(f"{current_user}&{user}")
-
-    return res
+            room = data['room']
+            print(f"Adding a customer to a room: {data['room']}")
+            join_room(room)
 
 
-def prepare_rooms_for(current_username: str):
-    result = {}
+        @self.socketio.on('client_sends_message')
+        def handle_client_message(json_):
+            print('server responds to: ' + str(json_))
+            response = json_
 
-    all_available_rooms = room_names_generator(users_list)
+            # client_token = json_['jwt']
+            #
+            # if auth_manager.validate_jwt_token(client_name, client_token):
+            #     # Proceed
+            # else:
+            #   #find a way to notify the client on auth error!
+            #   # forwarded_message = {"sender": "admin, "content": "Error! Failed Authorization!"}
 
-    for room_name in all_available_rooms:
-        if current_username in room_name:
-            names = room_name.split('&')
+            forwarded_message = {"sender": json_['sender'], "content": json_['content']}
 
-            if names[0] == current_username:
-                result[names[1]] = room_name
-            elif names[1] == current_username:
-                result[names[0]] = room_name
-
-    return result
+            self.socketio.emit('received_message', forwarded_message, to=response["conversation_room"])
 
 
-def connection_checker():
+        @self.socketio.on('client_disconnection')
+        def handle_client_disconnection(json_):
+            print(f"Client disconnection: {json_}")
+
+            client_name = json_['client']
+            # client_token = json_['jwt']
+            #
+            # if verified_client_token(client_name, client_token):
+            #     # Proceed
+
+            if client_name in self.users_currently_online:
+                self.users_currently_online.remove(client_name)
+                self.socketio.emit('user_has_gone_offline', {"username": client_name})
+
+            print(f"Users currently online: {self.users_currently_online}")
+
+
+        @self.socketio.on('connection_alive')
+        def processing_keep_alive_signals(json_):
+            client_name = json_['client']
+            message_time = json_['time']
+
+            print(f"Client {client_name} sent 'keep alive' signal at {message_time}")
+
+            # Updating the time at which the 'keep alive' signal was last time received for given user
+            self.keep_alive_tracking[client_name] = datetime.strptime(message_time, '%m/%d/%y %H:%M:%S')
+            print(f"Server Side Keep Alive Time Table Updated: {self.keep_alive_tracking}")
+
+
+        self.socketio.run(self.app, debug=True, allow_unsafe_werkzeug=True)
+
+
+def connection_checker(chat_instance: ChatServer):
     while True:
         # IN PROGRESS - SEE
         time.sleep(CONNECTIONS_VERIFICATION_INTERVAL)
@@ -187,11 +198,11 @@ def connection_checker():
 
         users_to_disconnect = []
 
-        for client_name in keep_alive_tracking:
-            last_time_keep_alive_message_received = keep_alive_tracking[client_name]
+        for client_name in chat_instance.keep_alive_tracking:
+            last_time_keep_alive_message_received = chat_instance.keep_alive_tracking[client_name]
 
-            print(f"User: {client_name}, current time: {datetime.now()}, last time keep alive message was received:"
-                  f" {last_time_keep_alive_message_received}, delta: {datetime.now() - last_time_keep_alive_message_received} ")
+            # print(f"User: {client_name}, current time: {datetime.now()}, last time keep alive message was received:"
+            #       f" {last_time_keep_alive_message_received}, delta: {datetime.now() - last_time_keep_alive_message_received} ")
 
             # Consider the user as disconnected if no 'keep alive' was received for more than X seconds (configurable)
             if datetime.now() - last_time_keep_alive_message_received > timedelta(seconds=KEEP_ALIVE_DELAY_BETWEEN_EVENTS):
@@ -199,15 +210,19 @@ def connection_checker():
 
         print(f"Disconnecting users: {users_to_disconnect}")
         for user in users_to_disconnect:
-            if user in users_currently_online:
-                users_currently_online.remove(user)
+            if user in chat_instance.users_currently_online:
+                chat_instance.users_currently_online.remove(user)
 
-            keep_alive_tracking.pop(user)
-            socketio.emit('user_has_gone_offline', {"username": user})
+            chat_instance.keep_alive_tracking.pop(user)
+            chat_instance.socketio.emit('user_has_gone_offline', {"username": user})
 
-# API METHOD that will return this in response to GET request with a param (username)
+
+
+
+
 
 if __name__ == '__main__':
-    connection_verification_thread = threading.Thread(target=connection_checker)
+    my_chat_server = ChatServer()
+    connection_verification_thread = threading.Thread(target=connection_checker, args=(my_chat_server,))
     connection_verification_thread.start()
-    socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
+    my_chat_server.run()
