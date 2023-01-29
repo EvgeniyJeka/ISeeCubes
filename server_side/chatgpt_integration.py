@@ -2,6 +2,8 @@ import os
 import openai
 import logging
 
+USE_TOKENS_TO_TEST_CONNECTION = False
+
 class ChatGPTIntegration:
 
     def is_chatgpt_available(self):
@@ -15,18 +17,24 @@ class ChatGPTIntegration:
             key = os.getenv("OPENAI_API_KEY")
 
             if key and len(key) > 0:
-                activation_check = self.send_input("Are you alive?")
+                if USE_TOKENS_TO_TEST_CONNECTION:
 
-                if isinstance(activation_check, str) and len(activation_check) > 0:
+                    activation_check = self.send_input("Are you alive?")
+                    logging.info(f"ChatGPT Integration: ChatGPT replied to the activation check: {activation_check}")
+
+                    if isinstance(activation_check, str) and len(activation_check) > 0:
+                        return True
+                    else:
+                        return False
+
+                else:
                     return True
-
-                return False
 
             else:
                 return False
 
         except Exception as e:
-            logging.warning(f"Can't establish communication with ChatGPT: {e}")
+            logging.warning(f"ChatGPT Integration: Can't establish communication with ChatGPT: {e}")
             return False
 
     def send_input(self, verbal_input, model="text-babbage-001", temperature=0.7, max_tokens=256):
