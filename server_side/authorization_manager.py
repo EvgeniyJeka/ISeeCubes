@@ -30,7 +30,7 @@ class AuthManager:
             key = self.key_gen()
             encoded_jwt = jwt.encode({"user": username, "password": password}, key, algorithm="HS256")
             self.active_tokens[username] = encoded_jwt
-            return {"result": encoded_jwt}
+            return {"result": "success", "key": encoded_jwt}
 
         else:
             return {"error": "Invalid credentials!"}

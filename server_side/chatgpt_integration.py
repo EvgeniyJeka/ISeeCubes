@@ -4,8 +4,8 @@ import logging
 
 USE_TOKENS_TO_TEST_CONNECTION = False
 
-#CHAT_GPT_SELECTED_MODEL = 'text-davinci-002'
-CHAT_GPT_SELECTED_MODEL = 'text-babbage-001'
+CHAT_GPT_SELECTED_MODEL = 'text-davinci-002'
+#CHAT_GPT_SELECTED_MODEL = 'text-babbage-001'
 
 
 class ChatGPTIntegration:
