@@ -139,7 +139,7 @@ class ChatServer:
             An event "new_user_online" is emitted to all connected clients with the new client's username.
             The user is added to a specific room, which is passed in the data received in the "join" event.
             Logs an error message if the JWT token is invalid.
-            
+
             :param data:
             :return:
             """
