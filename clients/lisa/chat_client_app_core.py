@@ -42,13 +42,15 @@ class ClientAppCore:
         # IN PROGRESS! #
 
         print(f"App Core: sending a sign in request to the server, username: {username}, password: {password}")
-        response = json.dumps({'result': 'success', 'key': '1245Test'}) # Temporary stub for client side
-        sign_in_data = json.loads(response)
+        #response = json.dumps({'result': 'success', 'key': '1245Test'}) # Temporary stub for client side
+
+        response = requests.post(url="http://localhost:5000/log_in", json={"username": username, "password": password})
+        sign_in_data = json.loads(response.text)
 
         if 'result' in sign_in_data.keys():
             if sign_in_data['result'] == 'success':
                 self.my_name = username
-                self.current_auth_token = sign_in_data['key']
+                self.current_auth_token = sign_in_data['token']
                 self.user_logged_in = True
                 return {"result": "success"}
 

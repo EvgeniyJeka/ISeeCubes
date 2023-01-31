@@ -30,8 +30,6 @@ from flask_socketio import SocketIO, join_room
 # Add 2 variations of import (for Dockerization)
 from server_side.authorization_manager import AuthManager
 
-
-
 # Config
 from server_side.chatgpt_integration import ChatGPTIntegration
 
@@ -40,6 +38,7 @@ KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 8
 
 # Special users
 CHAT_GPT_USER = "ChatGPT"
+
 
 class ChatServer:
 
@@ -54,7 +53,6 @@ class ChatServer:
 
     auth_manager = None
     chatgpt_instance = None
-
 
     def __init__(self):
         self.app = Flask(__name__)
@@ -111,11 +109,12 @@ class ChatServer:
         def login_request():
             request_content = request.get_json()
 
-            if 'username' and 'password' not in request_content.keys():
-                return {"error": "Invalid Log In request"}
+            try:
+                username = request_content['username']
+                password = request_content['password']
 
-            username = request_content['username']
-            password = request_content['password']
+            except KeyError:
+                return {"error": "Invalid Log In request"}
 
             print(username, password)
 
