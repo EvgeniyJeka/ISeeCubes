@@ -54,8 +54,10 @@ class ClientAppCore:
                 self.user_logged_in = True
                 return {"result": "success"}
 
-            elif sign_in_data['result'] == 'wrong credentials':
-                return {"result": "wrong credentials"}
+            elif sign_in_data['result'] == 'Invalid credentials':
+                return {"result": "Invalid credentials"}
+            else:
+                return {"result": "Unknown server code"}
         else:
             return {"result": "server error"}
 
