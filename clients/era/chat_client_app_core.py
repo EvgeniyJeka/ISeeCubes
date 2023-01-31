@@ -125,6 +125,30 @@ class ClientAppCore:
                     current_messages_box.see("end")
                     current_messages_box.configure(state="disabled")
 
+        @self.sio.on('ai_response_received')
+        def handle_my_custom_event(message):
+
+            print(f"{message['sender']}: {message['content']}")
+            first_message_conversation = f"{message['sender']}: {message['content']}"
+
+            current_messages_box = self.address_book[message['sender']]
+
+            # First message from given user
+            if current_messages_box is None:
+                t1 = threading.Thread(target=self.message_box.show_message_box,
+                                      args=(first_message_conversation, message['sender']))
+                t1.start()
+                time.sleep(6)
+
+            # The conversation with the given user is going on, and a Chat Room is already open
+            else:
+                current_messages_box.configure(state="normal")
+                current_messages_box.insert(INSERT, "\n")
+                current_messages_box.insert(INSERT, f"{message['sender']}: {message['content']}")
+                current_messages_box.insert(INSERT, "\n")
+                current_messages_box.see("end")
+                current_messages_box.configure(state="disabled")
+
         @self.sio.on('new_user_online')
         def handle_new_user_online(message):
             user_name = message["username"]

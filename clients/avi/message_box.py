@@ -1,5 +1,6 @@
 from tkinter import *
 import logging
+import functools
 
 logging.basicConfig(level=logging.INFO)
 
@@ -67,6 +68,8 @@ class MessageBox:
                              command=lambda: self.handle_send(created_entry, messages_box, message_sender))
         button_send.place(x=465, y=340)
 
+        message_box_window.bind("<Return>", functools.partial(self.handle_send, created_entry, messages_box, message_sender))
+
         # CLEAR button - clears the entry box
         button_clear = Button(message_box_window, text="Clear", bg='#567', fg='White', height="1", width="15",
                               command=lambda: self.handle_clear(messages_box))
@@ -81,7 +84,11 @@ class MessageBox:
         message_box_window.protocol("WM_DELETE_WINDOW", on_closing)
         message_box_window.mainloop()
 
-    def handle_send(self, target_entry, target_messages_box, destination):
+    def test_me(self,a):
+        print("Test")
+        print(a)
+
+    def handle_send(self, target_entry, target_messages_box, destination, *args):
         """
         This method is attached to the 'Send' button.
         Once the button is clicked, the content of the entry is packed and send
