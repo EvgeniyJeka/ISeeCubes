@@ -33,6 +33,8 @@ logging.basicConfig(level=logging.INFO)
 # Add 2 variations of import (for Dockerization)
 from server_side.authorization_manager import AuthManager
 
+
+
 # Config
 from server_side.chatgpt_integration import ChatGPTIntegration
 
@@ -41,8 +43,6 @@ KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 8
 
 # Special users
 CHAT_GPT_USER = "ChatGPT"
-SYSTEM_ADMIN_USER = "Chat Admin"
-
 
 class ChatServer:
 
@@ -57,6 +57,7 @@ class ChatServer:
 
     auth_manager = None
     chatgpt_instance = None
+
 
     def __init__(self):
         self.app = Flask(__name__)
@@ -173,38 +174,66 @@ I           If the token generation is successful, the code removes the JWT toke
 
         @self.socketio.on('join')
         def on_join(data):
-            """
-            The method extracts the client name and JWT token from the data received in the "join" event.
-            Validates the JWT token using the "auth_manager.validate_jwt_token" method.
-            If the JWT token is valid, the client name is added to the list of "users_currently_online".
-            An event "new_user_online" is emitted to all connected clients with the new client's username.
-            The user is added to a specific room, which is passed in the data received in the "join" event.
-            Logs an error message if the JWT token is invalid.
 
-            :param data:
-            :return:
-            """
-            client_name = data['client']
-            client_token = data['jwt']
+            try:
+                client_name = data['client']
+                client_token = data['jwt']
+                room = data['room']
 
-            # The user is allowed to join only if his/her JWT passes validation
-            if self.auth_manager.validate_jwt_token(client_name, client_token):
+            except KeyError as e:
+                logging.error(f"Invalid request, missing required field: {e}")
+                return {"error": f"Invalid request, missing required field: {e}"}
 
-                # Perform only once on each connection
-                if client_name not in self.users_currently_online:
+            # Validating JWT before allowing the user to JOIN
+            if not self.auth_manager.validate_jwt_token(client_name, client_token):
+                logging.error(f"Invalid JWT: {client_token}")
+                return {"error": "Invalid JWT"}
 
-                    self.users_currently_online.append(client_name)
-                    # Emit 'new_user_online' to ALL (with current client username)
-                    self.socketio.emit('new_user_online', {"username": client_name}, callback=user_joined)
+            # Perform only once on each connection
+            if client_name not in self.users_currently_online:
+                self.users_currently_online.append(client_name)
+                # Emit 'new_user_online' to ALL (with current client username)
+                self.socketio.emit('new_user_online', {"username": client_name}, callback=user_joined)
 
-                    logging.info(f"Users currently online: {self.users_currently_online}")
-                    room = data['room']
-                    print(f"Adding a customer to a room: {data['room']}")
-                    join_room(room)
+            logging.info(f"Users currently online: {self.users_currently_online}")
 
-            else:
-                logging.error(f"User {client_name} has sent 'join' event with invalid token."
-                              f" Validation fails. User wasn't allowed to join.")
+            logging.info(f"Adding a customer to a room: {data['room']}")
+            join_room(room)
+            return {"result": "success"}
+
+        # @self.socketio.on('join')
+        # def on_join(data):
+        #     """
+        #     The method extracts the client name and JWT token from the data received in the "join" event.
+        #     Validates the JWT token using the "auth_manager.validate_jwt_token" method.
+        #     If the JWT token is valid, the client name is added to the list of "users_currently_online".
+        #     An event "new_user_online" is emitted to all connected clients with the new client's username.
+        #     The user is added to a specific room, which is passed in the data received in the "join" event.
+        #     Logs an error message if the JWT token is invalid.
+        #
+        #     :param data:
+        #     :return:
+        #     """
+        #     client_name = data['client']
+        #     client_token = data['jwt']
+        #
+        #     # The user is allowed to join only if his/her JWT passes validation
+        #     if self.auth_manager.validate_jwt_token(client_name, client_token):
+        #
+        #         # Perform only once on each connection
+        #         if client_name not in self.users_currently_online:
+        #             self.users_currently_online.append(client_name)
+        #             # Emit 'new_user_online' to ALL (with current client username)
+        #             self.socketio.emit('new_user_online', {"username": client_name}, callback=user_joined)
+        #
+        #             logging.info(f"Users currently online: {self.users_currently_online}")
+        #             room = data['room']
+        #             print(f"Adding a customer to a room: {data['room']}")
+        #             join_room(room)
+        #
+        #     else:
+        #         logging.error(f"User {client_name} has sent 'join' event with invalid token."
+        #                       f" Validation fails. User wasn't allowed to join.")
 
         @self.socketio.on('client_sends_message')
         def handle_client_message(json_):

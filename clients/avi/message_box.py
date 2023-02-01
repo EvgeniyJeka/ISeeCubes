@@ -84,10 +84,6 @@ class MessageBox:
         message_box_window.protocol("WM_DELETE_WINDOW", on_closing)
         message_box_window.mainloop()
 
-    def test_me(self,a):
-        print("Test")
-        print(a)
-
     def handle_send(self, target_entry, target_messages_box, destination, *args):
         """
         This method is attached to the 'Send' button.
