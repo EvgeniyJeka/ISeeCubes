@@ -231,7 +231,7 @@ I           If the token generation is successful, the code removes the JWT toke
 
         @self.socketio.on('client_sends_message')
         def handle_client_message(data):
-            # IN PROGRESS !! 
+            # IN PROGRESS !!
             print('server responds to: ' + str(data))
             response = data
 
@@ -246,9 +246,9 @@ I           If the token generation is successful, the code removes the JWT toke
             # Invalid JWT token in client message
             if not self.auth_manager.validate_jwt_token(client_name, client_token):
                 forwarded_message = {"sender": ADMIN_USER, "content": f"Error! Failed Authorization! "
-                f"User '{client_name}' must re login so the conversation can be resumed"}
+                f"User '{client_name}' must disconnect, re login and reconnect so the conversation can be resumed."}
 
-                self.socketio.emit('received_message', forwarded_message, to=response["conversation_room"])
+                self.socketio.emit('received_message', forwarded_message, to=f"{ADMIN_USER}&{client_name}")
                 return
 
             if CHAT_GPT_USER in data["conversation_room"]:
