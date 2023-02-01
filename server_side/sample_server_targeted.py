@@ -43,11 +43,12 @@ KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 8
 
 # Special users
 CHAT_GPT_USER = "ChatGPT"
+ADMIN_USER = "Admin"
 
 class ChatServer:
 
     # Will be taken from SQL DB
-    users_list = ["Lisa", "Avi", "Tsahi", "Era", "Bravo", "Dariya", "ChatGPT"]
+    users_list = ["Lisa", "Avi", "Tsahi", "Era", "Bravo", "Dariya", CHAT_GPT_USER, ADMIN_USER]
 
     # Mapping active users against the last time the 'connection_alive' event was received from each
     keep_alive_tracking = {}
@@ -201,64 +202,66 @@ I           If the token generation is successful, the code removes the JWT toke
             join_room(room)
             return {"result": "success"}
 
-        # @self.socketio.on('join')
-        # def on_join(data):
-        #     """
-        #     The method extracts the client name and JWT token from the data received in the "join" event.
-        #     Validates the JWT token using the "auth_manager.validate_jwt_token" method.
-        #     If the JWT token is valid, the client name is added to the list of "users_currently_online".
-        #     An event "new_user_online" is emitted to all connected clients with the new client's username.
-        #     The user is added to a specific room, which is passed in the data received in the "join" event.
-        #     Logs an error message if the JWT token is invalid.
+
+        # @self.socketio.on('client_sends_message')
+        # def handle_client_message(json_):
+        #     print('server responds to: ' + str(json_))
+        #     response = json_
         #
-        #     :param data:
-        #     :return:
-        #     """
-        #     client_name = data['client']
-        #     client_token = data['jwt']
+        #     # client_token = json_['jwt']
+        #     #
+        #     # if auth_manager.validate_jwt_token(client_name, client_token):
+        #     #     # Proceed
+        #     # else:
+        #     #   #find a way to notify the client on auth error!
+        #     #   # forwarded_message = {"sender": "admin, "content": "Error! Failed Authorization!"}
         #
-        #     # The user is allowed to join only if his/her JWT passes validation
-        #     if self.auth_manager.validate_jwt_token(client_name, client_token):
+        #     if CHAT_GPT_USER in json_["conversation_room"]:
+        #         print(f"Sending this content to ChatGPT: {json_['content']}")
         #
-        #         # Perform only once on each connection
-        #         if client_name not in self.users_currently_online:
-        #             self.users_currently_online.append(client_name)
-        #             # Emit 'new_user_online' to ALL (with current client username)
-        #             self.socketio.emit('new_user_online', {"username": client_name}, callback=user_joined)
+        #         chat_gpt_response = self.chatgpt_instance.send_input(json_['content'])
+        #         print(f"Response received from ChatGPT: {chat_gpt_response}")
         #
-        #             logging.info(f"Users currently online: {self.users_currently_online}")
-        #             room = data['room']
-        #             print(f"Adding a customer to a room: {data['room']}")
-        #             join_room(room)
+        #         forwarded_message = {"sender": CHAT_GPT_USER, "content": chat_gpt_response}
+        #         self.socketio.emit('ai_response_received', forwarded_message, to=response["conversation_room"])
+        #         return
         #
-        #     else:
-        #         logging.error(f"User {client_name} has sent 'join' event with invalid token."
-        #                       f" Validation fails. User wasn't allowed to join.")
+        #     forwarded_message = {"sender": json_['sender'], "content": json_['content']}
+        #     self.socketio.emit('received_message', forwarded_message, to=response["conversation_room"])
 
         @self.socketio.on('client_sends_message')
-        def handle_client_message(json_):
-            print('server responds to: ' + str(json_))
-            response = json_
+        def handle_client_message(data):
+            # IN PROGRESS !! 
+            print('server responds to: ' + str(data))
+            response = data
 
-            # client_token = json_['jwt']
-            #
-            # if auth_manager.validate_jwt_token(client_name, client_token):
-            #     # Proceed
-            # else:
-            #   #find a way to notify the client on auth error!
-            #   # forwarded_message = {"sender": "admin, "content": "Error! Failed Authorization!"}
+            try:
+                client_name = data['sender']
+                client_token = data['jwt']
 
-            if CHAT_GPT_USER in json_["conversation_room"]:
-                print(f"Sending this content to ChatGPT: {json_['content']}")
+            except KeyError as e:
+                logging.error(f"Invalid message, missing required fields: {e}")
+                return {"error": f"Invalid message, missing required fields: {e}"}
 
-                chat_gpt_response = self.chatgpt_instance.send_input(json_['content'])
-                print(f"Response received from ChatGPT: {chat_gpt_response}")
+            # Invalid JWT token in client message
+            if not self.auth_manager.validate_jwt_token(client_name, client_token):
+                forwarded_message = {"sender": ADMIN_USER, "content": f"Error! Failed Authorization! "
+                f"User '{client_name}' must re login so the conversation can be resumed"}
+
+                self.socketio.emit('received_message', forwarded_message, to=response["conversation_room"])
+                return
+
+            if CHAT_GPT_USER in data["conversation_room"]:
+                logging.info(f"Sending this content to ChatGPT: {data['content']}")
+
+                chat_gpt_response = self.chatgpt_instance.send_input(data['content'])
+                logging.info(f"Response received from ChatGPT: {chat_gpt_response}")
 
                 forwarded_message = {"sender": CHAT_GPT_USER, "content": chat_gpt_response}
                 self.socketio.emit('ai_response_received', forwarded_message, to=response["conversation_room"])
                 return
 
-            forwarded_message = {"sender": json_['sender'], "content": json_['content']}
+            forwarded_message = {"sender": data['sender'], "content": data['content']}
             self.socketio.emit('received_message', forwarded_message, to=response["conversation_room"])
 
 
