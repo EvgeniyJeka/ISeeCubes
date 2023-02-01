@@ -120,11 +120,52 @@ class ChatServer:
             except KeyError:
                 return {"error": "Invalid Log In request"}
 
-            print(username, password)
-
+            logging.info(f"New log in request received, username: {username}, password: {password}")
             requested_token = self.auth_manager.generate_jwt_token(username, password)
 
             return requested_token
+
+        @self.app.route("/admin/kill_token", methods=['POST'])
+        def admin_kill_token():
+            """
+            Extracts JSON data from the request which should contain a 'username', 'password' and 'user_token_terminate' field.
+            Uses the 'username' and 'password' fields to generate a JWT token using the 'generate_jwt_token'
+            method of an 'auth_manager' object.
+I           If the token generation is successful, the code removes the JWT token of the specified user
+            ('user_token_terminate') from the 'active_tokens' dictionary of the 'auth_manager' object.
+            :return: dict
+            """
+
+            request_content = request.get_json()
+
+            if not request_content:
+                return {"error": "Invalid request format, expected JSON data"}
+
+            try:
+                username = request_content['username']
+                password = request_content['password']
+                kill_user_token = request_content['user_token_terminate']
+
+            except KeyError as e:
+                return {"error": f"Invalid request, missing required field: {e}"}
+
+            logging.info(f"Admin user request received, username: {username}, password: {password}")
+            requested_token = self.auth_manager.generate_jwt_token(username, password)
+
+            if requested_token['result'] == 'success':
+                logging.info(f"Terminating JWT that belongs to {kill_user_token} by admin's request")
+
+                try:
+                    self.auth_manager.active_tokens.pop(kill_user_token)
+
+                except KeyError:
+                    return {"error": f"No JWT for user {kill_user_token}"}
+
+                logging.info(f"Successfully terminated JWT for user: {kill_user_token}")
+                return {"result": "success"}
+
+            else:
+                return {"error": "Admin access denied"}
 
 
         def user_joined():

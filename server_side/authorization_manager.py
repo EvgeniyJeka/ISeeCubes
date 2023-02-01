@@ -14,7 +14,8 @@ class AuthManager:
     credentials = {"Lisa": hash("TestMe"),
                    "Avi": hash("MoreMoreMore"),
                    "Era": hash("Come on"),
-                   "Tsahi": hash("Virtual Environment")}
+                   "Tsahi": hash("Virtual Environment"),
+                   "Admin": hash("AdminPassword")}
 
     def generate_jwt_token(self, username, password):
         """
