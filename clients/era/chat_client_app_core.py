@@ -6,6 +6,9 @@ import socketio
 import requests
 import json
 import threading
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 
 # TO DO:
@@ -41,19 +44,22 @@ class ClientAppCore:
     def send_log_in_request(self, username, password):
         # IN PROGRESS! #
 
-        print(f"App Core: sending a sign in request to the server, username: {username}, password: {password}")
-        response = json.dumps({'result': 'success', 'key': '1245Test'}) # Temporary stub for client side
-        sign_in_data = json.loads(response)
+        logging.info(f"App Core: sending a sign in request to the server, username: {username}, password: {password}")
+
+        response = requests.post(url="http://localhost:5000/log_in", json={"username": username, "password": password})
+        sign_in_data = json.loads(response.text)
 
         if 'result' in sign_in_data.keys():
             if sign_in_data['result'] == 'success':
                 self.my_name = username
-                self.current_auth_token = sign_in_data['key']
+                self.current_auth_token = sign_in_data['token']
                 self.user_logged_in = True
                 return {"result": "success"}
 
-            elif sign_in_data['result'] == 'wrong credentials':
-                return {"result": "wrong credentials"}
+            elif sign_in_data['result'] == 'Invalid credentials':
+                return {"result": "Invalid credentials"}
+            else:
+                return {"result": "Unknown server code"}
         else:
             return {"result": "server error"}
 
@@ -64,12 +70,14 @@ class ClientAppCore:
             self.sio = socketio.Client()
 
             if self.user_logged_in is False:
-                print("Core App: user isn't logged in, can't connect!")
+                logging.warning("Core App: user isn't logged in, can't connect!")
                 return False
+
+            headers = {"username": self.my_name, "jwt": self.current_auth_token}
 
             # GET CONTACTS request
             self.sio.connect('http://localhost:5000')
-            response = requests.get(f"http://localhost:5000/get_contacts_list/{self.my_name}")
+            response = requests.get(f"http://localhost:5000/get_contacts_list/{self.my_name}", headers=headers)
             server_contacts_data = json.loads(response.text)
 
             # All existing contacts
@@ -90,13 +98,13 @@ class ClientAppCore:
             self.message_box = MessageBox(self)
 
             # Returning the list of all available contacts received from the server
-            print(f"Contacts list received from the server: {self.contacts_list}")
-            print(f"Online contacts list received: {self.currently_online_contacts}")
+            logging.info(f"Contacts list received from the server: {self.contacts_list}")
+            logging.info(f"Online contacts list received: {self.currently_online_contacts}")
 
             return {"contacts": self.contacts_list, "currently_online": self.currently_online_contacts, "my_name": self.my_name}
 
         except Exception as e:
-            print(f"Failed to connect: {e}")
+            logging.error(f"Failed to connect: {e}")
             return False
 
     def start_listening_loop(self):
@@ -125,6 +133,30 @@ class ClientAppCore:
                     current_messages_box.see("end")
                     current_messages_box.configure(state="disabled")
 
+        @self.sio.on('ai_response_received')
+        def handle_my_custom_event(message):
+
+            print(f"{message['sender']}: {message['content']}")
+            first_message_conversation = f"{message['sender']}: {message['content']}"
+
+            current_messages_box = self.address_book[message['sender']]
+
+            # First message from given user
+            if current_messages_box is None:
+                t1 = threading.Thread(target=self.message_box.show_message_box,
+                                      args=(first_message_conversation, message['sender']))
+                t1.start()
+                time.sleep(6)
+
+            # The conversation with the given user is going on, and a Chat Room is already open
+            else:
+                current_messages_box.configure(state="normal")
+                current_messages_box.insert(INSERT, "\n")
+                current_messages_box.insert(INSERT, f"{message['sender']}: {message['content']}")
+                current_messages_box.insert(INSERT, "\n")
+                current_messages_box.see("end")
+                current_messages_box.configure(state="disabled")
+
         @self.sio.on('new_user_online')
         def handle_new_user_online(message):
             user_name = message["username"]
@@ -147,9 +179,25 @@ class ClientAppCore:
 
 
     def sending_keep_alive_loop(self):
-        print(f"SENDING KEEP ALIVE SIGNALS EVERY {keep_alive_delay_between_events} seconds")
+        """
+        This method continuously sends "connection_alive" events to a server using Socket.IO while the user is logged in.
+        The function first logs a message indicating that it will send keep-alive signals every
+        keep_alive_delay_between_events seconds.
 
-        while True:
+        It then enters an infinite loop using while self.user_logged_in,
+        which will run as long as the user_logged_in variable is set to True.
+        In each iteration of the loop, the current date and time is retrieved using datetime.now(),
+        and a "connection_alive" event is emitted to the server with a dictionary as
+        the payload that contains the client's name and the current time.
+
+        Finally, the function uses time.sleep(keep_alive_delay_between_events)
+        to pause the loop for keep_alive_delay_between_events seconds before emitting the next "connection_alive" event.
+        :return:
+        """
+        logging.info(f"SENDING KEEP ALIVE SIGNALS EVERY {keep_alive_delay_between_events} seconds")
+
+        # Sending 'connection_alive' event every X seconds while the user is logged in
+        while self.user_logged_in:
             now = datetime.now()
             self.sio.emit('connection_alive', {'client': self.my_name,
                                                "time": now.strftime('%m/%d/%y %H:%M:%S')})
