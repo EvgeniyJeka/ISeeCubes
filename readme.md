@@ -96,9 +96,9 @@ to the current user).
 While handling the events ClientAppCore is responsible to make the required adjustments in ChatClient UI elements - 
 to color usernames of  users that are currently online in green, to enable/disable buttons e.t.c. 
 
-3. MessageBox...
+3. MessageBox..
 
-4. LoginWindow...
+4. LoginWindow..
  
 
 

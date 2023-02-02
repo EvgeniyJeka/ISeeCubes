@@ -1,6 +1,10 @@
 from tkinter import *
 from PIL import ImageTk, Image
 import threading
+import logging
+import concurrent.futures
+
+logging.basicConfig(level=logging.INFO)
 
 from clients.lisa.chat_client_app_core import ClientAppCore
 from clients.lisa.login_window import LoginWindow
@@ -23,6 +27,7 @@ width = 285
 # Log In request (client side), response parsed. D
 # Connect button is enabled only after successful Log In D
 # Log in button is disabled after successful login and re-enabled after disconnect D
+
 
 class ChatClient:
 
@@ -122,22 +127,39 @@ class ChatClient:
         self.main_ui_window.protocol("WM_DELETE_WINDOW", on_closing)
         self.main_ui_window.mainloop()
 
-    # CHAT WITH button - MAKE ENABLED ONLY AFTER CONNECTION IS ESTABLISHED !!
     def take_selected_chat_partner_from_ui(self):
+        """
+        The method  takes the selected contact from the user interface (UI) and tries to start a chat with
+        the selected contact. The selected contact is obtained by calling the curselection method on
+        the contacts_list_ui_element object.
+        """
         selected_contact = self.contacts_list_ui_element.curselection()
-        try:
-            self.handle_chat_with(self.contacts_list_ui_element.get(selected_contact[0]))
-        except IndexError as e:
-            print(f"No contact was selected: {e}")
+        if selected_contact:
+            selected_contact = self.contacts_list_ui_element.get(selected_contact[0])
+            self.handle_chat_with(selected_contact)
+        else:
+            logging.error("No contact was selected")
 
     def handle_connect(self):
-        print("Button clicked: CONNECT")
+        """
+        Handles the "Connect" button click. When the button is clicked, the client app calls the
+        "initiate_connection" method in the "client_app_core" object.
+        If the connection is initiated successfully, the function retrieves the list of contacts from the server
+        and inserts them into the "contacts_list_ui_element".
+        Then it colors the contacts that are currently online in green, and all others in red.
+        Finally, it starts two threads: "listening_loop_thread" and "sending_keep_alive_thread".
+        These threads are used for listening for incoming messages and sending keep-alive messages
+        to the server, respectively.
+        :return:
+        """
+        logging.info("Button clicked: CONNECT")
         # When connection is initiated the list of the available contacts is fetched from the server
         server_initiate_feed = self.client_app_core.initiate_connection()
 
         if server_initiate_feed is False:
-            print("Client App Core: Error, failed to connect")
+            logging.info("Client App Core: Error, failed to connect")
             self.connection_indicator_ui_element.config(text="Error", fg="red4")
+            self.client_app_core.user_logged_in = False
             return
 
         contacts_list = server_initiate_feed['contacts']
@@ -148,7 +170,7 @@ class ChatClient:
             self.connection_indicator_ui_element.config(text="Online", fg="green")
         else:
             self.connection_indicator_ui_element.config(text="Error", fg="red4")
-            print("Failed to connect!")
+            logging.error("Failed to connect!")
 
         # Inserting the list of contacts that was fetched into the 'Contact List' UI Element
         self.contacts_list_ui_element.delete(0, END)
@@ -160,13 +182,14 @@ class ChatClient:
         self.button_connect["state"] = DISABLED
         self.button_chat_with["state"] = ACTIVE
 
-        print("Starting Listening Loop")
+        logging.info("Starting Listening Loop")
         self.listening_loop_thread = threading.Thread(target=self.client_app_core.start_listening_loop)
         self.listening_loop_thread.start()
 
-        print("Starting Sending Keep Alive Loop")
+        logging.info("Starting Sending Keep Alive Loop")
         self.sending_keep_alive_thread = threading.Thread(target=self.client_app_core.sending_keep_alive_loop)
         self.sending_keep_alive_thread.start()
+
 
     def handle_disconnect(self):
         print("Button clicked: DISCONNECT")
@@ -191,7 +214,9 @@ class ChatClient:
         self.main_ui_window.title(f"Please log in")
 
         # Emitting 'client_disconnection' event to the server
-        self.client_app_core.sio.emit('client_disconnection', {"client": self.client_app_core.my_name})
+        self.client_app_core.sio.emit('client_disconnection',
+                                      {"client": self.client_app_core.my_name,
+                                       "jwt": self.client_app_core.current_auth_token})
 
         # Stopping the Listening Loop thread
         self.listening_loop_thread.join(timeout=2)
@@ -204,7 +229,7 @@ class ChatClient:
             self.log_in_window.show_login_window(self.main_ui_window, self.button_connect)
 
     def handle_chat_with(self, target_contact):
-        print("Button clicked: CHAT WITH")
+        logging.info("Button clicked: CHAT WITH")
         t2 = threading.Thread(target=self.start_chat_thread, args=(target_contact,))
         t2.start()
 

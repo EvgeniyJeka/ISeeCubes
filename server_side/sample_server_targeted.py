@@ -100,6 +100,20 @@ class ChatServer:
 
         @self.app.route("/get_contacts_list/<username>", methods=['GET'])
         def get_rooms_list(username):
+
+            user_name = request.headers.get('username')
+            jwt_token = request.headers.get('jwt')
+
+            if not all([user_name, jwt_token]):
+                return {"error": "The 'get_contact_list' request headers must contain username and jwt fields"}
+
+            logging.info(f"Received a request for contacts, username: '{user_name}',  JWT: {jwt_token}")
+
+            # Validating JWT before allowing the user to get the contacts list
+            if not self.auth_manager.validate_jwt_token(user_name, jwt_token):
+                logging.error(f"Invalid JWT: {jwt_token}")
+                return {"error": "Invalid JWT"}
+
             contacts_data = {"contacts": self.prepare_rooms_for(username),
                              "currently_online": self.users_currently_online,
                              "all_existing_contacts": self.users_list}
@@ -227,6 +241,7 @@ I           If the token generation is successful, the code removes the JWT toke
                 self.socketio.emit('received_message', forwarded_message, to=f"{ADMIN_USER}&{client_name}")
                 return
 
+            # Message sent to ChatGPT
             if CHAT_GPT_USER in data["conversation_room"]:
                 logging.info(f"Sending this content to ChatGPT: {data['content']}")
 
@@ -244,17 +259,24 @@ I           If the token generation is successful, the code removes the JWT toke
         def handle_client_disconnection(json_):
             print(f"Client disconnection: {json_}")
 
-            client_name = json_['client']
-            # client_token = json_['jwt']
-            #
-            # if verified_client_token(client_name, client_token):
-            #     # Proceed
+            try:
+                client_name = json_['client']
+                client_token = json_['jwt']
+
+            except KeyError as e:
+                logging.error(f"Invalid message, missing required fields: {e}")
+                return {"error": f"Invalid message, missing required fields: {e}"}
+
+            # Invalid JWT token in client message
+            if not self.auth_manager.validate_jwt_token(client_name, client_token):
+                logging.warning(f"Caution! An unauthorized disconnection attempt was just performed for user {client_name}!")
+                return
 
             if client_name in self.users_currently_online:
                 self.users_currently_online.remove(client_name)
                 self.socketio.emit('user_has_gone_offline', {"username": client_name})
 
-            print(f"Users currently online: {self.users_currently_online}")
+            logging.info(f"Users currently online: {self.users_currently_online}")
 
         @self.socketio.on('connection_alive')
         def processing_keep_alive_signals(json_):
@@ -274,27 +296,28 @@ def connection_checker(chat_instance: ChatServer):
     while True:
         # IN PROGRESS - SEE
         time.sleep(CONNECTIONS_VERIFICATION_INTERVAL)
-        print("Verifying active connections..")
+        logging.info("Verifying active connections..")
 
         users_to_disconnect = []
 
         for client_name in chat_instance.keep_alive_tracking:
             last_time_keep_alive_message_received = chat_instance.keep_alive_tracking[client_name]
 
-            # print(f"User: {client_name}, current time: {datetime.now()}, last time keep alive message was received:"
-            #       f" {last_time_keep_alive_message_received}, delta: {datetime.now() - last_time_keep_alive_message_received} ")
+            print(f"User: {client_name}, current time: {datetime.now()}, last time keep alive message was received:"
+                  f" {last_time_keep_alive_message_received}, delta: {datetime.now() - last_time_keep_alive_message_received} ")
 
             # Consider the user as disconnected if no 'keep alive' was received for more than X seconds (configurable)
             if datetime.now() - last_time_keep_alive_message_received > timedelta(
                     seconds=KEEP_ALIVE_DELAY_BETWEEN_EVENTS):
                 users_to_disconnect.append(client_name)
 
-        print(f"Disconnecting users: {users_to_disconnect}")
+        logging.info(f"Disconnecting users: {users_to_disconnect}")
         for user in users_to_disconnect:
             if user in chat_instance.users_currently_online:
                 # Removing the user from 'active users' list and killing the JWT
                 chat_instance.users_currently_online.remove(user)
-                chat_instance.auth_manager.active_tokens.pop(user)
+                if user in chat_instance.auth_manager.active_tokens:
+                    chat_instance.auth_manager.active_tokens.pop(user)
 
             chat_instance.keep_alive_tracking.pop(user)
             chat_instance.socketio.emit('user_has_gone_offline', {"username": user})
