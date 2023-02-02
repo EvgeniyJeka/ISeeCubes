@@ -8,7 +8,6 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-
 # TO DO:
 # 1.  Custom 'keep alive' logic both on server and on client side // TEST AGAINST 2-3 CLIENTS, NOT EMULATIONS D
 #
@@ -33,8 +32,6 @@ logging.basicConfig(level=logging.INFO)
 # Add 2 variations of import (for Dockerization)
 from server_side.authorization_manager import AuthManager
 
-
-
 # Config
 from server_side.chatgpt_integration import ChatGPTIntegration
 
@@ -45,8 +42,8 @@ KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 8
 CHAT_GPT_USER = "ChatGPT"
 ADMIN_USER = "Admin"
 
-class ChatServer:
 
+class ChatServer:
     # Will be taken from SQL DB
     users_list = ["Lisa", "Avi", "Tsahi", "Era", "Bravo", "Dariya", CHAT_GPT_USER, ADMIN_USER]
 
@@ -59,7 +56,6 @@ class ChatServer:
     auth_manager = None
     chatgpt_instance = None
 
-
     def __init__(self):
         self.app = Flask(__name__)
         self.socketio = SocketIO(self.app)
@@ -70,7 +66,6 @@ class ChatServer:
         # Verifying the ChatGPT service is available
         if self.chatgpt_instance.is_chatgpt_available():
             self.users_currently_online.append(CHAT_GPT_USER)
-
 
     def room_names_generator(self, listed_users: list) -> list:
         listed_users.sort()
@@ -101,12 +96,12 @@ class ChatServer:
 
         return result
 
-
     def run(self):
 
         @self.app.route("/get_contacts_list/<username>", methods=['GET'])
         def get_rooms_list(username):
-            contacts_data = {"contacts": self.prepare_rooms_for(username), "currently_online": self.users_currently_online,
+            contacts_data = {"contacts": self.prepare_rooms_for(username),
+                             "currently_online": self.users_currently_online,
                              "all_existing_contacts": self.users_list}
 
             return contacts_data
@@ -169,7 +164,6 @@ I           If the token generation is successful, the code removes the JWT toke
             else:
                 return {"error": "Admin access denied"}
 
-
         def user_joined():
             print(f"User joined!")
 
@@ -202,37 +196,19 @@ I           If the token generation is successful, the code removes the JWT toke
             join_room(room)
             return {"result": "success"}
 
-
-        # @self.socketio.on('client_sends_message')
-        # def handle_client_message(json_):
-        #     print('server responds to: ' + str(json_))
-        #     response = json_
-        #
-        #     # client_token = json_['jwt']
-        #     #
-        #     # if auth_manager.validate_jwt_token(client_name, client_token):
-        #     #     # Proceed
-        #     # else:
-        #     #   #find a way to notify the client on auth error!
-        #     #   # forwarded_message = {"sender": "admin, "content": "Error! Failed Authorization!"}
-        #
-        #     if CHAT_GPT_USER in json_["conversation_room"]:
-        #         print(f"Sending this content to ChatGPT: {json_['content']}")
-        #
-        #         chat_gpt_response = self.chatgpt_instance.send_input(json_['content'])
-        #         print(f"Response received from ChatGPT: {chat_gpt_response}")
-        #
-        #         forwarded_message = {"sender": CHAT_GPT_USER, "content": chat_gpt_response}
-        #         self.socketio.emit('ai_response_received', forwarded_message, to=response["conversation_room"])
-        #         return
-        #
-        #     forwarded_message = {"sender": json_['sender'], "content": json_['content']}
-        #     self.socketio.emit('received_message', forwarded_message, to=response["conversation_room"])
-
         @self.socketio.on('client_sends_message')
         def handle_client_message(data):
-            # IN PROGRESS !!
-            print('server responds to: ' + str(data))
+            """
+            This method is used to handle messages received from end client via websocket.
+            JWT token is validated. If JWT is invalid, the message isn't handled and the sender receives an error message from Admin.
+            If the message destination is another user, the message is redirected to him (published to the relevant conversation room).
+            If the message destination is ChatGPT user (or another bot), the message is forwarded to it,
+            and bot's response is sent back to the user.
+            :param data: message content, dict
+            :return:
+            """
+
+            logging.info('server responds to: ' + str(data))
             response = data
 
             try:
@@ -264,7 +240,6 @@ I           If the token generation is successful, the code removes the JWT toke
             forwarded_message = {"sender": data['sender'], "content": data['content']}
             self.socketio.emit('received_message', forwarded_message, to=response["conversation_room"])
 
-
         @self.socketio.on('client_disconnection')
         def handle_client_disconnection(json_):
             print(f"Client disconnection: {json_}")
@@ -281,18 +256,16 @@ I           If the token generation is successful, the code removes the JWT toke
 
             print(f"Users currently online: {self.users_currently_online}")
 
-
         @self.socketio.on('connection_alive')
         def processing_keep_alive_signals(json_):
             client_name = json_['client']
             message_time = json_['time']
 
-            print(f"Client {client_name} sent 'keep alive' signal at {message_time}")
+            logging.info(f"Client {client_name} sent 'keep alive' signal at {message_time}")
 
             # Updating the time at which the 'keep alive' signal was last time received for given user
             self.keep_alive_tracking[client_name] = datetime.strptime(message_time, '%m/%d/%y %H:%M:%S')
-            print(f"Server Side Keep Alive Time Table Updated: {self.keep_alive_tracking}")
-
+            logging.info(f"Server Side Keep Alive Time Table Updated: {self.keep_alive_tracking}")
 
         self.socketio.run(self.app, debug=True, allow_unsafe_werkzeug=True)
 
@@ -312,17 +285,19 @@ def connection_checker(chat_instance: ChatServer):
             #       f" {last_time_keep_alive_message_received}, delta: {datetime.now() - last_time_keep_alive_message_received} ")
 
             # Consider the user as disconnected if no 'keep alive' was received for more than X seconds (configurable)
-            if datetime.now() - last_time_keep_alive_message_received > timedelta(seconds=KEEP_ALIVE_DELAY_BETWEEN_EVENTS):
+            if datetime.now() - last_time_keep_alive_message_received > timedelta(
+                    seconds=KEEP_ALIVE_DELAY_BETWEEN_EVENTS):
                 users_to_disconnect.append(client_name)
 
         print(f"Disconnecting users: {users_to_disconnect}")
         for user in users_to_disconnect:
             if user in chat_instance.users_currently_online:
+                # Removing the user from 'active users' list and killing the JWT
                 chat_instance.users_currently_online.remove(user)
+                chat_instance.auth_manager.active_tokens.pop(user)
 
             chat_instance.keep_alive_tracking.pop(user)
             chat_instance.socketio.emit('user_has_gone_offline', {"username": user})
-
 
 
 if __name__ == '__main__':
