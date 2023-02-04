@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from flask import Flask, request
 from flask_socketio import SocketIO, join_room
 import logging
+import queue
 
 logging.basicConfig(level=logging.INFO)
 
@@ -37,6 +38,7 @@ from server_side.chatgpt_integration import ChatGPTIntegration
 
 CONNECTIONS_VERIFICATION_INTERVAL = 10
 KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 8
+CACHED_OFFLINE_MESSAGES_DELAY = 3
 
 # Special users
 CHAT_GPT_USER = "ChatGPT"
@@ -52,6 +54,9 @@ class ChatServer:
 
     # Will be in service cache AND in DB (Redis DB?)
     users_currently_online = []
+
+    # Messages that were sent to offline users and waiting to be delivered (once the user will be online).
+    cached_messages_for_offline_users = dict()
 
     auth_manager = None
     chatgpt_instance = None
@@ -96,9 +101,58 @@ class ChatServer:
 
         return result
 
-    def _extract_target_user(self, conversation_room: str, sender: str):
-        split_list = conversation_room.split("&")
-        return [x for x in split_list if x != sender][0]
+    # def handle_messaging_offline_user(self, message_destination, content, conversation_room):
+    #
+    #     new_cached_message = {"content": content, "conversation_room": conversation_room}
+    #
+    #     if message_destination in self.cached_messages_for_offline_users.keys():
+    #         stored_messages = self.cached_messages_for_offline_users[message_destination]
+    #         stored_messages.append(new_cached_message)
+    #
+    #     else:
+    #         self.cached_messages_for_offline_users[message_destination] = [new_cached_message]
+    #         logging.info(f"Cached messages sent to offline users: {self.cached_messages_for_offline_users}")
+
+    import logging
+    import queue
+
+    def handle_messaging_offline_user(self, message_sender, message_destination, content, conversation_room):
+
+        if not message_destination:
+            logging.error("Message recipient not specified")
+            return
+
+        new_cached_message = {"sender": message_sender, "content": content, "conversation_room": conversation_room}
+
+        if message_destination in self.cached_messages_for_offline_users.keys():
+            messages_queue = self.cached_messages_for_offline_users[message_destination]
+            messages_queue.put(new_cached_message)
+            logging.info(f"Cached messages sent to offline users: {self.cached_messages_for_offline_users}")
+
+        else:
+            messages_queue = queue.Queue()
+            messages_queue.put(new_cached_message)
+            self.cached_messages_for_offline_users[message_destination] = messages_queue
+            logging.info(f"Cached messages sent to offline users: {self.cached_messages_for_offline_users}")
+
+    def publish_cached_messages(self, user_name):
+
+        try:
+            if user_name in self.cached_messages_for_offline_users.keys():
+                awaiting_messages = self.cached_messages_for_offline_users[user_name]
+
+                while not awaiting_messages.empty():
+                    next_message_to_publish = awaiting_messages.get()
+                    logging.info(f"Publishing a message cached for {user_name} - {next_message_to_publish['content']}")
+                    message = {"sender": next_message_to_publish['sender'], "content": next_message_to_publish['content']}
+                    self.socketio.emit('received_message', message, to=next_message_to_publish["conversation_room"])
+
+                return True
+
+        except Exception as e:
+            logging.error(f"Failed to publish cached messages to user {user_name} - {e}")
+            return False
+
 
     def run(self):
 
@@ -214,52 +268,13 @@ I           If the token generation is successful, the code removes the JWT toke
 
             logging.info(f"Adding a customer to a room: {data['room']}")
             join_room(room)
-            return {"result": "success"}
 
-        # @self.socketio.on('client_sends_message')
-        # def handle_client_message(data):
-        #     """
-        #     This method is used to handle messages received from end client via websocket.
-        #     JWT token is validated. If JWT is invalid, the message isn't handled and the sender receives an error message from Admin.
-        #     If the message destination is another user, the message is redirected to him (published to the relevant conversation room).
-        #     If the message destination is ChatGPT user (or another bot), the message is forwarded to it,
-        #     and bot's response is sent back to the user.
-        #     :param data: message content, dict
-        #     :return:
-        #     """
-        #
-        #     logging.info('server responds to: ' + str(data))
-        #     response = data
-        #
-        #     try:
-        #         client_name = data['sender']
-        #         client_token = data['jwt']
-        #
-        #     except KeyError as e:
-        #         logging.error(f"Invalid message, missing required fields: {e}")
-        #         return {"error": f"Invalid message, missing required fields: {e}"}
-        #
-        #     # Invalid JWT token in client message
-        #     if not self.auth_manager.validate_jwt_token(client_name, client_token):
-        #         forwarded_message = {"sender": ADMIN_USER, "content": f"Error! Failed Authorization! "
-        #         f"User '{client_name}' must disconnect, re login and reconnect so the conversation can be resumed."}
-        #
-        #         self.socketio.emit('received_message', forwarded_message, to=f"{ADMIN_USER}&{client_name}")
-        #         return
-        #
-        #     # Message sent to ChatGPT
-        #     if CHAT_GPT_USER in data["conversation_room"]:
-        #         logging.info(f"Sending this content to ChatGPT: {data['content']}")
-        #
-        #         chat_gpt_response = self.chatgpt_instance.send_input(data['content'])
-        #         logging.info(f"Response received from ChatGPT: {chat_gpt_response}")
-        #
-        #         forwarded_message = {"sender": CHAT_GPT_USER, "content": chat_gpt_response}
-        #         self.socketio.emit('ai_response_received', forwarded_message, to=response["conversation_room"])
-        #         return
-        #
-        #     forwarded_message = {"sender": data['sender'], "content": data['content']}
-        #     self.socketio.emit('received_message', forwarded_message, to=response["conversation_room"])
+            time.sleep(CACHED_OFFLINE_MESSAGES_DELAY)
+
+            # Emitting messages that were cached for this user, if there are any
+            self.publish_cached_messages(client_name)
+
+            return {"result": "success"}
 
         @self.socketio.on('client_sends_message')
         def handle_client_message(data):
@@ -301,9 +316,20 @@ I           If the token generation is successful, the code removes the JWT toke
                 chat_gpt_response = self.chatgpt_instance.send_input(content)
                 return send_bot_response(CHAT_GPT_USER, chat_gpt_response, conversation_room)
 
-            # Extracting message target and handling messages sent to OFFLINE users
+            # Extracting message target
+            message_destination = _extract_target_user(conversation_room, client_name)
 
-            return send_message(client_name, content, conversation_room)
+            if message_destination not in self.users_list or message_destination is False:
+                logging.error(f"Trying to send a message to non-existing user.")
+                return
+
+            # Handling messages sent to OFFLINE users
+            if message_destination not in self.users_currently_online:
+                return self.handle_messaging_offline_user(client_name, message_destination, content, conversation_room)
+
+            # Happy Path - message is instantly delivered to it's destination
+            else:
+                return send_message(client_name, content, conversation_room)
 
         def send_message(sender, content, conversation_room):
             """
@@ -344,6 +370,16 @@ I           If the token generation is successful, the code removes the JWT toke
             """
             message = {"sender": ADMIN_USER, "content": f"Error! {error_message}"}
             self.socketio.emit('received_message', message, to=f"{ADMIN_USER}&{client_name}")
+
+        def _extract_target_user(conversation_room: str, sender: str):
+            split_list = conversation_room.split("&")
+            results_list = [x for x in split_list if x != sender]
+
+            if len(results_list) != 1:
+                logging.error(f"Invalid conversation room designation: {conversation_room}")
+                return False
+
+            return results_list[0]
 
         @self.socketio.on('client_disconnection')
         def handle_client_disconnection(json_):
@@ -393,8 +429,8 @@ def connection_checker(chat_instance: ChatServer):
         for client_name in chat_instance.keep_alive_tracking:
             last_time_keep_alive_message_received = chat_instance.keep_alive_tracking[client_name]
 
-            print(f"User: {client_name}, current time: {datetime.now()}, last time keep alive message was received:"
-                  f" {last_time_keep_alive_message_received}, delta: {datetime.now() - last_time_keep_alive_message_received} ")
+            # print(f"User: {client_name}, current time: {datetime.now()}, last time keep alive message was received:"
+            #       f" {last_time_keep_alive_message_received}, delta: {datetime.now() - last_time_keep_alive_message_received} ")
 
             # Consider the user as disconnected if no 'keep alive' was received for more than X seconds (configurable)
             if datetime.now() - last_time_keep_alive_message_received > timedelta(
