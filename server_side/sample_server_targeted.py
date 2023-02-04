@@ -96,6 +96,10 @@ class ChatServer:
 
         return result
 
+    def _extract_target_user(self, conversation_room: str, sender: str):
+        split_list = conversation_room.split("&")
+        return [x for x in split_list if x != sender][0]
+
     def run(self):
 
         @self.app.route("/get_contacts_list/<username>", methods=['GET'])
@@ -256,6 +260,8 @@ I           If the token generation is successful, the code removes the JWT toke
 
             forwarded_message = {"sender": data['sender'], "content": data['content']}
             self.socketio.emit('received_message', forwarded_message, to=response["conversation_room"])
+
+
 
         @self.socketio.on('client_disconnection')
         def handle_client_disconnection(json_):
