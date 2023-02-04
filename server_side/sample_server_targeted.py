@@ -216,56 +216,138 @@ I           If the token generation is successful, the code removes the JWT toke
             join_room(room)
             return {"result": "success"}
 
+        # @self.socketio.on('client_sends_message')
+        # def handle_client_message(data):
+        #     """
+        #     This method is used to handle messages received from end client via websocket.
+        #     JWT token is validated. If JWT is invalid, the message isn't handled and the sender receives an error message from Admin.
+        #     If the message destination is another user, the message is redirected to him (published to the relevant conversation room).
+        #     If the message destination is ChatGPT user (or another bot), the message is forwarded to it,
+        #     and bot's response is sent back to the user.
+        #     :param data: message content, dict
+        #     :return:
+        #     """
+        #
+        #     logging.info('server responds to: ' + str(data))
+        #     response = data
+        #
+        #     try:
+        #         client_name = data['sender']
+        #         client_token = data['jwt']
+        #
+        #     except KeyError as e:
+        #         logging.error(f"Invalid message, missing required fields: {e}")
+        #         return {"error": f"Invalid message, missing required fields: {e}"}
+        #
+        #     # Invalid JWT token in client message
+        #     if not self.auth_manager.validate_jwt_token(client_name, client_token):
+        #         forwarded_message = {"sender": ADMIN_USER, "content": f"Error! Failed Authorization! "
+        #         f"User '{client_name}' must disconnect, re login and reconnect so the conversation can be resumed."}
+        #
+        #         self.socketio.emit('received_message', forwarded_message, to=f"{ADMIN_USER}&{client_name}")
+        #         return
+        #
+        #     # Message sent to ChatGPT
+        #     if CHAT_GPT_USER in data["conversation_room"]:
+        #         logging.info(f"Sending this content to ChatGPT: {data['content']}")
+        #
+        #         chat_gpt_response = self.chatgpt_instance.send_input(data['content'])
+        #         logging.info(f"Response received from ChatGPT: {chat_gpt_response}")
+        #
+        #         forwarded_message = {"sender": CHAT_GPT_USER, "content": chat_gpt_response}
+        #         self.socketio.emit('ai_response_received', forwarded_message, to=response["conversation_room"])
+        #         return
+        #
+        #     forwarded_message = {"sender": data['sender'], "content": data['content']}
+        #     self.socketio.emit('received_message', forwarded_message, to=response["conversation_room"])
+
         @self.socketio.on('client_sends_message')
         def handle_client_message(data):
             """
-            This method is used to handle messages received from end client via websocket.
-            JWT token is validated. If JWT is invalid, the message isn't handled and the sender receives an error message from Admin.
-            If the message destination is another user, the message is redirected to him (published to the relevant conversation room).
-            If the message destination is ChatGPT user (or another bot), the message is forwarded to it,
-            and bot's response is sent back to the user.
-            :param data: message content, dict
-            :return:
-            """
+               Handle incoming message from client.
 
-            logging.info('server responds to: ' + str(data))
-            response = data
+               This function is triggered by the 'client_sends_message' event, and
+               performs the following actions:
+
+               1. Extracts the 'sender', 'jwt', 'conversation_room', and 'content' data
+                  from the incoming message.
+               2. Validates the JWT token for the sender.
+               3. If the conversation_room includes the CHAT_GPT_USER, the message is
+                  sent to the ChatGPT instance for processing.
+               4. If the conversation_room does not include the CHAT_GPT_USER, the
+                  message is sent as-is to the intended recipients.
+
+               :param data: Dictionary containing the incoming message data.
+               :return: None
+            """
 
             try:
                 client_name = data['sender']
                 client_token = data['jwt']
+                conversation_room = data['conversation_room']
+                content = data['content']
 
             except KeyError as e:
-                logging.error(f"Invalid message, missing required fields: {e}")
-                return {"error": f"Invalid message, missing required fields: {e}"}
+                logging.error(f"Invalid message, missing required field: {e}")
+                return
 
             # Invalid JWT token in client message
             if not self.auth_manager.validate_jwt_token(client_name, client_token):
-                forwarded_message = {"sender": ADMIN_USER, "content": f"Error! Failed Authorization! "
-                f"User '{client_name}' must disconnect, re login and reconnect so the conversation can be resumed."}
-
-                self.socketio.emit('received_message', forwarded_message, to=f"{ADMIN_USER}&{client_name}")
-                return
+                return send_error_message(f"User '{client_name}' must disconnect, re login and reconnect so the "
+                                          f"conversation can be resumed.", client_name)
 
             # Message sent to ChatGPT
-            if CHAT_GPT_USER in data["conversation_room"]:
-                logging.info(f"Sending this content to ChatGPT: {data['content']}")
+            if CHAT_GPT_USER in conversation_room:
+                chat_gpt_response = self.chatgpt_instance.send_input(content)
+                return send_bot_response(CHAT_GPT_USER, chat_gpt_response, conversation_room)
 
-                chat_gpt_response = self.chatgpt_instance.send_input(data['content'])
-                logging.info(f"Response received from ChatGPT: {chat_gpt_response}")
+            # Extracting message target and handling messages sent to OFFLINE users
 
-                forwarded_message = {"sender": CHAT_GPT_USER, "content": chat_gpt_response}
-                self.socketio.emit('ai_response_received', forwarded_message, to=response["conversation_room"])
-                return
+            return send_message(client_name, content, conversation_room)
 
-            forwarded_message = {"sender": data['sender'], "content": data['content']}
-            self.socketio.emit('received_message', forwarded_message, to=response["conversation_room"])
+        def send_message(sender, content, conversation_room):
+            """
+            Sends a message to a specified conversation room
 
+             Args:
+              - sender (str): the name of the sender
+              - content (str): the content of the message
+              - conversation_room (str): the name of the conversation room
 
+           """
+
+            message = {"sender": sender, "content": content}
+            self.socketio.emit('received_message', message, to=conversation_room)
+
+        def send_bot_response(sending_bot, content, conversation_room):
+            """
+            Forwards a bot response to a specified conversation room
+
+             Args:
+              - recipient (str): the name of the recipient
+              - content (str): the content of the response
+              - conversation_room (str): the name of the conversation room
+
+            """
+
+            message = {"sender": sending_bot, "content": content}
+            self.socketio.emit('ai_response_received', message, to=conversation_room)
+
+        def send_error_message(error_message, client_name):
+            """
+            Sends an error message to a specified recipient (from the Admin user)
+
+            Args:
+            - error_message (str): the content of the error message
+            - recipient (str): the name of the recipient
+
+            """
+            message = {"sender": ADMIN_USER, "content": f"Error! {error_message}"}
+            self.socketio.emit('received_message', message, to=f"{ADMIN_USER}&{client_name}")
 
         @self.socketio.on('client_disconnection')
         def handle_client_disconnection(json_):
-            print(f"Client disconnection: {json_}")
+            logging.info(f"Client disconnection: {json_}")
 
             try:
                 client_name = json_['client']
