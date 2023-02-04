@@ -168,6 +168,8 @@ I           If the token generation is successful, the code removes the JWT toke
 
                 try:
                     self.auth_manager.active_tokens.pop(kill_user_token)
+                    self.keep_alive_tracking.pop(kill_user_token)
+                    self.socketio.emit('user_has_gone_offline', {"username": kill_user_token})
 
                 except KeyError:
                     return {"error": f"No JWT for user {kill_user_token}"}
