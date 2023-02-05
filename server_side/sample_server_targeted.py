@@ -146,6 +146,7 @@ class ChatServer:
                     logging.info(f"Publishing a message cached for {user_name} - {next_message_to_publish['content']}")
                     message = {"sender": next_message_to_publish['sender'], "content": next_message_to_publish['content']}
                     self.socketio.emit('received_message', message, to=next_message_to_publish["conversation_room"])
+                    time.sleep(1)
 
                 return True
 
@@ -258,11 +259,11 @@ I           If the token generation is successful, the code removes the JWT toke
                 logging.error(f"Invalid JWT: {client_token}")
                 return {"error": "Invalid JWT"}
 
-            # Perform only once on each connection
-            if client_name not in self.users_currently_online:
-                self.users_currently_online.append(client_name)
-                # Emit 'new_user_online' to ALL (with current client username)
-                self.socketio.emit('new_user_online', {"username": client_name}, callback=user_joined)
+            # # Perform only once on each connection
+            # if client_name not in self.users_currently_online:
+            #     self.users_currently_online.append(client_name)
+            #     # Emit 'new_user_online' to ALL (with current client username)
+            #     self.socketio.emit('new_user_online', {"username": client_name}, callback=user_joined)
 
             logging.info(f"Users currently online: {self.users_currently_online}")
 
@@ -271,8 +272,13 @@ I           If the token generation is successful, the code removes the JWT toke
 
             time.sleep(CACHED_OFFLINE_MESSAGES_DELAY)
 
-            # Emitting messages that were cached for this user, if there are any
-            self.publish_cached_messages(client_name)
+            # Perform only once on each connection
+            if client_name not in self.users_currently_online:
+                self.users_currently_online.append(client_name)
+                # Emit 'new_user_online' to ALL (with current client username)
+                self.socketio.emit('new_user_online', {"username": client_name}, callback=user_joined)
+                # Emitting messages that were cached for this user, if there are any
+                self.publish_cached_messages(client_name)
 
             return {"result": "success"}
 
