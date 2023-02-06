@@ -26,9 +26,9 @@ logging.basicConfig(level=logging.INFO)
 #
 # Document methods & events
 # Make the server run in a Docker container
-# CASE ISSUE - Server and Client side
-# handle_client_message - avoid sending user's JWT to another user (client + server side)
-
+# CASE ISSUE - Server and Client side D
+# handle_client_message - avoid sending user's JWT to another user (client + server side) D
+# Support the flow connect-chat-disconnect-reconnect-chat (bug fix)
 
 # Add 2 variations of import (for Dockerization)
 from server_side.authorization_manager import AuthManager
@@ -53,7 +53,7 @@ class ChatServer:
     keep_alive_tracking = {}
 
     # Will be in service cache AND in DB (Redis DB?)
-    users_currently_online = []
+    users_currently_online = set()
 
     # Messages that were sent to offline users and waiting to be delivered (once the user will be online).
     cached_messages_for_offline_users = dict()
@@ -70,7 +70,7 @@ class ChatServer:
 
         # Verifying the ChatGPT service is available
         if self.chatgpt_instance.is_chatgpt_available():
-            self.users_currently_online.append(CHAT_GPT_USER)
+            self.users_currently_online.add(CHAT_GPT_USER)
 
     def room_names_generator(self, listed_users: list) -> list:
         listed_users.sort()
@@ -101,21 +101,6 @@ class ChatServer:
 
         return result
 
-    # def handle_messaging_offline_user(self, message_destination, content, conversation_room):
-    #
-    #     new_cached_message = {"content": content, "conversation_room": conversation_room}
-    #
-    #     if message_destination in self.cached_messages_for_offline_users.keys():
-    #         stored_messages = self.cached_messages_for_offline_users[message_destination]
-    #         stored_messages.append(new_cached_message)
-    #
-    #     else:
-    #         self.cached_messages_for_offline_users[message_destination] = [new_cached_message]
-    #         logging.info(f"Cached messages sent to offline users: {self.cached_messages_for_offline_users}")
-
-    import logging
-    import queue
-
     def handle_messaging_offline_user(self, message_sender, message_destination, content, conversation_room):
 
         if not message_destination:
@@ -123,17 +108,18 @@ class ChatServer:
             return
 
         new_cached_message = {"sender": message_sender, "content": content, "conversation_room": conversation_room}
+        logging.info(f"Caching a message from {message_sender} to {message_destination}: {content}")
 
         if message_destination in self.cached_messages_for_offline_users.keys():
             messages_queue = self.cached_messages_for_offline_users[message_destination]
             messages_queue.put(new_cached_message)
-            logging.info(f"Cached messages sent to offline users: {self.cached_messages_for_offline_users}")
+            #logging.info(f"Cached messages sent to offline users: {self.cached_messages_for_offline_users}")
 
         else:
             messages_queue = queue.Queue()
             messages_queue.put(new_cached_message)
             self.cached_messages_for_offline_users[message_destination] = messages_queue
-            logging.info(f"Cached messages sent to offline users: {self.cached_messages_for_offline_users}")
+            #logging.info(f"Cached messages sent to offline users: {self.cached_messages_for_offline_users}")
 
     def publish_cached_messages(self, user_name):
 
@@ -174,7 +160,7 @@ class ChatServer:
                 return {"error": "Invalid JWT"}
 
             contacts_data = {"contacts": self.prepare_rooms_for(username),
-                             "currently_online": self.users_currently_online,
+                             "currently_online": list(self.users_currently_online),
                              "all_existing_contacts": self.users_list}
 
             return contacts_data
@@ -239,6 +225,34 @@ I           If the token generation is successful, the code removes the JWT toke
             else:
                 return {"error": "Admin access denied"}
 
+        @self.app.route("/admin/get_info", methods=['POST'])
+        def admin_get_info():
+            """
+            Extracts JSON data from the request which should contain a 'username', 'password' and 'user_token_terminate' field.
+            Uses the 'username' and 'password' fields to generate a JWT token using the 'generate_jwt_token'
+            method of an 'auth_manager' object.
+I           If the token generation is successful, the method returns a list of all users that are currently online.
+
+            """
+
+            request_content = request.get_json()
+
+            if not request_content:
+                return {"error": "Invalid request format, expected JSON data"}
+
+            try:
+                username = request_content['username']
+                password = request_content['password']
+
+            except KeyError as e:
+                return {"error": f"Invalid request, missing required field: {e}"}
+
+            logging.info(f"Admin user request received, username: {username}, password: {password}")
+            requested_token = self.auth_manager.generate_jwt_token(username, password)
+
+            if requested_token['result'] == 'success':
+                return {"online_clients_list": list(self.users_currently_online)}
+
         def user_joined():
             print(f"User joined!")
 
@@ -259,13 +273,7 @@ I           If the token generation is successful, the code removes the JWT toke
                 logging.error(f"Invalid JWT: {client_token}")
                 return {"error": "Invalid JWT"}
 
-            # # Perform only once on each connection
-            # if client_name not in self.users_currently_online:
-            #     self.users_currently_online.append(client_name)
-            #     # Emit 'new_user_online' to ALL (with current client username)
-            #     self.socketio.emit('new_user_online', {"username": client_name}, callback=user_joined)
-
-            logging.info(f"Users currently online: {self.users_currently_online}")
+            logging.info(f"Users currently online: {list(self.users_currently_online)}")
 
             logging.info(f"Adding a customer to a room: {data['room']}")
             join_room(room)
@@ -274,7 +282,7 @@ I           If the token generation is successful, the code removes the JWT toke
 
             # Perform only once on each connection
             if client_name not in self.users_currently_online:
-                self.users_currently_online.append(client_name)
+                self.users_currently_online.add(client_name)
                 # Emit 'new_user_online' to ALL (with current client username)
                 self.socketio.emit('new_user_online', {"username": client_name}, callback=user_joined)
                 # Emitting messages that were cached for this user, if there are any
@@ -408,7 +416,7 @@ I           If the token generation is successful, the code removes the JWT toke
                 self.users_currently_online.remove(client_name)
                 self.socketio.emit('user_has_gone_offline', {"username": client_name})
 
-            logging.info(f"Users currently online: {self.users_currently_online}")
+            logging.info(f"Users currently online: {list(self.users_currently_online)}")
 
         @self.socketio.on('connection_alive')
         def processing_keep_alive_signals(json_):

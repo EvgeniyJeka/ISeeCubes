@@ -67,7 +67,8 @@ class ClientAppCore:
     def initiate_connection(self):
         # CONNECT method
         try:
-            self.sio = socketio.Client()
+            if self.sio is None:
+                self.sio = socketio.Client()
 
             if self.user_logged_in is False:
                 logging.warning("Core App: user isn't logged in, can't connect!")

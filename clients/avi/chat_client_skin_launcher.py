@@ -218,6 +218,9 @@ class ChatClient:
                                       {"client": self.client_app_core.my_name,
                                        "jwt": self.client_app_core.current_auth_token})
 
+        # Disconnecting, closing the SIO instance
+        self.client_app_core.sio.disconnect()
+
         # Stopping the Listening Loop thread
         self.listening_loop_thread.join(timeout=2)
 
