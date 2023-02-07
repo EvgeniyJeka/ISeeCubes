@@ -2,19 +2,22 @@ import jwt
 import logging
 import secrets
 
+try:
+    from server_side.postgres_integration import PostgresIntegration
+
+except ModuleNotFoundError:
+    from postgres_integration import PostgresIntegration
+
 logging.basicConfig(level=logging.INFO)
 
 
 class AuthManager:
+
+    def __init__(self):
+        self.postgres_integration = PostgresIntegration()
+
     # Copy this to Redis, fetch on app start
     active_tokens = dict()
-
-    # Move this to SQL DB
-    credentials = {"Lisa": hash("TestMe"),
-                   "Avi": hash("MoreMoreMore"),
-                   "Era": hash("Come on"),
-                   "Tsahi": hash("Virtual Environment"),
-                   "Admin": hash("AdminPassword")}
 
     def generate_jwt_token(self, username, password):
         """
@@ -48,7 +51,8 @@ class AuthManager:
         return self.active_tokens[username] == token
 
     def validate_credentials_for_jwt_creation(self, username, password):
-        if username not in self.credentials.keys():
+        usersnames_list = self.postgres_integration.get_all_available_users_list()
+        if username not in usersnames_list:
             return False
 
-        return self.credentials[username] == hash(password)
+        return self.postgres_integration.get_users_hashed_password(username) == hash(password)

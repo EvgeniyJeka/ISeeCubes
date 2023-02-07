@@ -7,7 +7,6 @@ import logging
 import queue
 import os
 
-from server_side.postgres_integration import PostgresIntegration
 
 try:
     # Add 2 variations of import (for Dockerization)

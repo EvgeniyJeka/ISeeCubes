@@ -24,3 +24,7 @@ class PostgresIntegration:
         """
 
         return self.users_list
+
+
+    def get_users_hashed_password(self, username):
+        return self.credentials[username]
