@@ -32,3 +32,12 @@ services:
 
     networks:
       - i_see_cubes_main
+    environment:
+      -KEEP_ALIVE_LOGGING=10
+      -OPENAI_API_KEY=""
+#      - SQL_HOST=cabin_db
+#      - SQL_PORT=3306
+#      - SQL_USER=root
+#      - SQL_PASSWORD=123456
+#      - WAIT_BEFORE_TIMEOUT=15
+#      - MYSQL_DB_WARMUP_DELAY=60

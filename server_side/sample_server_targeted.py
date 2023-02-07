@@ -5,6 +5,7 @@ from flask import Flask, request
 from flask_socketio import SocketIO, join_room
 import logging
 import queue
+import os
 
 try:
     # Add 2 variations of import (for Dockerization)
@@ -48,6 +49,7 @@ logging.basicConfig(level=logging.INFO)
 CONNECTIONS_VERIFICATION_INTERVAL = 10
 KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 8
 CACHED_OFFLINE_MESSAGES_DELAY = 3
+KEEP_ALIVE_LOGGING = os.getenv("KEEP_ALIVE_LOGGING")
 
 # Special users
 CHAT_GPT_USER = "ChatGPT"
@@ -483,9 +485,11 @@ def connection_checker(chat_instance: ChatServer):
         for client_name in chat_instance.keep_alive_tracking:
             last_time_keep_alive_message_received = chat_instance.keep_alive_tracking[client_name]
 
-            # print(f"User: {client_name}, current time: {datetime.now()}, last time keep alive message was received:"
-            #       f" {last_time_keep_alive_message_received},"
-            #       f" delta: {datetime.now() - last_time_keep_alive_message_received} ")
+            if KEEP_ALIVE_LOGGING:
+                logging.info(f"User: {client_name}, current time: {datetime.now()}, "
+                             f"last time keep alive message was received:"
+                      f" {last_time_keep_alive_message_received},"
+                      f" delta: {datetime.now() - last_time_keep_alive_message_received} ")
 
             # Consider the user as disconnected if no 'keep alive' was received for more than X seconds (configurable)
             if datetime.now() - last_time_keep_alive_message_received > timedelta(
