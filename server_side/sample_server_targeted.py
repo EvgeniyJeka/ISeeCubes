@@ -7,19 +7,19 @@ import logging
 import queue
 import os
 
+from server_side.postgres_integration import PostgresIntegration
+
 try:
     # Add 2 variations of import (for Dockerization)
     from server_side.authorization_manager import AuthManager
-
-    # Config
     from server_side.chatgpt_integration import ChatGPTIntegration
+    from server_side.postgres_integration import PostgresIntegration
 
 except ModuleNotFoundError:
     # Add 2 variations of import (for Dockerization)
     from authorization_manager import AuthManager
-
-    # Config
     from chatgpt_integration import ChatGPTIntegration
+    from postgres_integration import PostgresIntegration
 
 
 logging.basicConfig(level=logging.INFO)
@@ -58,7 +58,7 @@ ADMIN_USER = "Admin"
 
 class ChatServer:
     # Will be taken from SQL DB
-    users_list = ["Lisa", "Avi", "Tsahi", "Era", "Bravo", "Dariya", CHAT_GPT_USER, ADMIN_USER]
+    users_list = None
 
     # Mapping active users against the last time the 'connection_alive' event was received from each
     keep_alive_tracking = {}
@@ -82,6 +82,9 @@ class ChatServer:
         # Verifying the ChatGPT service is available
         if self.chatgpt_instance.is_chatgpt_available():
             self.users_currently_online.add(CHAT_GPT_USER)
+
+        self.postgres_integration = PostgresIntegration()
+        self.users_list = self.postgres_integration.get_all_available_users_list()
 
     def room_names_generator(self, listed_users: list) -> list:
         listed_users.sort()
