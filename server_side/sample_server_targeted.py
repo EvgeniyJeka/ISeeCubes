@@ -15,10 +15,10 @@ try:
 
 except ModuleNotFoundError:
     # Add 2 variations of import (for Dockerization)
-    from .authorization_manager import AuthManager
+    from authorization_manager import AuthManager
 
     # Config
-    from .chatgpt_integration import ChatGPTIntegration
+    from chatgpt_integration import ChatGPTIntegration
 
 
 logging.basicConfig(level=logging.INFO)
@@ -469,7 +469,7 @@ I           If the token generation is successful, the method returns a list of 
             self.keep_alive_tracking[client_name] = datetime.strptime(message_time, '%m/%d/%y %H:%M:%S')
             logging.info(f"Server Side Keep Alive Time Table Updated: {self.keep_alive_tracking}")
 
-        self.socketio.run(self.app, debug=True, allow_unsafe_werkzeug=True)
+        self.socketio.run(self.app, debug=True, allow_unsafe_werkzeug=True, host='0.0.0.0')
 
 
 def connection_checker(chat_instance: ChatServer):
