@@ -6,11 +6,20 @@ from flask_socketio import SocketIO, join_room
 import logging
 import queue
 
-# Add 2 variations of import (for Dockerization)
-from server_side.authorization_manager import AuthManager
+try:
+    # Add 2 variations of import (for Dockerization)
+    from server_side.authorization_manager import AuthManager
 
-# Config
-from server_side.chatgpt_integration import ChatGPTIntegration
+    # Config
+    from server_side.chatgpt_integration import ChatGPTIntegration
+
+except ModuleNotFoundError:
+    # Add 2 variations of import (for Dockerization)
+    from .authorization_manager import AuthManager
+
+    # Config
+    from .chatgpt_integration import ChatGPTIntegration
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -34,7 +43,6 @@ logging.basicConfig(level=logging.INFO)
 # CASE ISSUE - Server and Client side D
 # handle_client_message - avoid sending user's JWT to another user (client + server side) D
 # Support the flow connect-chat-disconnect-reconnect-chat (bug fix) D
-
 
 
 CONNECTIONS_VERIFICATION_INTERVAL = 10
