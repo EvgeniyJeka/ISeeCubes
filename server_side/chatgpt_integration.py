@@ -20,7 +20,7 @@ class ChatGPTIntegration:
         try:
             key = os.getenv("OPENAI_API_KEY")
 
-            if key and len(key) > 0:
+            if key and len(key) > 1:
                 if USE_TOKENS_TO_TEST_CONNECTION:
 
                     activation_check = self.send_input("Are you alive?")

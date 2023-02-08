@@ -5,20 +5,20 @@ from flask import Flask, request
 from flask_socketio import SocketIO, join_room
 import logging
 import queue
+import os
+
 
 try:
     # Add 2 variations of import (for Dockerization)
     from server_side.authorization_manager import AuthManager
-
-    # Config
     from server_side.chatgpt_integration import ChatGPTIntegration
+    from server_side.postgres_integration import PostgresIntegration
 
 except ModuleNotFoundError:
     # Add 2 variations of import (for Dockerization)
-    from .authorization_manager import AuthManager
-
-    # Config
-    from .chatgpt_integration import ChatGPTIntegration
+    from authorization_manager import AuthManager
+    from chatgpt_integration import ChatGPTIntegration
+    from postgres_integration import PostgresIntegration
 
 
 logging.basicConfig(level=logging.INFO)
@@ -48,6 +48,7 @@ logging.basicConfig(level=logging.INFO)
 CONNECTIONS_VERIFICATION_INTERVAL = 10
 KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 8
 CACHED_OFFLINE_MESSAGES_DELAY = 3
+KEEP_ALIVE_LOGGING = os.getenv("KEEP_ALIVE_LOGGING")
 
 # Special users
 CHAT_GPT_USER = "ChatGPT"
@@ -56,7 +57,7 @@ ADMIN_USER = "Admin"
 
 class ChatServer:
     # Will be taken from SQL DB
-    users_list = ["Lisa", "Avi", "Tsahi", "Era", "Bravo", "Dariya", CHAT_GPT_USER, ADMIN_USER]
+    users_list = None
 
     # Mapping active users against the last time the 'connection_alive' event was received from each
     keep_alive_tracking = {}
@@ -80,6 +81,9 @@ class ChatServer:
         # Verifying the ChatGPT service is available
         if self.chatgpt_instance.is_chatgpt_available():
             self.users_currently_online.add(CHAT_GPT_USER)
+
+        self.postgres_integration = PostgresIntegration()
+        self.users_list = self.postgres_integration.get_all_available_users_list()
 
     def room_names_generator(self, listed_users: list) -> list:
         listed_users.sort()
@@ -250,7 +254,7 @@ I           If the token generation is successful, the code removes the JWT toke
                 logging.info(f"Terminating JWT that belongs to {kill_user_token} by admin's request")
 
                 try:
-                    self.auth_manager.active_tokens.pop(kill_user_token)
+                    self.auth_manager.redis_integration.delete_token(kill_user_token)
                     self.keep_alive_tracking.pop(kill_user_token)
                     self.socketio.emit('user_has_gone_offline', {"username": kill_user_token})
 
@@ -469,7 +473,7 @@ I           If the token generation is successful, the method returns a list of 
             self.keep_alive_tracking[client_name] = datetime.strptime(message_time, '%m/%d/%y %H:%M:%S')
             logging.info(f"Server Side Keep Alive Time Table Updated: {self.keep_alive_tracking}")
 
-        self.socketio.run(self.app, debug=True, allow_unsafe_werkzeug=True)
+        self.socketio.run(self.app, debug=True, allow_unsafe_werkzeug=True, host='0.0.0.0')
 
 
 def connection_checker(chat_instance: ChatServer):
@@ -483,9 +487,11 @@ def connection_checker(chat_instance: ChatServer):
         for client_name in chat_instance.keep_alive_tracking:
             last_time_keep_alive_message_received = chat_instance.keep_alive_tracking[client_name]
 
-            # print(f"User: {client_name}, current time: {datetime.now()}, last time keep alive message was received:"
-            #       f" {last_time_keep_alive_message_received},"
-            #       f" delta: {datetime.now() - last_time_keep_alive_message_received} ")
+            if KEEP_ALIVE_LOGGING:
+                logging.info(f"User: {client_name}, current time: {datetime.now()}, "
+                             f"last time keep alive message was received:"
+                      f" {last_time_keep_alive_message_received},"
+                      f" delta: {datetime.now() - last_time_keep_alive_message_received} ")
 
             # Consider the user as disconnected if no 'keep alive' was received for more than X seconds (configurable)
             if datetime.now() - last_time_keep_alive_message_received > timedelta(
@@ -496,9 +502,11 @@ def connection_checker(chat_instance: ChatServer):
         for user in users_to_disconnect:
             if user in chat_instance.users_currently_online:
                 # Removing the user from 'active users' list and killing the JWT
-                chat_instance.users_currently_online.remove(user)
-                if user in chat_instance.auth_manager.active_tokens:
-                    chat_instance.auth_manager.active_tokens.pop(user)
+                try:
+                    chat_instance.users_currently_online.remove(user)
+                    chat_instance.auth_manager.redis_integration.delete_token(user)
+                except KeyError as e:
+                    logging.error(f"Connection checker: error removing user JWT - {e}")
 
             chat_instance.keep_alive_tracking.pop(user)
             chat_instance.socketio.emit('user_has_gone_offline', {"username": user})
