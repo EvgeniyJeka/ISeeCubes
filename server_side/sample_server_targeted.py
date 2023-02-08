@@ -254,7 +254,7 @@ I           If the token generation is successful, the code removes the JWT toke
                 logging.info(f"Terminating JWT that belongs to {kill_user_token} by admin's request")
 
                 try:
-                    self.auth_manager.active_tokens.pop(kill_user_token)
+                    self.auth_manager.redis_integration.delete_token(kill_user_token)
                     self.keep_alive_tracking.pop(kill_user_token)
                     self.socketio.emit('user_has_gone_offline', {"username": kill_user_token})
 
@@ -502,9 +502,11 @@ def connection_checker(chat_instance: ChatServer):
         for user in users_to_disconnect:
             if user in chat_instance.users_currently_online:
                 # Removing the user from 'active users' list and killing the JWT
-                chat_instance.users_currently_online.remove(user)
-                if user in chat_instance.auth_manager.active_tokens:
-                    chat_instance.auth_manager.active_tokens.pop(user)
+                try:
+                    chat_instance.users_currently_online.remove(user)
+                    chat_instance.auth_manager.redis_integration.delete_token(user)
+                except KeyError as e:
+                    logging.error(f"Connection checker: error removing user JWT - {e}")
 
             chat_instance.keep_alive_tracking.pop(user)
             chat_instance.socketio.emit('user_has_gone_offline', {"username": user})

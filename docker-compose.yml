@@ -6,19 +6,18 @@ networks:
 
 services:
 
-#
-#  cabin_db:
-#    image: mysql:8.0.27
-#    volumes:
-#      - "./.mysql-data/db:/var/lib/mysql"
-#    restart: always
-#    ports:
-#      - 3306:3306
-#    networks:
-#      - creditto_main
-#    environment:
-#      MYSQL_ROOT_PASSWORD: 123456
-#      MYSQL_DATABASE: sys
+#  postgres:
+#      image: postgres:14.1-alpine
+#      restart: always
+#      environment:
+#        - POSTGRES_USER=postgres
+#        - POSTGRES_PASSWORD=postgres
+#      ports:
+#        - '5432:5432'
+#      volumes:
+#        - db:/var/lib/postgresql/data
+#      networks:
+#        - i_see_cubes_main
 
 
   chat_messenger:
@@ -28,16 +27,16 @@ services:
     ports:
       - "5000:5000"
 #    depends_on:
-#      - cabin_db
+#      - postgres
 
     networks:
       - i_see_cubes_main
     environment:
       -KEEP_ALIVE_LOGGING=10
       -OPENAI_API_KEY=""
-#      - SQL_HOST=cabin_db
-#      - SQL_PORT=3306
-#      - SQL_USER=root
-#      - SQL_PASSWORD=123456
+#      - SQL_HOST=postgres
+#      - SQL_PORT=5432
+#      - SQL_USER=postgres
+#      - SQL_PASSWORD=postgres
 #      - WAIT_BEFORE_TIMEOUT=15
-#      - MYSQL_DB_WARMUP_DELAY=60
+#      - POSTGRES_DB_WARMUP_DELAY=60

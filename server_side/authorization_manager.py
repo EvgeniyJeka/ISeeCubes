@@ -2,11 +2,14 @@ import jwt
 import logging
 import secrets
 
+
 try:
     from server_side.postgres_integration import PostgresIntegration
+    from server_side.redis_integration import RedisIntegration
 
 except ModuleNotFoundError:
     from postgres_integration import PostgresIntegration
+    from redis_integration import RedisIntegration
 
 logging.basicConfig(level=logging.INFO)
 
@@ -15,9 +18,10 @@ class AuthManager:
 
     def __init__(self):
         self.postgres_integration = PostgresIntegration()
+        self.redis_integration = RedisIntegration()
 
-    # Copy this to Redis, fetch on app start
-    active_tokens = dict()
+    # # Copy this to Redis, fetch on app start
+    # active_tokens = dict()
 
     def generate_jwt_token(self, username, password):
         """
@@ -43,8 +47,12 @@ class AuthManager:
                 payload = {"user": username}
 
                 encoded_jwt = jwt.encode(payload, secret_key, algorithm="HS256")
-                self.active_tokens[username] = encoded_jwt
-                return {"result": "success", "token": encoded_jwt}
+
+                if self.redis_integration.insert_token(username, encoded_jwt):
+                    return {"result": "success", "token": encoded_jwt}
+                else:
+                    logging.error("Error! Failed to insert newly created token to Redis")
+                    return {"error": "Failed to insert newly created token to Redis"}
 
             else:
                 return {"result": "Invalid credentials"}
@@ -66,10 +74,12 @@ class AuthManager:
         :rtype: bool
         """
 
-        if username not in self.active_tokens.keys():
+        currently_active_tokens = self.redis_integration.fetch_active_tokens()
+
+        if username not in currently_active_tokens:
             return False
 
-        return self.active_tokens[username] == token
+        return self.redis_integration.validate_user_token(username, token)
 
     def validate_credentials_for_jwt_creation(self, username, password):
         """
