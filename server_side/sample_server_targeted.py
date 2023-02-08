@@ -23,6 +23,8 @@ except ModuleNotFoundError:
 
 logging.basicConfig(level=logging.INFO)
 
+config_file_path = "./config.ini"
+
 # TO DO:
 # 1.  Custom 'keep alive' logic both on server and on client side // TEST AGAINST 2-3 CLIENTS, NOT EMULATIONS D
 #
@@ -75,15 +77,16 @@ class ChatServer:
         self.app = Flask(__name__)
         self.socketio = SocketIO(self.app)
 
-        self.auth_manager = AuthManager()
+
         self.chatgpt_instance = ChatGPTIntegration()
 
         # Verifying the ChatGPT service is available
         if self.chatgpt_instance.is_chatgpt_available():
             self.users_currently_online.add(CHAT_GPT_USER)
 
-        self.postgres_integration = PostgresIntegration()
+        self.postgres_integration = PostgresIntegration(config_file_path)
         self.users_list = self.postgres_integration.get_all_available_users_list()
+        self.auth_manager = AuthManager(self.postgres_integration)
 
     def room_names_generator(self, listed_users: list) -> list:
         listed_users.sort()

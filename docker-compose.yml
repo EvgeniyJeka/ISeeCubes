@@ -4,34 +4,38 @@ networks:
   i_see_cubes_main:
     driver: bridge
 
+volumes:
+  db:
+    driver: local
+
 services:
 
-#  postgres:
-#      image: postgres:14.1-alpine
+  postgres:
+      image: postgres:14.1-alpine
+      restart: always
+      environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=postgres
+      ports:
+        - '5432:5432'
+      volumes:
+        - db:/var/lib/postgresql/data
+      networks:
+        - i_see_cubes_main
+
+
+#  chat_messenger:
+#      image: chat_messenger_server:latest
+#      build: ./server_side
 #      restart: always
-#      environment:
-#        - POSTGRES_USER=postgres
-#        - POSTGRES_PASSWORD=postgres
 #      ports:
-#        - '5432:5432'
-#      volumes:
-#        - db:/var/lib/postgresql/data
+#        - 5000:5000
 #      networks:
 #        - i_see_cubes_main
-
-
-    chat_messenger:
-        image: chat_messenger_server:latest
-        build: ./server_side
-        restart: always
-        ports:
-          - 5000:5000
-        networks:
-          - i_see_cubes_main
-        environment:
-          KEEP_ALIVE_LOGGING: 10
-          OPENAI_API_KEY: 0
-          TZ: Asia/Jerusalem
+#      environment:
+#        KEEP_ALIVE_LOGGING: 10
+#        OPENAI_API_KEY: 0
+#        TZ: Asia/Jerusalem
 
 
 #      - SQL_HOST=postgres
@@ -40,3 +44,5 @@ services:
 #      - SQL_PASSWORD=postgres
 #      - WAIT_BEFORE_TIMEOUT=15
 #      - POSTGRES_DB_WARMUP_DELAY=60
+
+
