@@ -97,4 +97,4 @@ class AuthManager:
         if username not in usersnames_list:
             return False
 
-        return self.postgres_integration.get_users_hashed_password(username) == hash(password)
+        return self.postgres_integration.get_users_hashed_password(username) == self.postgres_integration.hash_string(password)

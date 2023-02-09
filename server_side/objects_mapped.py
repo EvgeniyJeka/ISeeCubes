@@ -10,5 +10,6 @@ class UsersMapped(Base):
 
     id = Column('id', db.BIGINT, primary_key=True)
     user_name = Column('user_name', db.String(255))
+    user_password = Column('user_password', db.String(255))
     user_status = Column('status', db.INT)
-    current_jwt = Column('current_jwt', db.BIGINT, primary_key=True)
+
