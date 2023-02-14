@@ -45,28 +45,41 @@ class PostgresIntegration:
     #                "Tsahi": hash("Virtual Environment"),
     #                "Admin": hash("AdminPassword")}
 
+    hst = None
+    usr = None
+    pwd = None
+    db_name = None
+
     def __init__(self, config_file_path):
 
-        # Reading DB name, host and credentials from config
-        config = configparser.ConfigParser()
-        config.read(config_file_path)
-        hst = config.get("SQL_DB", "host")
-        usr = config.get("SQL_DB", "user")
-        pwd = config.get("SQL_DB", "password")
-        db_name = config.get("SQL_DB", "db_name")
+        self.read_config(config_file_path)
 
         try:
-            self.cursor, self.engine = self.connect_me(hst, usr, pwd, db_name)
+            self.cursor, self.engine = self.connect_me(self.hst, self.usr, self.pwd, self.db_name)
             # Initiating a session
             Session = sessionmaker(bind=self.engine)
             self.session = Session()
-            self.metadata = db.MetaData(bind=self.engine)
 
             self.create_validate_tables()
             self.fetch_credentials()
 
         except TypeError:
             logging.critical("SQL DB - Failed to connect, please verify SQL DB container is running")
+
+    def read_config(self, config_file_path):
+
+        try:
+            # Reading DB name, host and credentials from config
+            config = configparser.ConfigParser()
+            config.read(config_file_path)
+            self.hst = config.get("SQL_DB", "host")
+            self.usr = config.get("SQL_DB", "user")
+            self.pwd = config.get("SQL_DB", "password")
+            self.db_name = config.get("SQL_DB", "db_name")
+
+        except Exception as e:
+            logging.critical(f"Postgress integration: Error! Failed to read config from the 'config.ini' file! {e}")
+            raise e
 
     # Connect to DB
     def connect_me(self, hst, usr, pwd, db_name):
@@ -112,12 +125,12 @@ class PostgresIntegration:
         return hash_object.hexdigest()
 
     def create_fill_users_table(self):
+
         self.users_table = UsersMapped()
-        #objects_mapped.Base.metadata.create_all(self.engine)
+        objects_mapped.Base.metadata.create_all(self.engine)
 
         logging.info(f"Filling the {USERS_TABLE_NAME} with the default data from the users.json file.")
         objects_mapped.Base.metadata.create_all(self.engine)
-
 
         # Inserting the default test users
         self.session.add_all(self.read_user_creds_from_file(users_list_file_path))
@@ -149,42 +162,14 @@ class PostgresIntegration:
                 logging.warning(f"The content of the '{USERS_TABLE_NAME} differs from the file content."
                                 f" Renewing the table.")
 
+                self.cursor, self.engine = self.connect_me(self.hst, self.usr, self.pwd, self.db_name)
                 objects_mapped.Base.metadata.drop_all(self.engine)
 
                 if not self.create_fill_users_table():
                     logging.error(f"Error! Failed to create the {USERS_TABLE_NAME} table!")
                     raise ValueError(f"Error! Failed to create the {USERS_TABLE_NAME} table!")
 
-                # objects_mapped.Base.metadata.create_all(self.engine)
 
-                # Base = declarative_base(bind=self.engine)
-                #
-                #
-                # # drop the table
-                # Base.metadata.drop_all(self.engine)
-
-                # table = db.Table(USERS_TABLE_NAME, self.metadata, autoload=True)
-
-
-
-
-                # table = db.Table(USERS_TABLE_NAME, self.metadata, autoload=True)
-                # table.drop()
-                # self.metadata.execute(checkfirst=True)
-                #metadata = db.MetaData()
-
-
-                # # SQL Alchemy table instance is passed to the "fill_table" method
-                # table = db.Table(USERS_TABLE_NAME, self.metadata, autoload=True)
-                # table.drop()
-                # self.metadata.execute(checkfirst=True)
-                #
-                print("Checkpoint!!")
-
-
-                # if not self.create_fill_users_table():
-                #     logging.error(f"Error! Failed to create the {USERS_TABLE_NAME} table!")
-                #     raise ValueError(f"Error! Failed to create the {USERS_TABLE_NAME} table!")
 
     def get_table_content(self, table):
         """
@@ -294,6 +279,8 @@ if __name__ == "__main__":
 
     postgres_integration = PostgresIntegration(config_file_path)
     users_creds_table = postgres_integration.get_table_content(USERS_TABLE_NAME)
+    postgres_integration.engine.dispose()
+
 
     # with open(users_list_file_path, "r") as f:
     #     file_content = f.read()
