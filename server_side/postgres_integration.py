@@ -118,9 +118,11 @@ class PostgresIntegration:
         logging.info(f"Filling the {USERS_TABLE_NAME} with the default data from the users.json file.")
         objects_mapped.Base.metadata.create_all(self.engine)
 
+
         # Inserting the default test users
         self.session.add_all(self.read_user_creds_from_file(users_list_file_path))
         self.session.commit()
+        self.session.close()
 
         return True
 
@@ -147,6 +149,14 @@ class PostgresIntegration:
                 logging.warning(f"The content of the '{USERS_TABLE_NAME} differs from the file content."
                                 f" Renewing the table.")
 
+                objects_mapped.Base.metadata.drop_all(self.engine)
+
+                if not self.create_fill_users_table():
+                    logging.error(f"Error! Failed to create the {USERS_TABLE_NAME} table!")
+                    raise ValueError(f"Error! Failed to create the {USERS_TABLE_NAME} table!")
+
+                # objects_mapped.Base.metadata.create_all(self.engine)
+
                 # Base = declarative_base(bind=self.engine)
                 #
                 #
@@ -154,8 +164,7 @@ class PostgresIntegration:
                 # Base.metadata.drop_all(self.engine)
 
                 # table = db.Table(USERS_TABLE_NAME, self.metadata, autoload=True)
-                # objects_mapped.Base.metadata.drop_all()
-                # objects_mapped.Base.metadata.create_all(self.engine)
+
 
 
 
