@@ -4,10 +4,10 @@ import logging
 import hashlib
 
 import sqlalchemy
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, MetaData, exc, Table
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy_utils import database_exists, create_database
 import sqlalchemy as db
-from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 
 try:
@@ -26,14 +26,13 @@ USERS_TABLE_NAME = 'users'
 ACTIVE_USER_STATUS = 1
 BLOCKED_USER_STATUS = 0
 
-class PostgresIntegration:
 
+class PostgresIntegration:
     # Special users
     CHAT_GPT_USER = "ChatGPT"
     ADMIN_USER = "Admin"
 
     users_list = None
-
     credentials = None
 
     # # Will be taken from SQL DB
@@ -45,7 +44,6 @@ class PostgresIntegration:
     #                "Era": hash("Come on"),
     #                "Tsahi": hash("Virtual Environment"),
     #                "Admin": hash("AdminPassword")}
-
 
     def __init__(self, config_file_path):
 
@@ -62,6 +60,7 @@ class PostgresIntegration:
             # Initiating a session
             Session = sessionmaker(bind=self.engine)
             self.session = Session()
+            self.metadata = db.MetaData(bind=self.engine)
 
             self.create_validate_tables()
             self.fetch_credentials()
@@ -108,6 +107,23 @@ class PostgresIntegration:
             logging.critical("SQL DB - Failed to connect, reason is unclear")
             logging.critical(e)
 
+    def hash_string(self, input_: str):
+        hash_object = hashlib.sha256(input_.encode())
+        return hash_object.hexdigest()
+
+    def create_fill_users_table(self):
+        self.users_table = UsersMapped()
+        #objects_mapped.Base.metadata.create_all(self.engine)
+
+        logging.info(f"Filling the {USERS_TABLE_NAME} with the default data from the users.json file.")
+        objects_mapped.Base.metadata.create_all(self.engine)
+
+        # Inserting the default test users
+        self.session.add_all(self.read_user_creds_from_file(users_list_file_path))
+        self.session.commit()
+
+        return True
+
     def create_validate_tables(self):
         """
         This method can be used to validate, that all needed table are exist.
@@ -119,16 +135,47 @@ class PostgresIntegration:
         # Creating the 'users' table if not exists - column for each "User" object property.
         if USERS_TABLE_NAME not in tables:
             logging.warning(f"{USERS_TABLE_NAME} table is missing! Creating the {USERS_TABLE_NAME} table")
-            self.users_table = UsersMapped()
-            objects_mapped.Base.metadata.create_all(self.engine)
 
-            logging.info(f"Filling the {USERS_TABLE_NAME} with the default data from the users.json file.")
-            objects_mapped.Base.metadata.create_all(self.engine)
+            if not self.create_fill_users_table():
+                logging.error(f"Error! Failed to create the {USERS_TABLE_NAME} table!")
+                raise ValueError(f"Error! Failed to create the {USERS_TABLE_NAME} table!")
 
-            # Inserting the default test users
+        # Compare the content of the table to the file content. If it doesn't identical - drop the table
+        # and create it from scratch, insert all info from the file
+        else:
+            if not self.compare_credentials_sql_against_file(users_list_file_path):
+                logging.warning(f"The content of the '{USERS_TABLE_NAME} differs from the file content."
+                                f" Renewing the table.")
 
-            self.session.add_all(self.read_user_creds_from_file(users_list_file_path))
-            self.session.commit()
+                # Base = declarative_base(bind=self.engine)
+                #
+                #
+                # # drop the table
+                # Base.metadata.drop_all(self.engine)
+
+                # table = db.Table(USERS_TABLE_NAME, self.metadata, autoload=True)
+                # objects_mapped.Base.metadata.drop_all()
+                # objects_mapped.Base.metadata.create_all(self.engine)
+
+
+
+                # table = db.Table(USERS_TABLE_NAME, self.metadata, autoload=True)
+                # table.drop()
+                # self.metadata.execute(checkfirst=True)
+                #metadata = db.MetaData()
+
+
+                # # SQL Alchemy table instance is passed to the "fill_table" method
+                # table = db.Table(USERS_TABLE_NAME, self.metadata, autoload=True)
+                # table.drop()
+                # self.metadata.execute(checkfirst=True)
+                #
+                print("Checkpoint!!")
+
+
+                # if not self.create_fill_users_table():
+                #     logging.error(f"Error! Failed to create the {USERS_TABLE_NAME} table!")
+                #     raise ValueError(f"Error! Failed to create the {USERS_TABLE_NAME} table!")
 
     def get_table_content(self, table):
         """
@@ -146,7 +193,6 @@ class PostgresIntegration:
 
         return result
 
-
     def get_all_available_users_list(self):
         """
         Extracts all existing users from Postgres DB and returns as a list
@@ -155,10 +201,44 @@ class PostgresIntegration:
 
         return list(self.credentials.keys())
 
-
     def get_users_hashed_password(self, username):
         return self.credentials[username]
 
+    def compare_credentials_sql_against_file(self, users_list_file_path):
+        """
+           This function compares the credentials of users stored in a PostgreSQL database with those stored in a JSON file.
+
+           :param users_list_file_path: The path to the JSON file containing the users' credentials to be compared.
+           :type users_list_file_path: str
+           :return: True if the users' credentials in the database and the file match, False otherwise.
+           :rtype: bool
+        """
+        users_creds_table = self.get_table_content(USERS_TABLE_NAME)
+
+        with open(users_list_file_path, "r") as f:
+            file_content = f.read()
+
+        file_content = json.loads(file_content)
+        users_creds_file = file_content['users']
+
+        if len(users_creds_table) != len(users_creds_file):
+            return False
+
+        users_creds_table.sort(key=lambda x: x[0])
+        users_creds_file.sort(key=lambda x: x['id'])
+
+        for j in range(0, len(users_creds_table)):
+            table_record = users_creds_table[j]
+            file_item = users_creds_file[j]
+
+            if file_item['id'] != table_record[0]:
+                return False
+            if file_item['username'] != table_record[1]:
+                return False
+            if self.hash_string(file_item['password']) != table_record[2]:
+                return False
+
+        return True
 
     def read_user_creds_from_file(self, file_path):
 
@@ -172,7 +252,8 @@ class PostgresIntegration:
 
         for item in users_vs_creds:
             print(f"User {item['username']} , "
-                  f"plain password: {item['password']} - {type(item['username'])}, hashed password: {self.hash_string(item['password'])}")
+                  f"plain password: {item['password']} - {type(item['username'])},"
+                  f" hashed password: {self.hash_string(item['password'])}")
 
             user_mapped_objects.append(UsersMapped(id=item['id'],
                                                    user_name=item['username'],
@@ -196,16 +277,40 @@ class PostgresIntegration:
             logging.error(f"Failed to fetch credentials from SQL - {e}")
             return False
 
-    def hash_string(self, input_: str):
-        hash_object = hashlib.sha256(input_.encode())
-        return hash_object.hexdigest()
-
 
 
 
 if __name__ == "__main__":
     config_file_path = "./config.ini"
-    postgres_integration = PostgresIntegration(config_file_path)
 
-    users_creds = postgres_integration.get_table_content(USERS_TABLE_NAME)
-    print(users_creds)
+    postgres_integration = PostgresIntegration(config_file_path)
+    users_creds_table = postgres_integration.get_table_content(USERS_TABLE_NAME)
+
+    # with open(users_list_file_path, "r") as f:
+    #     file_content = f.read()
+    #
+    # file_content = json.loads(file_content)
+    # users_creds_file = file_content['users']
+    #
+    # if len(users_creds_table) != len(users_creds_file):
+    #     print(False)
+    #
+    # users_creds_table.sort(key=lambda x: x[0])
+    # users_creds_file.sort(key=lambda x: x['id'])
+    #
+    print("Checkpoint 2")
+    print(users_creds_table)
+    # print(users_creds_file)
+    #
+    # for i in range(0, len(users_creds_table)):
+    #     table_record = users_creds_table[i]
+    #     file_item = users_creds_file[i]
+    #
+    #     if file_item['id'] != table_record[0]:
+    #         print(False)
+    #     if file_item['username'] != table_record[1]:
+    #         print(False)
+    #     if postgres_integration.hash_string(file_item['password']) != table_record[2]:
+    #         print(False)
+    #
+    # print(True)
