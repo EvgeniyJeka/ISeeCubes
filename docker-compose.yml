@@ -33,6 +33,7 @@ services:
 #      networks:
 #        - i_see_cubes_main
 #      environment:
+#
 #        KEEP_ALIVE_LOGGING: 10
 #        OPENAI_API_KEY: 0
 #        TZ: Asia/Jerusalem
@@ -42,6 +43,7 @@ services:
 #      - SQL_PORT=5432
 #      - SQL_USER=postgres
 #      - SQL_PASSWORD=postgres
+#      - SQL_DB_NAME =chat_db
 #      - WAIT_BEFORE_TIMEOUT=15
 #      - POSTGRES_DB_WARMUP_DELAY=60
 

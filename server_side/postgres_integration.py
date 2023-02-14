@@ -2,10 +2,10 @@ import configparser
 import json
 import logging
 import hashlib
+import os
 
 import sqlalchemy
-from sqlalchemy import create_engine, MetaData, exc, Table
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine, exc
 from sqlalchemy_utils import database_exists, create_database
 import sqlalchemy as db
 from sqlalchemy.orm import sessionmaker
@@ -51,6 +51,13 @@ class PostgresIntegration:
     db_name = None
 
     def __init__(self, config_file_path):
+        """
+        Initiating a new instance - fetching the config either from env. variables (if applicable) or from
+        'config.ini' file, creating an instance of SQL Alchemy engine, cursor and session.
+        Creating the required DB and tables if required.
+        Validating the content of the existing USERS table against the file.
+        :param config_file_path:
+        """
 
         self.read_config(config_file_path)
 
@@ -67,18 +74,32 @@ class PostgresIntegration:
             logging.critical("SQL DB - Failed to connect, please verify SQL DB container is running")
 
     def read_config(self, config_file_path):
+        """
+            This method reads database configuration information from either the provided configuration file
+            or environment variables.
+
+            :param config_file_path: (str) Path to the configuration file.
+            :raises: Exception if the database configuration information cannot be read.
+        """
 
         try:
-            # Reading DB name, host and credentials from config
-            config = configparser.ConfigParser()
-            config.read(config_file_path)
-            self.hst = config.get("SQL_DB", "host")
-            self.usr = config.get("SQL_DB", "user")
-            self.pwd = config.get("SQL_DB", "password")
-            self.db_name = config.get("SQL_DB", "db_name")
+            if os.getenv("SQL_USER") is None:
+                # Reading DB name, host and credentials from config
+                config = configparser.ConfigParser()
+                config.read(config_file_path)
+                self.hst = config.get("SQL_DB", "host")
+                self.usr = config.get("SQL_DB", "user")
+                self.pwd = config.get("SQL_DB", "password")
+                self.db_name = config.get("SQL_DB", "db_name")
+            else:
+                self.hst = os.getenv("SQL_HOST")
+                self.usr = os.getenv("SQL_USER")
+                self.pwd = os.getenv("SQL_PASSWORD")
+                self.db_name = os.getenv("SQL_DB_NAME")
 
         except Exception as e:
-            logging.critical(f"Postgress integration: Error! Failed to read config from the 'config.ini' file! {e}")
+            logging.critical(f"Postgress integration: Error! Failed to read config from the "
+                             f"'config.ini' file or fetch from environment variables! {e}")
             raise e
 
     # Connect to DB
@@ -235,17 +256,28 @@ class PostgresIntegration:
         return True
 
     def read_user_creds_from_file(self, file_path):
+        """
+           Reads the user credentials from a JSON file and converts the plain text passwords to hashed passwords.
+
+           :param file_path: path to the JSON file containing the user credentials
+           :return: a list of objects of type `UsersMapped` containing the hashed passwords and other user information
+        """
 
         user_mapped_objects = []
 
-        with open(file_path, "r") as f:
-            file_content = f.read()
+        try:
+            with open(file_path, "r") as f:
+                file_content = f.read()
 
-        file_content = json.loads(file_content)
-        users_vs_creds = file_content['users']
+            file_content = json.loads(file_content)
+            users_vs_creds = file_content['users']
+
+        except Exception as e:
+            logging.error(f"Postgress integration: Error! Failed to read user creds from JSON file! {e}")
+            raise e
 
         for item in users_vs_creds:
-            print(f"User {item['username']} , "
+            logging.info(f"User {item['username']} , "
                   f"plain password: {item['password']} - {type(item['username'])},"
                   f" hashed password: {self.hash_string(item['password'])}")
 
@@ -257,6 +289,13 @@ class PostgresIntegration:
         return user_mapped_objects
 
     def fetch_credentials(self):
+        """
+            This method fetches credentials from a SQL table with the name `USERS_TABLE_NAME` and populates the instance variable
+            `credentials` with the fetched data.
+
+            :return: Boolean indicating success (True) or failure (False) of the operation
+        """
+
         try:
             result = {}
             data_from_sql = self.get_table_content(USERS_TABLE_NAME)
@@ -274,39 +313,10 @@ class PostgresIntegration:
 
 
 
-if __name__ == "__main__":
-    config_file_path = "./config.ini"
+# if __name__ == "__main__":
+#     config_file_path = "./config.ini"
+#
+#     postgres_integration = PostgresIntegration(config_file_path)
+#     users_creds_table = postgres_integration.get_table_content(USERS_TABLE_NAME)
 
-    postgres_integration = PostgresIntegration(config_file_path)
-    users_creds_table = postgres_integration.get_table_content(USERS_TABLE_NAME)
-    postgres_integration.engine.dispose()
 
-
-    # with open(users_list_file_path, "r") as f:
-    #     file_content = f.read()
-    #
-    # file_content = json.loads(file_content)
-    # users_creds_file = file_content['users']
-    #
-    # if len(users_creds_table) != len(users_creds_file):
-    #     print(False)
-    #
-    # users_creds_table.sort(key=lambda x: x[0])
-    # users_creds_file.sort(key=lambda x: x['id'])
-    #
-    print("Checkpoint 2")
-    print(users_creds_table)
-    # print(users_creds_file)
-    #
-    # for i in range(0, len(users_creds_table)):
-    #     table_record = users_creds_table[i]
-    #     file_item = users_creds_file[i]
-    #
-    #     if file_item['id'] != table_record[0]:
-    #         print(False)
-    #     if file_item['username'] != table_record[1]:
-    #         print(False)
-    #     if postgres_integration.hash_string(file_item['password']) != table_record[2]:
-    #         print(False)
-    #
-    # print(True)
