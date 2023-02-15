@@ -35,16 +35,6 @@ class PostgresIntegration:
     users_list = None
     credentials = None
 
-    # # Will be taken from SQL DB
-    # users_list = ["Lisa", "Avi", "Tsahi", "Era", "Bravo", "Dariya", CHAT_GPT_USER, ADMIN_USER]
-    #
-    # # Move this to SQL DB
-    # credentials = {"Lisa": hash("TestMe"),
-    #                "Avi": hash("MoreMoreMore"),
-    #                "Era": hash("Come on"),
-    #                "Tsahi": hash("Virtual Environment"),
-    #                "Admin": hash("AdminPassword")}
-
     hst = None
     usr = None
     pwd = None
@@ -146,26 +136,48 @@ class PostgresIntegration:
         return hash_object.hexdigest()
 
     def create_fill_users_table(self):
+        """
+           Create the Users table in the database and fill it with default data from a JSON file.
 
-        self.users_table = UsersMapped()
-        objects_mapped.Base.metadata.create_all(self.engine)
+           The method creates the Users table in the database if it does not already exist. It then reads a JSON file
+           containing default user credentials, and adds those credentials to the Users table.
 
-        logging.info(f"Filling the {USERS_TABLE_NAME} with the default data from the users.json file.")
-        objects_mapped.Base.metadata.create_all(self.engine)
+           :raises: An exception if there is an error creating the table or filling it with data.
+        """
 
-        # Inserting the default test users
-        self.session.add_all(self.read_user_creds_from_file(users_list_file_path))
-        self.session.commit()
-        self.session.close()
+        try:
+            self.users_table = UsersMapped()
+            objects_mapped.Base.metadata.create_all(self.engine)
 
-        return True
+            logging.info(f"Filling the {USERS_TABLE_NAME} with the default data from the users.json file.")
+            objects_mapped.Base.metadata.create_all(self.engine)
+
+            # Inserting the default test users
+            self.session.add_all(self.read_user_creds_from_file(users_list_file_path))
+            self.session.commit()
+            self.session.close()
+            return True
+
+        except Exception as e:
+            logging.error(f"Postrgess integration: Error! Failed to insert user creds from file to SQL DB: {e}")
+            self.session.rollback()
+            raise e
+        finally:
+            self.session.close()
 
     def create_validate_tables(self):
         """
-        This method can be used to validate, that all needed table are exist.
-        If they aren't the method will create them
-        :param engine: Sql Alchemy engine
-        """
+            Checks that all required tables exist in the database, and creates them if they don't.
+
+            This method first retrieves the list of table names from the database using the SQL Alchemy engine. If the
+            'users' table is not found, it is created by calling the 'create_fill_users_table' method. If the table exists,
+            the method checks whether the content of the table matches the content of the JSON file containing default user
+            credentials. If there is a mismatch, the table is dropped and recreated from scratch, and the default credentials
+            are inserted into it using the 'create_fill_users_table' method.
+
+            :raises: A ValueError if an error occurs creating or validating any of the required tables.
+         """
+
         tables = self.engine.table_names()
 
         # Creating the 'users' table if not exists - column for each "User" object property.
@@ -189,8 +201,6 @@ class PostgresIntegration:
                 if not self.create_fill_users_table():
                     logging.error(f"Error! Failed to create the {USERS_TABLE_NAME} table!")
                     raise ValueError(f"Error! Failed to create the {USERS_TABLE_NAME} table!")
-
-
 
     def get_table_content(self, table):
         """
@@ -227,6 +237,7 @@ class PostgresIntegration:
            :type users_list_file_path: str
            :return: True if the users' credentials in the database and the file match, False otherwise.
            :rtype: bool
+
         """
         users_creds_table = self.get_table_content(USERS_TABLE_NAME)
 
@@ -261,6 +272,7 @@ class PostgresIntegration:
 
            :param file_path: path to the JSON file containing the user credentials
            :return: a list of objects of type `UsersMapped` containing the hashed passwords and other user information
+
         """
 
         user_mapped_objects = []
@@ -294,6 +306,7 @@ class PostgresIntegration:
             `credentials` with the fetched data.
 
             :return: Boolean indicating success (True) or failure (False) of the operation
+
         """
 
         try:
@@ -313,10 +326,10 @@ class PostgresIntegration:
 
 
 
-# if __name__ == "__main__":
-#     config_file_path = "./config.ini"
-#
-#     postgres_integration = PostgresIntegration(config_file_path)
-#     users_creds_table = postgres_integration.get_table_content(USERS_TABLE_NAME)
+if __name__ == "__main__":
+    config_file_path = "./config.ini"
+
+    postgres_integration = PostgresIntegration(config_file_path)
+    users_creds_table = postgres_integration.get_table_content(USERS_TABLE_NAME)
 
 
