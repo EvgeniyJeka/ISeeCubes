@@ -60,8 +60,9 @@ class PostgresIntegration:
             self.create_validate_tables()
             self.fetch_credentials()
 
-        except TypeError:
-            logging.critical("SQL DB - Failed to connect, please verify SQL DB container is running")
+        except TypeError as e:
+            logging.critical(f"SQL DB - Failed to connect, please verify SQL DB container is running {e}")
+            raise e
 
     def read_config(self, config_file_path):
         """
@@ -74,7 +75,7 @@ class PostgresIntegration:
 
         try:
             if os.getenv("SQL_USER") is None:
-                # Reading DB name, host and credentials from config
+            # Reading DB name, host and credentials from config
                 config = configparser.ConfigParser()
                 config.read(config_file_path)
                 self.hst = config.get("SQL_DB", "host")
@@ -125,11 +126,13 @@ class PostgresIntegration:
         except sqlalchemy.exc.OperationalError as e:
             logging.critical("SQL DB -  Can't connect, verify credentials and host, verify the server is available")
             logging.critical(e)
+            raise e
 
         # General error
         except Exception as e:
-            logging.critical("SQL DB - Failed to connect, reason is unclear")
+            logging.critical(f"SQL DB - Failed to connect, reason is unclear")
             logging.critical(e)
+            raise e
 
     def hash_string(self, input_: str):
         hash_object = hashlib.sha256(input_.encode())
