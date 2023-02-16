@@ -52,6 +52,7 @@ services:
 #        SQL_USER: postgres
 #        SQL_PASSWORD: postgres
 #        SQL_DB_NAME: chat_db
+#        REDIS_HOST: iseecubes_redis_1
 #        WAIT_BEFORE_TIMEOUT: 15
 #        POSTGRES_DB_WARMUP_DELAY: 60
 
