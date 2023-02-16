@@ -465,12 +465,12 @@ I           If the token generation is successful, the method returns a list of 
         @self.socketio.on('connection_alive')
         def processing_keep_alive_signals(json_):
             client_name = json_['client']
-            message_time = json_['time']
+            current_time = datetime.now()
 
-            logging.info(f"Client {client_name} sent 'keep alive' signal at {message_time}")
+            logging.info(f"Client {client_name} sent 'keep alive' signal at {current_time}")
 
             # Updating the time at which the 'keep alive' signal was last time received for given user
-            self.keep_alive_tracking[client_name] = datetime.strptime(message_time, '%m/%d/%y %H:%M:%S')
+            self.keep_alive_tracking[client_name] = current_time
             logging.info(f"Server Side Keep Alive Time Table Updated: {self.keep_alive_tracking}")
 
         self.socketio.run(self.app, debug=True, allow_unsafe_werkzeug=True, host='0.0.0.0')

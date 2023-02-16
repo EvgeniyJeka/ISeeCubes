@@ -200,8 +200,7 @@ class ClientAppCore:
         # Sending 'connection_alive' event every X seconds while the user is logged in
         while self.user_logged_in:
             now = datetime.now()
-            self.sio.emit('connection_alive', {'client': self.my_name,
-                                               "time": now.strftime('%m/%d/%y %H:%M:%S')})
+            self.sio.emit('connection_alive', {'client': self.my_name})
 
             time.sleep(keep_alive_delay_between_events)
 
