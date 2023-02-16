@@ -16,8 +16,8 @@ logging.basicConfig(level=logging.INFO)
 
 class AuthManager:
 
-    def __init__(self):
-        self.postgres_integration = PostgresIntegration()
+    def __init__(self, postgres_integration):
+        self.postgres_integration = postgres_integration
         self.redis_integration = RedisIntegration()
 
     # # Copy this to Redis, fetch on app start
@@ -97,4 +97,4 @@ class AuthManager:
         if username not in usersnames_list:
             return False
 
-        return self.postgres_integration.get_users_hashed_password(username) == hash(password)
+        return self.postgres_integration.get_users_hashed_password(username) == self.postgres_integration.hash_string(password)
