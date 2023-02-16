@@ -74,11 +74,6 @@ class AuthManager:
         :rtype: bool
         """
 
-        currently_active_tokens = self.redis_integration.fetch_active_tokens()
-
-        if username not in currently_active_tokens:
-            return False
-
         return self.redis_integration.validate_user_token(username, token)
 
     def validate_credentials_for_jwt_creation(self, username, password):

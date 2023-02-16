@@ -8,6 +8,8 @@ volumes:
   db:
     driver: local
 
+  redis_data:
+
 services:
 
   postgres:
@@ -23,26 +25,34 @@ services:
       networks:
         - i_see_cubes_main
 
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - i_see_cubes_main
 
-  chat_messenger:
-      image: chat_messenger_server:latest
-      build: ./server_side
-      restart: always
-      ports:
-        - 5000:5000
-      depends_on:
-        - postgres
-      networks:
-        - i_see_cubes_main
-      environment:
-        KEEP_ALIVE_LOGGING: 10
-        OPENAI_API_KEY: 0
-        TZ: Asia/Jerusalem
-        SQL_HOST: iseecubes_postgres_1
-        SQL_USER: postgres
-        SQL_PASSWORD: postgres
-        SQL_DB_NAME: chat_db
-        WAIT_BEFORE_TIMEOUT: 15
-        POSTGRES_DB_WARMUP_DELAY: 60
+
+#  chat_messenger:
+#      image: chat_messenger_server:latest
+#      build: ./server_side
+#      restart: always
+#      ports:
+#        - 5000:5000
+#      depends_on:
+#        - postgres
+#      networks:
+#        - i_see_cubes_main
+#      environment:
+#        KEEP_ALIVE_LOGGING: 10
+#        OPENAI_API_KEY: 0
+#        SQL_HOST: iseecubes_postgres_1
+#        SQL_USER: postgres
+#        SQL_PASSWORD: postgres
+#        SQL_DB_NAME: chat_db
+#        WAIT_BEFORE_TIMEOUT: 15
+#        POSTGRES_DB_WARMUP_DELAY: 60
 
 
