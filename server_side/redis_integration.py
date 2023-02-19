@@ -39,7 +39,7 @@ class RedisIntegration:
             else:
                 self.hst = os.getenv("REDIS_HOST")
                 self.redis_jwt_hashmap_name = os.getenv("AUTH_TOKEN_HASHMAP")
-                self.db_name = int(os.getenv("REDIS_DB_NUMBER"))
+                self.db_number = int(os.getenv("REDIS_DB_NUMBER"))
 
         except Exception as e:
             logging.critical(f"Redis integration: Error! Failed to read config from the "

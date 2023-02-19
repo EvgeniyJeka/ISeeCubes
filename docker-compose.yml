@@ -26,7 +26,7 @@ services:
         - i_see_cubes_main
 
   redis:
-    image: redis:latest
+    image: redis:7.0.8
     ports:
       - "6379:6379"
     volumes:
@@ -35,27 +35,27 @@ services:
       - i_see_cubes_main
 
 
-#  chat_messenger:
-#      image: chat_messenger_server:latest
-#      build: ./server_side
-#      restart: always
-#      ports:
-#        - 5000:5000
-#      depends_on:
-#        - postgres
-#      networks:
-#        - i_see_cubes_main
-#      environment:
-#        KEEP_ALIVE_LOGGING: 10
-#        OPENAI_API_KEY: 0
-#        SQL_HOST: iseecubes_postgres_1
-#        SQL_USER: postgres
-#        SQL_PASSWORD: postgres
-#        SQL_DB_NAME: chat_db
-#        REDIS_HOST: iseecubes_redis_1
-#        AUTH_TOKEN_HASHMAP: auth_tokens
-#        REDIS_DB_NUMBER: 0
-#        WAIT_BEFORE_TIMEOUT: 15
-#        POSTGRES_DB_WARMUP_DELAY: 60
+  chat_messenger:
+      image: chat_messenger_server:latest
+      build: ./server_side
+      restart: always
+      ports:
+        - 5000:5000
+      depends_on:
+        - postgres
+      networks:
+        - i_see_cubes_main
+      environment:
+        KEEP_ALIVE_LOGGING: 10
+        OPENAI_API_KEY: 0
+        SQL_HOST: iseecubes_postgres_1
+        SQL_USER: postgres
+        SQL_PASSWORD: postgres
+        SQL_DB_NAME: chat_db
+        REDIS_HOST: iseecubes_redis_1
+        REDIS_DB_NUMBER: 0
+        AUTH_TOKEN_HASHMAP: auth_tokens
+        WAIT_BEFORE_TIMEOUT: 15
+        POSTGRES_DB_WARMUP_DELAY: 60
 
 
