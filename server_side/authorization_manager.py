@@ -16,9 +16,9 @@ logging.basicConfig(level=logging.INFO)
 
 class AuthManager:
 
-    def __init__(self, postgres_integration):
+    def __init__(self, postgres_integration, redis_integration):
         self.postgres_integration = postgres_integration
-        self.redis_integration = RedisIntegration()
+        self.redis_integration = redis_integration
 
     # # Copy this to Redis, fetch on app start
     # active_tokens = dict()
@@ -73,11 +73,6 @@ class AuthManager:
         :return: Whether the JWT is valid or not.
         :rtype: bool
         """
-
-        currently_active_tokens = self.redis_integration.fetch_active_tokens()
-
-        if username not in currently_active_tokens:
-            return False
 
         return self.redis_integration.validate_user_token(username, token)
 
