@@ -16,9 +16,9 @@ logging.basicConfig(level=logging.INFO)
 
 class AuthManager:
 
-    def __init__(self, postgres_integration):
+    def __init__(self, postgres_integration, redis_integration):
         self.postgres_integration = postgres_integration
-        self.redis_integration = RedisIntegration()
+        self.redis_integration = redis_integration
 
     # # Copy this to Redis, fetch on app start
     # active_tokens = dict()

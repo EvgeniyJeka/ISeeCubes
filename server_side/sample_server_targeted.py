@@ -13,12 +13,14 @@ try:
     from server_side.authorization_manager import AuthManager
     from server_side.chatgpt_integration import ChatGPTIntegration
     from server_side.postgres_integration import PostgresIntegration
+    from server_side.redis_integration import RedisIntegration
 
 except ModuleNotFoundError:
     # Add 2 variations of import (for Dockerization)
     from authorization_manager import AuthManager
     from chatgpt_integration import ChatGPTIntegration
     from postgres_integration import PostgresIntegration
+    from redis_integration import RedisIntegration
 
 
 logging.basicConfig(level=logging.INFO)
@@ -85,8 +87,10 @@ class ChatServer:
             self.users_currently_online.add(CHAT_GPT_USER)
 
         self.postgres_integration = PostgresIntegration(config_file_path)
+        self.redis_integration = RedisIntegration(config_file_path)
+
         self.users_list = self.postgres_integration.get_all_available_users_list()
-        self.auth_manager = AuthManager(self.postgres_integration)
+        self.auth_manager = AuthManager(self.postgres_integration, self.redis_integration)
 
     def room_names_generator(self, listed_users: list) -> list:
         listed_users.sort()
