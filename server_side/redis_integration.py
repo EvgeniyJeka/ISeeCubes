@@ -15,13 +15,15 @@ class RedisIntegration:
     def __init__(self, config_file_path):
         self.redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
-    # def fetch_active_tokens(self):
-    #     print("Fetching here all active tokens from Redis - Stab")
-    #     return self.active_tokens
-
     def insert_token(self, username, inserted_token):
-        logging.info("Inserting here the JWT to Redis - Stab")
-        return self.redis_client.hset(REDIS_TOKENS_HASH_MAP_NAME, username, inserted_token)
+
+        try:
+            logging.info(f"Inserting  the JWT to Redis, username: {username}, token: {inserted_token}")
+            return self.redis_client.hset(REDIS_TOKENS_HASH_MAP_NAME, username, inserted_token)
+
+        except Exception as e:
+            logging.error(f"Redis Integration: Error! Failed to insert user token {username} into Redis - {e}")
+            raise e
 
     def fetch_token_by_username(self, username):
         try:
@@ -55,7 +57,7 @@ class RedisIntegration:
 
     def delete_token(self, username):
         try:
-            logging.info("Deleting here the token from Redis - Stab")
+            logging.info(f"Deleting the token  related to {username}from Redis")
             self.redis_client.hdel(REDIS_TOKENS_HASH_MAP_NAME, username)
             return True
 

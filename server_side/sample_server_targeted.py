@@ -465,6 +465,7 @@ I           If the token generation is successful, the method returns a list of 
 
             if client_name in self.users_currently_online:
                 self.users_currently_online.remove(client_name)
+                self.auth_manager.redis_integration.delete_token(client_name)
                 self.socketio.emit('user_has_gone_offline', {"username": client_name})
 
             logging.info(f"Users currently online: {list(self.users_currently_online)}")
