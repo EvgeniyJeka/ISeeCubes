@@ -54,7 +54,8 @@ class RedisIntegration:
 
         try:
             logging.info(f"Inserting  the JWT to Redis, username: {username}, token: {inserted_token}")
-            return self.redis_client.hset(self.redis_jwt_hashmap_name, username, inserted_token)
+            if self.redis_client.hset(self.redis_jwt_hashmap_name, username, inserted_token) == 0:
+                return True
 
         except Exception as e:
             logging.error(f"Redis Integration: Error! Failed to insert user token {username} into Redis - {e}")
@@ -119,7 +120,10 @@ class RedisIntegration:
 
         if existing_conversations:
             existing_conversations.append(conversation)
-            return self.store_first_conversation(username, existing_conversations)
+            self.delete_stored_conversation(username)
+
+            stored_conversation_item = json.dumps(existing_conversations)
+            return self.redis_client.hset(self.redis_pending_conversations_hashmap_name, username, stored_conversation_item)
 
         else:
             return self.store_first_conversation(username, conversation)
@@ -133,6 +137,7 @@ class RedisIntegration:
             if saved_conversations:
                 pending_conversations = saved_conversations.decode('utf-8')
                 return json.loads(pending_conversations)
+
             else:
                 logging.warning(f"No pending conversations for user {username}")
                 return None
@@ -164,8 +169,19 @@ class RedisIntegration:
 if __name__ == "__main__":
     config_file_path = "./config.ini"
     print("Test")
-    # red = RedisIntegration(config_file_path)
-    # red.store_first_conversation("El", "Hellow El")
+    new_cached_message = {"sender": 'message_sender1', "content": 'content1', "conversation_room": 'conversation_room1'}
+    new_cached_message2 = {"sender": 'message_sender2', "content": 'content2', "conversation_room": 'conversation_room2'}
+    new_cached_message3 = {"sender": 'message_sender3', "content": 'content3', "conversation_room": 'conversation_room3'}
+    new_cached_message4 = {"sender": 'message_sender4', "content": 'content4',"conversation_room": 'conversation_room4'}
+    red = RedisIntegration(config_file_path)
+    red.delete_stored_conversation("El")
+
+    red.store_first_conversation("El", new_cached_message)
+    red.extend_stored_conversations_list("El", new_cached_message2)
+    red.extend_stored_conversations_list("El", new_cached_message3)
+    red.extend_stored_conversations_list("El", new_cached_message4)
+    print(red.fetch_pending_conversations_for_user("El"))
+
     # red.extend_stored_conversations_list("El", "Good bye")
     # red.store_first_conversation("Boris", "Ga Ga Ga")
     # print(red.delete_stored_conversation("El"))

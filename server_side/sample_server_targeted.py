@@ -70,7 +70,7 @@ class ChatServer:
     users_currently_online = set()
 
     # Messages that were sent to offline users and waiting to be delivered (once the user will be online).
-    cached_messages_for_offline_users = dict()
+    #cached_messages_for_offline_users = dict()
 
     auth_manager = None
     chatgpt_instance = None
@@ -149,14 +149,20 @@ class ChatServer:
         new_cached_message = {"sender": message_sender, "content": content, "conversation_room": conversation_room}
         logging.info(f"Caching a message from {message_sender} to {message_destination}: {content}")
 
-        if message_destination in self.cached_messages_for_offline_users.keys():
-            messages_queue = self.cached_messages_for_offline_users[message_destination]
-            messages_queue.put(new_cached_message)
+        users_list = self.redis_integration.get_users_list_with_pending_conversatons()
+
+        if message_destination in users_list:
+            # messages_queue = self.cached_messages_for_offline_users[message_destination]
+            # messages_queue.put(new_cached_message)
+
+            self.redis_integration.extend_stored_conversations_list(message_destination, new_cached_message)
 
         else:
-            messages_queue = queue.Queue()
-            messages_queue.put(new_cached_message)
-            self.cached_messages_for_offline_users[message_destination] = messages_queue
+            # messages_queue = queue.Queue()
+            # messages_queue.put(new_cached_message)
+            # self.cached_messages_for_offline_users[message_destination] = messages_queue
+
+            self.redis_integration.store_first_conversation(message_destination, new_cached_message)
 
     def publish_cached_messages(self, user_name):
         """
@@ -171,11 +177,12 @@ class ChatServer:
         """
 
         try:
-            if user_name in self.cached_messages_for_offline_users.keys():
-                awaiting_messages = self.cached_messages_for_offline_users[user_name]
+            users_list = self.redis_integration.get_users_list_with_pending_conversatons()
 
-                while not awaiting_messages.empty():
-                    next_message_to_publish = awaiting_messages.get()
+            if user_name in users_list:
+                awaiting_messages = self.redis_integration.fetch_pending_conversations_for_user(user_name)
+
+                for next_message_to_publish in awaiting_messages:
                     logging.info(f"Publishing a message cached for {user_name} - {next_message_to_publish['content']}")
                     message = {"sender": next_message_to_publish['sender'],
                                "content": next_message_to_publish['content']}
@@ -183,7 +190,20 @@ class ChatServer:
                     self.socketio.emit('received_message', message, to=next_message_to_publish["conversation_room"])
                     time.sleep(1)
 
+                self.redis_integration.delete_stored_conversation(user_name)
                 return True
+
+
+                # while not awaiting_messages.empty():
+                #     next_message_to_publish = awaiting_messages.get()
+                #     logging.info(f"Publishing a message cached for {user_name} - {next_message_to_publish['content']}")
+                #     message = {"sender": next_message_to_publish['sender'],
+                #                "content": next_message_to_publish['content']}
+                #
+                #     self.socketio.emit('received_message', message, to=next_message_to_publish["conversation_room"])
+                #     time.sleep(1)
+                #
+                # return True
 
         except Exception as e:
             logging.error(f"Failed to publish cached messages to user {user_name} - {e}")
