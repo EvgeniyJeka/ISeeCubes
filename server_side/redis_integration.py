@@ -1,4 +1,6 @@
 import configparser
+import json
+
 import redis
 import logging
 import os
@@ -35,10 +37,12 @@ class RedisIntegration:
                 config.read(config_file_path)
                 self.hst = config.get("REDIS", "host")
                 self.redis_jwt_hashmap_name = config.get("REDIS", "auth_token_hashmap")
+                self.redis_pending_conversations_hashmap_name = config.get("REDIS", "pending_conversations_hashmap")
                 self.db_number = int(config.get("REDIS", "db_number"))
             else:
                 self.hst = os.getenv("REDIS_HOST")
                 self.redis_jwt_hashmap_name = os.getenv("AUTH_TOKEN_HASHMAP")
+                self.redis_pending_conversations_hashmap_name = os.getenv("PENDING_CONVERSATIONS_HASHMAP")
                 self.db_number = int(os.getenv("REDIS_DB_NUMBER"))
 
         except Exception as e:
@@ -96,9 +100,51 @@ class RedisIntegration:
             logging.error(f"Redis integration: Failed to delete JWT {username} from Redis: {e}")
             raise e
 
+    def store_first_conversation(self, username, conversation):
 
-#
-# if __name__ == "__main__":
-#     print("Test")
+        stored_conversations = json.dumps([conversation])
+
+        try:
+            logging.info(f"Storing first conversation for {username}, content: {conversation}")
+            return self.redis_client.hset(self.redis_pending_conversations_hashmap_name, username, stored_conversations)
+
+        except Exception as e:
+            logging.error(f"Redis Integration: Error! Failed to insert a "
+                          f"conversation line for {username} into Redis - {e}")
+            raise e
+
+    def extend_stored_conversations_list(self, username, conversation):
+        
+        existing_conversations = self.fetch_token_by_username(username)
+        existing_conversations.append(conversation)
+
+        return self.store_first_conversation(username, existing_conversations)
+
+    def fetch_pending_conversations_for_user(self, username):
+
+        try:
+            logging.info(f"Fetching pending conversations from Redis by username: {username}")
+            saved_conversations = self.redis_client.hget(self.redis_pending_conversations_hashmap_name, username)
+
+            if saved_conversations:
+                pending_conversations = saved_conversations.decode('utf-8')
+                return json.loads(pending_conversations)
+            else:
+                logging.warning(f"No JWT for user {username}")
+                return None
+
+        except Exception as e:
+            logging.error(f"Redis integration: Failed to fetch pending conversations for {username} from Redis: {e}")
+            raise e
+
+    def get_users_list_with_pending_conversatons(self):
+        pass
+
+
+
+if __name__ == "__main__":
+    config_file_path = "./config.ini"
+    print("Test")
+    red = RedisIntegration(config_file_path)
 
 
