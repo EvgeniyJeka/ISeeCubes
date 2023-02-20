@@ -114,11 +114,15 @@ class RedisIntegration:
             raise e
 
     def extend_stored_conversations_list(self, username, conversation):
-        
-        existing_conversations = self.fetch_token_by_username(username)
-        existing_conversations.append(conversation)
 
-        return self.store_first_conversation(username, existing_conversations)
+        existing_conversations = self.fetch_pending_conversations_for_user(username)
+
+        if existing_conversations:
+            existing_conversations.append(conversation)
+            return self.store_first_conversation(username, existing_conversations)
+
+        else:
+            return self.store_first_conversation(username, conversation)
 
     def fetch_pending_conversations_for_user(self, username):
 
@@ -130,7 +134,7 @@ class RedisIntegration:
                 pending_conversations = saved_conversations.decode('utf-8')
                 return json.loads(pending_conversations)
             else:
-                logging.warning(f"No JWT for user {username}")
+                logging.warning(f"No pending conversations for user {username}")
                 return None
 
         except Exception as e:
@@ -138,13 +142,34 @@ class RedisIntegration:
             raise e
 
     def get_users_list_with_pending_conversatons(self):
-        pass
+
+        users_list = self.redis_client.hkeys(self.redis_pending_conversations_hashmap_name)
+        if len(users_list) == 0:
+            return []
+
+        return [username.decode('utf-8') for username in users_list]
+
+    def delete_stored_conversation(self, username):
+        try:
+            logging.info(f"Deleting stored conversations related related to {username} from Redis")
+            self.redis_client.hdel(self.redis_pending_conversations_hashmap_name, username)
+            return True
+
+        except Exception as e:
+            logging.error(f"Redis integration: Failed to delete JWT {username} from Redis: {e}")
+            raise e
 
 
 
 if __name__ == "__main__":
     config_file_path = "./config.ini"
     print("Test")
-    red = RedisIntegration(config_file_path)
+    # red = RedisIntegration(config_file_path)
+    # red.store_first_conversation("El", "Hellow El")
+    # red.extend_stored_conversations_list("El", "Good bye")
+    # red.store_first_conversation("Boris", "Ga Ga Ga")
+    # print(red.delete_stored_conversation("El"))
+    # print(red.fetch_pending_conversations_for_user("Boris"))
+
 
 
