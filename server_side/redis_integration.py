@@ -51,6 +51,13 @@ class RedisIntegration:
             raise e
 
     def insert_token(self, username, inserted_token):
+        """
+        Inserting an auth. JWT that was generated for a user into Redis Hash Map - user name is the key,
+        and the JWT is the value
+        :param username: str
+        :param inserted_token: str
+        :return: True on success
+        """
 
         try:
             logging.info(f"Inserting  the JWT to Redis, username: {username}, token: {inserted_token}")
@@ -59,11 +66,18 @@ class RedisIntegration:
             if isinstance(redis_reply, int) and redis_reply >= 0:
                 return True
 
+            return False
+
         except Exception as e:
             logging.error(f"Redis Integration: Error! Failed to insert user token {username} into Redis - {e}")
             raise e
 
     def fetch_token_by_username(self, username):
+        """
+        Fetching auth. JWT from Redis by username.
+        :param username: str
+        :return: requested JWT on success, str
+        """
         try:
             logging.info(f"Fetching JWT from Redis by username: {username}")
             user_token = self.redis_client.hget(self.redis_jwt_hashmap_name, username)
@@ -167,27 +181,9 @@ class RedisIntegration:
             raise e
 
 
-
-if __name__ == "__main__":
-    config_file_path = "./config.ini"
-    print("Test")
-    new_cached_message = {"sender": 'message_sender1', "content": 'content1', "conversation_room": 'conversation_room1'}
-    new_cached_message2 = {"sender": 'message_sender2', "content": 'content2', "conversation_room": 'conversation_room2'}
-    new_cached_message3 = {"sender": 'message_sender3', "content": 'content3', "conversation_room": 'conversation_room3'}
-    new_cached_message4 = {"sender": 'message_sender4', "content": 'content4',"conversation_room": 'conversation_room4'}
-    red = RedisIntegration(config_file_path)
-    red.delete_stored_conversation("El")
-
-    red.store_first_conversation("El", new_cached_message)
-    red.extend_stored_conversations_list("El", new_cached_message2)
-    red.extend_stored_conversations_list("El", new_cached_message3)
-    red.extend_stored_conversations_list("El", new_cached_message4)
-    print(red.fetch_pending_conversations_for_user("El"))
-
-    # red.extend_stored_conversations_list("El", "Good bye")
-    # red.store_first_conversation("Boris", "Ga Ga Ga")
-    # print(red.delete_stored_conversation("El"))
-    # print(red.fetch_pending_conversations_for_user("Boris"))
+#
+# if __name__ == "__main__":
+#     config_file_path = "./config.ini"
 
 
 

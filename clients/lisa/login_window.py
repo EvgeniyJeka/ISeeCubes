@@ -1,7 +1,6 @@
 from tkinter import *
 import logging
 import requests
-from requests.exceptions import *
 
 from clients.lisa.local_client_config import LoginWindowConfig, LoginWindowErrorMessages
 
