@@ -12,22 +12,6 @@ from clients.lisa.login_window import LoginWindow
 hight = 600
 width = 285
 
-# TO DO:
-# Client, UI:
-# if the client is ALREADY CONNECTED the CONNECT button should DO NOTHING, OR BE DISABLED (
-# chat box size and design
-# chat box 'clear' button
-# chat box - current user name needs to be colored with green
-# Custom 'keep alive' logic both on server and on client side D
-#
-# Client UI, chatroom header - add the current user name D
-# Client UI, chat box header - add the current user name D
-#
-# Log In window (can take from Bookmarker) with CANCEL and CONFIRMATION D
-# Log In request (client side), response parsed. D
-# Connect button is enabled only after successful Log In D
-# Log in button is disabled after successful login and re-enabled after disconnect D
-
 
 class ChatClient:
 
