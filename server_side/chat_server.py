@@ -27,8 +27,6 @@ logging.basicConfig(level=logging.INFO)
 
 config_file_path = "./config.ini"
 
-#CONNECTIONS_VERIFICATION_INTERVAL = 10
-KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 8
 CACHED_OFFLINE_MESSAGES_DELAY = 3
 KEEP_ALIVE_LOGGING = os.getenv("KEEP_ALIVE_LOGGING")
 
@@ -106,7 +104,8 @@ class ChatServer:
 
     def handle_messaging_offline_user(self, message_sender, message_destination, content, conversation_room):
         """
-           Handles messaging for offline users. Caches messages intended for offline users and publishes them once the user comes back online.
+           Handles messaging for offline users. Caches messages intended for offline users and publishes them once
+           the user comes back online.
 
            Parameters:
            message_sender (str): The username of the sender of the message.
@@ -256,7 +255,7 @@ I           If the token generation is successful, the code removes the JWT toke
             field.
             Uses the 'username' and 'password' fields to generate a JWT token using the 'generate_jwt_token'
             method of an 'auth_manager' object.
-I           If the token generation is successful, the method returns a list of all users that are currently online.
+            If the token generation is successful, the method returns a list of all users that are currently online.
 
             """
 
@@ -458,7 +457,13 @@ I           If the token generation is successful, the method returns a list of 
 
         self.socketio.run(self.app, debug=True, allow_unsafe_werkzeug=True, host='0.0.0.0')
 
-def fetch_internal_chat_server_config(config_file_path):
+
+def fetch_internal_chat_server_config(config_file_path_):
+    """
+    This method can be used to fetch config either from the environmental variables or from config file
+    :param config_file_path_: config file path
+    :return: config dict
+    """
 
     result = {}
 
@@ -466,11 +471,15 @@ def fetch_internal_chat_server_config(config_file_path):
         if os.getenv("SQL_USER") is None:
             # Reading DB name, host and credentials from config
             config = configparser.ConfigParser()
-            config.read(config_file_path)
-            result["CONNECTIONS_VERIFICATION_INTERVAL"] = int(config.get("CHAT_SERVER_CONFIG", "connections_verification_interval"))
+            config.read(config_file_path_)
+            result["CONNECTIONS_VERIFICATION_INTERVAL"] =\
+                int(config.get("CHAT_SERVER_CONFIG", "connections_verification_interval"))
+            result["KEEP_ALIVE_DELAY_BETWEEN_EVENTS"] = \
+                int(config.get("CHAT_SERVER_CONFIG", "keep_alive_delay_between_events"))
 
         else:
             result["CONNECTIONS_VERIFICATION_INTERVAL"] = int(os.getenv("CONNECTIONS_VERIFICATION_INTERVAL"))
+            result["KEEP_ALIVE_DELAY_BETWEEN_EVENTS"] = int(os.getenv("KEEP_ALIVE_DELAY_BETWEEN_EVENTS"))
 
         return result
 
@@ -485,6 +494,7 @@ def fetch_internal_chat_server_config(config_file_path):
 
     except Exception as e:
         raise ValueError(f"Redis Integration: Error! Failed to read configuration: {e}") from e
+
 
 def connection_checker(chat_instance: ChatServer):
     """
@@ -501,6 +511,7 @@ def connection_checker(chat_instance: ChatServer):
     chat_internal_config = fetch_internal_chat_server_config(config_file_path)
 
     CONNECTIONS_VERIFICATION_INTERVAL = chat_internal_config["CONNECTIONS_VERIFICATION_INTERVAL"]
+    KEEP_ALIVE_DELAY_BETWEEN_EVENTS = chat_internal_config["KEEP_ALIVE_DELAY_BETWEEN_EVENTS"]
 
     while True:
         time.sleep(CONNECTIONS_VERIFICATION_INTERVAL)

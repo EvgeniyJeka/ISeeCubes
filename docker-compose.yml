@@ -48,6 +48,7 @@ services:
       environment:
         KEEP_ALIVE_LOGGING: 10
         CONNECTIONS_VERIFICATION_INTERVAL: 10
+        KEEP_ALIVE_DELAY_BETWEEN_EVENTS: 8
         OPENAI_API_KEY: 0
         SQL_HOST: iseecubes_postgres_1
         SQL_USER: postgres
@@ -57,7 +58,7 @@ services:
         REDIS_DB_NUMBER: 0
         AUTH_TOKEN_HASHMAP: auth_tokens
         PENDING_CONVERSATIONS_HASHMAP: pending_conversations
-        WAIT_BEFORE_TIMEOUT: 15
-        POSTGRES_DB_WARMUP_DELAY: 60
+#        WAIT_BEFORE_TIMEOUT: 15
+#        POSTGRES_DB_WARMUP_DELAY: 60
 
 
