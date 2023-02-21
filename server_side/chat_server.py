@@ -5,6 +5,7 @@ from flask import Flask, request
 from flask_socketio import SocketIO, join_room
 import logging
 import os
+import configparser
 
 
 try:
@@ -26,12 +27,11 @@ logging.basicConfig(level=logging.INFO)
 
 config_file_path = "./config.ini"
 
-CONNECTIONS_VERIFICATION_INTERVAL = 10
+#CONNECTIONS_VERIFICATION_INTERVAL = 10
 KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 8
 CACHED_OFFLINE_MESSAGES_DELAY = 3
 KEEP_ALIVE_LOGGING = os.getenv("KEEP_ALIVE_LOGGING")
 
-# Config fetching from file/env variables
 
 # Special users
 CHAT_GPT_USER = "ChatGPT"
@@ -458,6 +458,33 @@ I           If the token generation is successful, the method returns a list of 
 
         self.socketio.run(self.app, debug=True, allow_unsafe_werkzeug=True, host='0.0.0.0')
 
+def fetch_internal_chat_server_config(config_file_path):
+
+    result = {}
+
+    try:
+        if os.getenv("SQL_USER") is None:
+            # Reading DB name, host and credentials from config
+            config = configparser.ConfigParser()
+            config.read(config_file_path)
+            result["CONNECTIONS_VERIFICATION_INTERVAL"] = int(config.get("CHAT_SERVER_CONFIG", "connections_verification_interval"))
+
+        else:
+            result["CONNECTIONS_VERIFICATION_INTERVAL"] = int(os.getenv("CONNECTIONS_VERIFICATION_INTERVAL"))
+
+        return result
+
+    except FileNotFoundError as e:
+        raise ValueError(f"Redis Integration: Error! Config file not found at {config_file_path}") from e
+
+    except KeyError as e:
+        raise ValueError(f"Redis Integration: Error! Missing configuration item: {e}") from e
+
+    except ValueError as e:
+        raise ValueError(f"Redis Integration: Error! Invalid configuration value: {e}") from e
+
+    except Exception as e:
+        raise ValueError(f"Redis Integration: Error! Failed to read configuration: {e}") from e
 
 def connection_checker(chat_instance: ChatServer):
     """
@@ -470,6 +497,11 @@ def connection_checker(chat_instance: ChatServer):
     :param chat_instance:
     :return:
     """
+
+    chat_internal_config = fetch_internal_chat_server_config(config_file_path)
+
+    CONNECTIONS_VERIFICATION_INTERVAL = chat_internal_config["CONNECTIONS_VERIFICATION_INTERVAL"]
+
     while True:
         time.sleep(CONNECTIONS_VERIFICATION_INTERVAL)
         logging.info("Verifying active connections..")

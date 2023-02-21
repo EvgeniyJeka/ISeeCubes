@@ -47,6 +47,7 @@ services:
         - i_see_cubes_main
       environment:
         KEEP_ALIVE_LOGGING: 10
+        CONNECTIONS_VERIFICATION_INTERVAL: 10
         OPENAI_API_KEY: 0
         SQL_HOST: iseecubes_postgres_1
         SQL_USER: postgres
