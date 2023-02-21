@@ -12,4 +12,4 @@ class LoginWindowErrorMessages(Enum):
 
 
 class MainWindowConfig(Enum):
-    MAIN_UI_WINDOW_SIZE = "600x285"
+    MAIN_UI_WINDOW_SIZE = "285x600"
