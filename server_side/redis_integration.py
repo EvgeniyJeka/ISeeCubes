@@ -45,10 +45,17 @@ class RedisIntegration:
                 self.redis_pending_conversations_hashmap_name = os.getenv("PENDING_CONVERSATIONS_HASHMAP")
                 self.db_number = int(os.getenv("REDIS_DB_NUMBER"))
 
+        except FileNotFoundError as e:
+            raise ValueError(f"Redis Integration: Error! Config file not found at {config_file_path}") from e
+
+        except KeyError as e:
+            raise ValueError(f"Redis Integration: Error! Missing configuration item: {e}") from e
+
+        except ValueError as e:
+            raise ValueError(f"Redis Integration: Error! Invalid configuration value: {e}") from e
+
         except Exception as e:
-            logging.critical(f"Redis integration: Error! Failed to read config from the "
-                             f"'config.ini' file or fetch from environment variables! {e}")
-            raise e
+            raise ValueError(f"Redis Integration: Error! Failed to read configuration: {e}") from e
 
     def insert_token(self, username, inserted_token):
         """
@@ -59,14 +66,21 @@ class RedisIntegration:
         :return: True on success
         """
 
+        if not username or not inserted_token:
+            return False
+
         try:
             logging.info(f"Inserting  the JWT to Redis, username: {username}, token: {inserted_token}")
 
             redis_reply = self.redis_client.hset(self.redis_jwt_hashmap_name, username, inserted_token)
-            if isinstance(redis_reply, int) and redis_reply >= 0:
+            if redis_reply >= 0:
                 return True
 
             return False
+
+        except redis.exceptions.RedisError as e:
+            logging.error(f"Redis Integration: Redis Error! - {e}")
+            raise e
 
         except Exception as e:
             logging.error(f"Redis Integration: Error! Failed to insert user token {username} into Redis - {e}")
@@ -88,11 +102,23 @@ class RedisIntegration:
                 logging.warning(f"No JWT for user {username}")
                 return None
 
+        except redis.exceptions.RedisError as e:
+            logging.error(f"Redis Integration: Redis Error! - {e}")
+            raise e
+
         except Exception as e:
             logging.error(f"Redis integration: Failed to fetch token by {username} from Redis: {e}")
             raise e
 
     def validate_user_token(self, username, token):
+        """
+        This method validates the provided auth JWT against JWT that is stored in Redis.
+        Auth. JWT is fetched from Redis by username and compared with the provided JWT.
+        The method returns True if those are identical
+        :param username: str
+        :param token: str
+        :return: bool
+        """
 
         try:
             token_saved_in_redis = self.fetch_token_by_username(username)
@@ -102,16 +128,37 @@ class RedisIntegration:
 
             return token_saved_in_redis == token
 
+        except redis.exceptions.RedisError as e:
+            logging.error(f"Redis Integration: Redis Error! - {e}")
+            raise e
+
         except Exception as e:
             logging.error(f"Redis integration: Failed to validate JWT {token} related to "
                           f"user {username} against Redis: {e}")
             raise e
 
     def delete_token(self, username):
+        """
+           Delete the JWT for the given username from Redis.
+
+           :param username: (str) The username of the JWT to delete.
+           :return: (bool) True if the JWT was deleted, False if the JWT was not found in Redis.
+           :raises: Exception if an error occurs while deleting the JWT.
+        """
         try:
+
+            # Check if token exists in Redis
+            if not self.redis_client.hexists(self.redis_jwt_hashmap_name, username):
+                logging.warning(f"No JWT for user {username}")
+                return False
+
             logging.info(f"Deleting the token  related to {username}from Redis")
             self.redis_client.hdel(self.redis_jwt_hashmap_name, username)
             return True
+
+        except redis.exceptions.RedisError as e:
+            logging.error(f"Redis Integration: Redis Error! - {e}")
+            raise e
 
         except Exception as e:
             logging.error(f"Redis integration: Failed to delete JWT {username} from Redis: {e}")

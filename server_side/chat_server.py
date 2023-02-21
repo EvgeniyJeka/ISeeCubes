@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from flask import Flask, request
 from flask_socketio import SocketIO, join_room
 import logging
-import queue
 import os
 
 
@@ -27,32 +26,12 @@ logging.basicConfig(level=logging.INFO)
 
 config_file_path = "./config.ini"
 
-# TO DO:
-# 1.  Custom 'keep alive' logic both on server and on client side // TEST AGAINST 2-3 CLIENTS, NOT EMULATIONS D
-#
-# 1.1 Client - while connected, will emit 'connection_alive' event every X seconds (will contain the username) D
-#
-# 1.2 Server - will keep a dict of all online users and the time when the last 'connection_alive' event was received D
-#
-# 1.3 Sever - on 'connection_alive' event the dict will be updated (the time) D
-#
-# 1.4 Server - while the app is running each X seconds the method 'connection_checker' that is running in a separate
-# thread will check for each user in the 'online users' dict (see 1.2) if CURRENT_TIME - LAST_TIME_CONNECTION_ALIVE_WAS_RECEVED < T,
-# while 'T' is configurable.  If CURRENT_TIME - LAST_TIME_CONNECTION_ALIVE_WAS_RECEVED => T, the connection will be
-# considered as DEAD - the user will be removed from the 'online users' list and an 'user_has_gone_offline' event will D
-# be published for all other users D
-#
-# Document methods & events
-# Make the server run in a Docker container
-# CASE ISSUE - Server and Client side D
-# handle_client_message - avoid sending user's JWT to another user (client + server side) D
-# Support the flow connect-chat-disconnect-reconnect-chat (bug fix) D
-
-
 CONNECTIONS_VERIFICATION_INTERVAL = 10
 KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 8
 CACHED_OFFLINE_MESSAGES_DELAY = 3
 KEEP_ALIVE_LOGGING = os.getenv("KEEP_ALIVE_LOGGING")
+
+# Config fetching from file/env variables
 
 # Special users
 CHAT_GPT_USER = "ChatGPT"
@@ -66,11 +45,7 @@ class ChatServer:
     # Mapping active users against the last time the 'connection_alive' event was received from each
     keep_alive_tracking = {}
 
-    # Will be in service cache AND in DB (Redis DB?)
     users_currently_online = set()
-
-    # Messages that were sent to offline users and waiting to be delivered (once the user will be online).
-    #cached_messages_for_offline_users = dict()
 
     auth_manager = None
     chatgpt_instance = None
@@ -78,7 +53,6 @@ class ChatServer:
     def __init__(self):
         self.app = Flask(__name__)
         self.socketio = SocketIO(self.app)
-
 
         self.chatgpt_instance = ChatGPTIntegration()
 
@@ -152,16 +126,9 @@ class ChatServer:
         users_list = self.redis_integration.get_users_list_with_pending_conversatons()
 
         if message_destination in users_list:
-            # messages_queue = self.cached_messages_for_offline_users[message_destination]
-            # messages_queue.put(new_cached_message)
-
             self.redis_integration.extend_stored_conversations_list(message_destination, new_cached_message)
 
         else:
-            # messages_queue = queue.Queue()
-            # messages_queue.put(new_cached_message)
-            # self.cached_messages_for_offline_users[message_destination] = messages_queue
-
             self.redis_integration.store_first_conversation(message_destination, new_cached_message)
 
     def publish_cached_messages(self, user_name):
@@ -192,18 +159,6 @@ class ChatServer:
 
                 self.redis_integration.delete_stored_conversation(user_name)
                 return True
-
-
-                # while not awaiting_messages.empty():
-                #     next_message_to_publish = awaiting_messages.get()
-                #     logging.info(f"Publishing a message cached for {user_name} - {next_message_to_publish['content']}")
-                #     message = {"sender": next_message_to_publish['sender'],
-                #                "content": next_message_to_publish['content']}
-                #
-                #     self.socketio.emit('received_message', message, to=next_message_to_publish["conversation_room"])
-                #     time.sleep(1)
-                #
-                # return True
 
         except Exception as e:
             logging.error(f"Failed to publish cached messages to user {user_name} - {e}")
@@ -505,8 +460,17 @@ I           If the token generation is successful, the method returns a list of 
 
 
 def connection_checker(chat_instance: ChatServer):
+    """
+    This method runs in a loop in a separate thread and verifies that each user that
+    is expected to be online at the moment sends 'connection_alive' event each X seconds -
+    it goes over the table that stores the time when the last 'connection_alive' event was received
+    against user name and if the delay is greater than X seconds the user is removed from the 'online users' list,
+    the auth. JWT token is removed from Redis and the 'user_has_gone_offline' event is published for all other clients
+
+    :param chat_instance:
+    :return:
+    """
     while True:
-        # IN PROGRESS - SEE
         time.sleep(CONNECTIONS_VERIFICATION_INTERVAL)
         logging.info("Verifying active connections..")
 
