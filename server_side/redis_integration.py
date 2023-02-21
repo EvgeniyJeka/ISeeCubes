@@ -165,12 +165,28 @@ class RedisIntegration:
             raise e
 
     def store_first_conversation(self, username, conversation):
+        """
+         This method is used to store the first 'conversation' item (a dict) in Redis for given user.
+         If there are several conversations for a user that need to be stored another method shall be used
+
+        :param username: str
+        :param conversation: dict
+        :return: True on success
+        """
 
         stored_conversations = json.dumps([conversation])
 
         try:
             logging.info(f"Storing first conversation for {username}, content: {conversation}")
-            return self.redis_client.hset(self.redis_pending_conversations_hashmap_name, username, stored_conversations)
+            redis_reply = \
+                self.redis_client.hset(self.redis_pending_conversations_hashmap_name, username, stored_conversations)
+
+            if redis_reply >= 0:
+                return True
+
+        except redis.exceptions.RedisError as e:
+            logging.error(f"Redis Integration: Redis Error! - {e}")
+            raise e
 
         except Exception as e:
             logging.error(f"Redis Integration: Error! Failed to insert a "
