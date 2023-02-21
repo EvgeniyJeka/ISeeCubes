@@ -1,5 +1,7 @@
 from tkinter import *
 import logging
+import requests
+from requests.exceptions import *
 
 from clients.lisa.local_client_config import LoginWindowConfig, LoginWindowErrorMessages
 
@@ -99,7 +101,7 @@ class LoginWindow:
 
             return True
 
-        except ConnectionError as e:
+        except requests.exceptions.ConnectionError as e:
             logging.error(f"Login window: Failed to log in, server unavailable - {e}")
             logging.error(f"Login window: Failed to log in - {e}")
             username_entry.delete(0, 'end')
