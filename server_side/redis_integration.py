@@ -54,7 +54,9 @@ class RedisIntegration:
 
         try:
             logging.info(f"Inserting  the JWT to Redis, username: {username}, token: {inserted_token}")
-            if self.redis_client.hset(self.redis_jwt_hashmap_name, username, inserted_token) == 0:
+
+            redis_reply = self.redis_client.hset(self.redis_jwt_hashmap_name, username, inserted_token)
+            if isinstance(redis_reply, int):
                 return True
 
         except Exception as e:
