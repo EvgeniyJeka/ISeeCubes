@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO)
 # Address Book - create an empty dict, fill it with DATA RECEIVED FROM THE SERVER ON CONNECTION D
 
 # Default window size when there are no bookmarks
-from clients.avi.message_box import MessageBox
+from additional_test_clients.era.message_box import MessageBox
 
 # Move to config
 keep_alive_delay_between_events = 6

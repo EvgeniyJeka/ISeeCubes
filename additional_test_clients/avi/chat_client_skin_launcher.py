@@ -6,8 +6,8 @@ import concurrent.futures
 
 logging.basicConfig(level=logging.INFO)
 
-from clients.tsahi.chat_client_app_core import ClientAppCore
-from clients.tsahi.login_window import LoginWindow
+from additional_test_clients.avi.chat_client_app_core import ClientAppCore
+from additional_test_clients.avi.login_window import LoginWindow
 
 hight = 600
 width = 285

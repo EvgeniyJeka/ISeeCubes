@@ -58,7 +58,6 @@ services:
         REDIS_DB_NUMBER: 0
         AUTH_TOKEN_HASHMAP: auth_tokens
         PENDING_CONVERSATIONS_HASHMAP: pending_conversations
-#        WAIT_BEFORE_TIMEOUT: 15
-#        POSTGRES_DB_WARMUP_DELAY: 60
+
 
 
