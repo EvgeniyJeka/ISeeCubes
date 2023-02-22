@@ -1,5 +1,22 @@
 #General Logic:
 
+Chat application, a simplified version of the 'legendary' ICQ.
+It consists of a Chat Server based on Flask - Socket IO and a desktop client
+implemented on Python. 
+
+After the connection is established user is presented with a list that contains 
+all other users and can start a chat with any of them. Users that are currently online are 
+colored with green - a message that is sent to such user will be rerouted immediately.
+Users that are offline at the moment are colored with red - a message that is sent will
+be stored an sent to the user once he is back online. Cached messages for offline users
+are stored in Redis.
+
+User need to log in with his credentials before he can connect. The credentials are 
+verified against those that are stored in Postgres SQL DB and the server responds with JWT
+generated for the user - all the request sent to the server contain that JWT, and it is verified on 
+the server side. JWT's are also stored in Redis. 
+
+
 ## Server side:
 
 The server is a Flask - Socket IO server, it communicates with client via HTTP requests
