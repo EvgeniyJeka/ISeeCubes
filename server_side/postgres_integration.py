@@ -329,10 +329,5 @@ class PostgresIntegration:
 
 
 
-if __name__ == "__main__":
-    config_file_path = "./config.ini"
-
-    postgres_integration = PostgresIntegration(config_file_path)
-    users_creds_table = postgres_integration.get_table_content(USERS_TABLE_NAME)
 
 

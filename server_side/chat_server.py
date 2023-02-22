@@ -164,6 +164,10 @@ class ChatServer:
             return False
 
     def run(self):
+        """
+        This method handles incoming HTTP requests and websocket messages
+
+        """
 
         @self.app.route("/get_contacts_list/<username>", methods=['GET'])
         def get_rooms_list(username):
@@ -277,11 +281,32 @@ I           If the token generation is successful, the code removes the JWT toke
             if requested_token['result'] == 'success':
                 return {"online_clients_list": list(self.users_currently_online)}
 
-        def user_joined():
-            print(f"User joined!")
-
         @self.socketio.on('join')
         def on_join(data):
+            """
+            Handling user 'join' request, a websocket message. The event is expected to contain the client name,
+            auth. JWT and the Room to which the client wishes to join. The client is expected to send a 'join'
+            request for each existing Room, but on the first 'join' request he is already added to the 'online
+            users' list after the JWT is verified.
+
+            This function handles the 'join' event by validating the client's JWT, adding the client to the specified
+            Room, and performing some additional steps when the client first joins a Room. If the JWT is invalid, the
+            function will return an error message.
+
+            When a client first joins a Room, this function adds them to the 'online users' list and emits a
+            'new_user_online' event to all connected clients, which includes the name of the new user. The function
+            also checks for any cached messages that were sent to the client while they were offline, and publishes
+            them to the Room so that the client can see them as incoming messages.
+
+            Inputs:
+            - data: A dictionary containing the client name, auth. JWT, and Room to join.
+
+            Returns:
+            - A dictionary with the result of the operation, which will be 'success' if everything went smoothly.
+
+            Note: This function is expected to be called when the client sends a 'join' request via a websocket
+            connection.
+            """
 
             try:
                 client_name = data['client']
@@ -308,7 +333,7 @@ I           If the token generation is successful, the code removes the JWT toke
             if client_name not in self.users_currently_online:
                 self.users_currently_online.add(client_name)
                 # Emit 'new_user_online' to ALL (with current client username)
-                self.socketio.emit('new_user_online', {"username": client_name}, callback=user_joined)
+                self.socketio.emit('new_user_online', {"username": client_name})
                 # Emitting messages that were cached for this user, if there are any
                 self.publish_cached_messages(client_name)
 
@@ -421,6 +446,16 @@ I           If the token generation is successful, the code removes the JWT toke
 
         @self.socketio.on('client_disconnection')
         def handle_client_disconnection(json_):
+            """
+              Handles a client disconnection event. Expects a JSON object containing the client name and its JWT token.
+              If the token is invalid, logs a warning and returns without doing anything.
+              If the client was currently online, removes it from the online users set and deletes its token from Redis.
+              Finally, emits a 'user_has_gone_offline' event to notify other users that this client has gone offline.
+
+              Args:
+                  json_: A dictionary containing the 'client' and 'jwt' keys.
+              """
+
             logging.info(f"Client disconnection: {json_}")
 
             try:
@@ -446,6 +481,13 @@ I           If the token generation is successful, the code removes the JWT toke
 
         @self.socketio.on('connection_alive')
         def processing_keep_alive_signals(json_):
+            """
+                Handles the "keep alive" signal from the client. This method is expected to be called periodically by the client to
+                indicate that the client is still connected and active.
+
+                Args:
+                    json_: A dictionary containing the client name.
+            """
             client_name = json_['client']
             current_time = datetime.now()
 
