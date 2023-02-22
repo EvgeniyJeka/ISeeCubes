@@ -8,4 +8,4 @@ RUN pip install -r requirements.txt
 
 EXPOSE 5000
 
-CMD ["python", "sample_server_targeted.py"]
+CMD ["python", "chat_server.py"]
