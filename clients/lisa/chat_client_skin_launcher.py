@@ -179,6 +179,14 @@ class ChatClient:
         self.sending_keep_alive_thread.start()
 
     def handle_disconnect(self):
+        """
+        Handles the "Disconnect" button click.
+        If the user is currently connected the connection is terminated.
+        The client emits 'client_disconnection' events and disconnects from the chat server web socket.
+        The thread that listens to the incoming events is stopped and the thread that sends
+        the 'connection_alive' event is stopped. 
+        :return:
+        """
         logging.info("Button clicked: DISCONNECT")
         if self.connection_status is False:
             logging.info("NOT CONNECTED")
