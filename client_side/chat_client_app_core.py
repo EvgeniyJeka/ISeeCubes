@@ -1,5 +1,4 @@
 import time
-from datetime import datetime
 from tkinter import *
 
 import socketio
@@ -8,13 +7,11 @@ import json
 import threading
 import logging
 
-from additional_test_clients.lisa.local_client_config import AppConfig
-
-logging.basicConfig(level=logging.INFO)
-
-
 # Default window size when there are no bookmarks
 from message_box import MessageBox
+from local_client_config import AppConfig
+
+logging.basicConfig(level=logging.INFO)
 
 
 class ClientAppCore:

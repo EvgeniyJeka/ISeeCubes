@@ -2,12 +2,11 @@ from tkinter import *
 from PIL import ImageTk, Image
 import threading
 import logging
-from additional_test_clients.lisa.local_client_config import MainWindowConfig
-
-logging.basicConfig(level=logging.INFO)
-
+from local_client_config import MainWindowConfig
 from chat_client_app_core import ClientAppCore
 from login_window import LoginWindow
+
+logging.basicConfig(level=logging.INFO)
 
 
 class ChatClient:
