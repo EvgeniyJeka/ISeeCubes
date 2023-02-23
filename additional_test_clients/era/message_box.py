@@ -2,7 +2,7 @@ from tkinter import *
 import logging
 import functools
 
-from additional_test_clients.lisa.local_client_config import MessageBoxConfig
+from additional_test_clients.era.local_client_config import MessageBoxConfig
 
 logging.basicConfig(level=logging.INFO)
 

@@ -2,7 +2,7 @@ from tkinter import *
 from PIL import ImageTk, Image
 import threading
 import logging
-from additional_test_clients.lisa.local_client_config import MainWindowConfig
+from additional_test_clients.avi.local_client_config import MainWindowConfig
 
 logging.basicConfig(level=logging.INFO)
 

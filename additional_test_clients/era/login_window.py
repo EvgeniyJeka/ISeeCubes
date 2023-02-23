@@ -2,7 +2,7 @@ from tkinter import *
 import logging
 import requests
 
-from additional_test_clients.lisa.local_client_config import LoginWindowConfig, LoginWindowErrorMessages
+from additional_test_clients.era.local_client_config import LoginWindowConfig, LoginWindowErrorMessages
 
 
 class LoginWindow:
@@ -45,8 +45,8 @@ class LoginWindow:
                                bg="red", fg="white")
 
         # TEMPORARY STUB !! Remove on Prod
-        username_entry.insert(0, "Lisa")
-        password_entry.insert(0, "TestMe")
+        username_entry.insert(0, "Era")
+        password_entry.insert(0, "Come on")
 
         username_label.grid(row=0, column=0, sticky=E)
         username_entry.grid(row=0, column=1)

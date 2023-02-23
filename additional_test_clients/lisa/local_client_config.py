@@ -16,7 +16,7 @@ class MainWindowConfig(Enum):
 
 
 class MessageBoxConfig(Enum):
-    MESSAGE_BOX_SIZE = "400x600"
+    MESSAGE_BOX_SIZE = "600x400"
 
 
 class AppConfig(Enum):
