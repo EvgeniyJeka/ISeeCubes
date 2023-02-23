@@ -2,11 +2,9 @@ from tkinter import *
 import logging
 import functools
 
+from additional_test_clients.avi.local_client_config import MessageBoxConfig
+
 logging.basicConfig(level=logging.INFO)
-
-
-MESSAGE_WINDOW_HEIGHT = 400
-MESSAGE_WINDOW_WIDTH = 600
 
 
 class MessageBox:
@@ -25,7 +23,6 @@ class MessageBox:
         self.sio = client_app_core.sio
         self.auth_token = client_app_core.current_auth_token
 
-
     def show_message_box(self, first_message, message_sender):
         """
         This method is used to open the Message Box window (UI).
@@ -35,9 +32,7 @@ class MessageBox:
         :return: n/a
         """
         # Window size
-        hight = MESSAGE_WINDOW_HEIGHT
-        width = MESSAGE_WINDOW_WIDTH
-        size = '%sx%s' % (width, hight)
+        size = MessageBoxConfig.MESSAGE_BOX_SIZE.value
 
         # Window
         message_box_window = Tk()

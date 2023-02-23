@@ -1,4 +1,9 @@
 from tkinter import *
+import logging
+import requests
+
+from additional_test_clients.avi.local_client_config import LoginWindowConfig, LoginWindowErrorMessages
+
 
 class LoginWindow:
 
@@ -9,23 +14,31 @@ class LoginWindow:
     def __init__(self, client_app_core):
         self.client_app_core = client_app_core
 
-
     def show_login_window(self, main_ui_window, button_connect):
+        """
+        This method opens the Log In window.
+        The Log In window contains 2 entry boxes and 2 buttons, once the user enter his credentials
+        and clicks on the 'Confirm' button the client sends a 'Log In' request to the server.
+        If the log in attempt was successful, the 'Connect' button on the main UI window is unlocked,
+        and the user can connect.
+        :param main_ui_window: Tkinter window object, main UI window
+        :param button_connect: TKinter button, 'Connect'
+        """
 
         self.main_ui_window = main_ui_window
         self.button_connect = button_connect
 
         login_window = Tk()
-        login_window.geometry("550x100")
+        login_window.geometry(LoginWindowConfig.LOGIN_WINDOW_SIZE.value)
 
-        label_1 = Label(login_window, text="Username:", fg="blue", font=("", 11))
+        username_label = Label(login_window, text="Username:", fg="blue", font=("", 11))
         username_entry = Entry(login_window, width="70")
 
-
-        label_2 = Label(login_window, text="Password: ", fg="blue", font=("", 11))
+        password_label = Label(login_window, text="Password: ", fg="blue", font=("", 11))
         password_entry = Entry(login_window, width="70")
 
-        confirm_button = Button(login_window, text="Confirm", command=lambda: self.handle_confirm(login_window, username_entry, password_entry),
+        confirm_button = Button(login_window, text="Confirm", command=lambda:
+                                self.handle_confirm(login_window, username_entry, password_entry),
                                 width=20, bg="blue",
                                 fg="white")
         cancel_button = Button(login_window, text="Cancel", command=lambda: self.close_window(login_window), width=20,
@@ -35,18 +48,16 @@ class LoginWindow:
         username_entry.insert(0, "Avi")
         password_entry.insert(0, "MoreMoreMore")
 
-
-        label_1.grid(row=0, column=0, sticky=E)
+        username_label.grid(row=0, column=0, sticky=E)
         username_entry.grid(row=0, column=1)
 
-        label_2.grid(row=1, column=0, sticky=E)
+        password_label.grid(row=1, column=0, sticky=E)
         password_entry.grid(row=1, column=1)
 
         confirm_button.grid(row=3, column=1, pady=6, sticky=W)
         cancel_button.grid(row=3, column=1, pady=6, sticky=E)
 
         login_window.mainloop()
-
 
     def handle_confirm(self, login_window, username_entry, password_entry):
         """
@@ -65,10 +76,10 @@ class LoginWindow:
         username = username_entry.get()
         password = password_entry.get()
 
-        print(f"Log In Window: sending Log In request, username: {username}, password: {password}")
-        response = self.client_app_core.send_log_in_request(username, password)
-
         try:
+            logging.info(f"Log In Window: sending Log In request, username: {username}, password: {password}")
+            response = self.client_app_core.send_log_in_request(username, password)
+
             # Successful login
             if response['result'] == "success":
                 self.main_ui_window.title(f"Hello, {username}")
@@ -79,7 +90,7 @@ class LoginWindow:
             elif response['result'] == "Invalid credentials":
                 username_entry.delete(0, 'end')
                 password_entry.delete(0, 'end')
-                password_entry.insert(0, "Wrong credentials. Please re login with your credentials.")
+                password_entry.insert(0, LoginWindowErrorMessages.WRONG_CREDENTIALS.value)
 
             # Unexpected response
             elif response['result'] == "Unknown server code":
@@ -89,19 +100,23 @@ class LoginWindow:
 
             return True
 
-        except Exception as e:
-            #logging.error(f"Login window: Failed to log in - {e}")
+        except requests.exceptions.ConnectionError as e:
+            logging.error(f"Login window: Failed to log in, server unavailable - {e}")
+            logging.error(f"Login window: Failed to log in - {e}")
             username_entry.delete(0, 'end')
             password_entry.delete(0, 'end')
-            password_entry.insert(0, "Log In failed. Server side error.")
+            password_entry.insert(0, LoginWindowErrorMessages.SERVER_UNAVAILABLE.value)
             return False
 
+        except Exception as e:
+            logging.error(f"Login window: Failed to log in - {e}")
+            username_entry.delete(0, 'end')
+            password_entry.delete(0, 'end')
+            password_entry.insert(0, LoginWindowErrorMessages.UNKNOWN_SERVER_CODE.value)
+            return False
 
     def close_window(self, window):
         window.destroy()
 
-# if __name__ == "__main__":
-#     login = LoginWindow()
-#     login.show_login_window()
 
 

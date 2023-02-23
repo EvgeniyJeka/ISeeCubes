@@ -17,8 +17,3 @@ class MainWindowConfig(Enum):
 
 class MessageBoxConfig(Enum):
     MESSAGE_BOX_SIZE = "400x600"
-
-
-class AppConfig(Enum):
-    KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 6
-    CHAT_SERVER_BASE_URL = "http://localhost:5000"
