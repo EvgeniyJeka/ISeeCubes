@@ -13,3 +13,12 @@ class LoginWindowErrorMessages(Enum):
 
 class MainWindowConfig(Enum):
     MAIN_UI_WINDOW_SIZE = "285x600"
+
+
+class MessageBoxConfig(Enum):
+    MESSAGE_BOX_SIZE = "600x400"
+
+
+class AppConfig(Enum):
+    KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 6
+    CHAT_SERVER_BASE_URL = "http://localhost:5000"

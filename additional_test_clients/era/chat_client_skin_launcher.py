@@ -2,12 +2,12 @@ from tkinter import *
 from PIL import ImageTk, Image
 import threading
 import logging
-from clients.lisa.local_client_config import MainWindowConfig
+from additional_test_clients.era.local_client_config import MainWindowConfig
 
 logging.basicConfig(level=logging.INFO)
 
-from clients.lisa.chat_client_app_core import ClientAppCore
-from clients.lisa.login_window import LoginWindow
+from additional_test_clients.era.chat_client_app_core import ClientAppCore
+from additional_test_clients.era.login_window import LoginWindow
 
 
 class ChatClient:
@@ -179,6 +179,14 @@ class ChatClient:
         self.sending_keep_alive_thread.start()
 
     def handle_disconnect(self):
+        """
+        Handles the "Disconnect" button click.
+        If the user is currently connected the connection is terminated.
+        The client emits 'client_disconnection' events and disconnects from the chat server web socket.
+        The thread that listens to the incoming events is stopped and the thread that sends
+        the 'connection_alive' event is stopped.
+        :return:
+        """
         logging.info("Button clicked: DISCONNECT")
         if self.connection_status is False:
             logging.info("NOT CONNECTED")

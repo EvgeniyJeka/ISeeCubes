@@ -20,9 +20,6 @@ class AuthManager:
         self.postgres_integration = postgres_integration
         self.redis_integration = redis_integration
 
-    # # Copy this to Redis, fetch on app start
-    # active_tokens = dict()
-
     def generate_jwt_token(self, username, password):
         """
            This method generates a JWT token based on passed credentials.

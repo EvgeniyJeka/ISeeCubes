@@ -8,17 +8,14 @@ import json
 import threading
 import logging
 
+from additional_test_clients.tsahi.local_client_config import AppConfig
+
 logging.basicConfig(level=logging.INFO)
 
 
-# TO DO:
-# Address Book - create an empty dict, fill it with DATA RECEIVED FROM THE SERVER ON CONNECTION D
-
 # Default window size when there are no bookmarks
-from clients.avi.message_box import MessageBox
+from additional_test_clients.tsahi.message_box import MessageBox
 
-# Move to config
-keep_alive_delay_between_events = 6
 
 class ClientAppCore:
 
@@ -42,11 +39,16 @@ class ClientAppCore:
         self.contacts_list_ui_element = contacts_list_ui_element
 
     def send_log_in_request(self, username, password):
-        # IN PROGRESS! #
+        """
+        This method is used to send HTTP sign in request to the chat server
+        :param username: str
+        :param password: str
+        """
 
         logging.info(f"App Core: sending a sign in request to the server, username: {username}, password: {password}")
 
-        response = requests.post(url="http://localhost:5000/log_in", json={"username": username, "password": password})
+        response = requests.post(url=AppConfig.CHAT_SERVER_BASE_URL.value + "/log_in",
+                                 json={"username": username, "password": password})
         sign_in_data = json.loads(response.text)
 
         if 'result' in sign_in_data.keys():
@@ -63,9 +65,24 @@ class ClientAppCore:
         else:
             return {"result": "server error"}
 
-
     def initiate_connection(self):
-        # CONNECT method
+        """
+        This method can be used to initiate connection to the chat server after the user is logged in.
+        The header of each request contains the JWT that was received from the server after log in.
+        The connection procedure includes:
+            - connection to chat server web socket
+            - contacts list request (the response includes all existing contacts, those that are currently online
+                                     and a list of room names that the specified user is a member of)
+            - sending 'join' request (web socket message) to each room on the rooms list
+
+            - initiating the MessageBox instance.
+
+        After the connection was initiated the server will add the newly connected client to the list
+        of users, that are currently online, notify all other users and publish all cached messages
+        to the newly joined user that were sent to him while he was offline by other users.
+
+        :return: dict (with all the relevant data).
+        """
         try:
             if self.sio is None:
                 self.sio = socketio.Client()
@@ -77,8 +94,9 @@ class ClientAppCore:
             headers = {"username": self.my_name, "jwt": self.current_auth_token}
 
             # GET CONTACTS request
-            self.sio.connect('http://localhost:5000')
-            response = requests.get(f"http://localhost:5000/get_contacts_list/{self.my_name}", headers=headers)
+            self.sio.connect(AppConfig.CHAT_SERVER_BASE_URL.value)
+            response = requests.get(f"{AppConfig.CHAT_SERVER_BASE_URL.value}/get_contacts_list/{self.my_name}",
+                                    headers=headers)
             server_contacts_data = json.loads(response.text)
 
             # All existing contacts
@@ -94,7 +112,8 @@ class ClientAppCore:
             # Establishing contacts with all persons from the Contacts List
             for contact in self.contacts_list:
                 conversation_room = self.contacts_list[contact]
-                self.sio.emit('join', {"room": conversation_room, "client": self.my_name, "jwt": self.current_auth_token})
+                self.sio.emit('join', {"room": conversation_room, "client": self.my_name,
+                                       "jwt": self.current_auth_token})
 
             self.message_box = MessageBox(self)
 
@@ -102,26 +121,40 @@ class ClientAppCore:
             logging.info(f"Contacts list received from the server: {self.contacts_list}")
             logging.info(f"Online contacts list received: {self.currently_online_contacts}")
 
-            return {"contacts": self.contacts_list, "currently_online": self.currently_online_contacts, "my_name": self.my_name}
+            return {"contacts": self.contacts_list,
+                    "currently_online": self.currently_online_contacts, "my_name": self.my_name}
 
         except Exception as e:
             logging.error(f"Failed to connect: {e}")
             return False
 
     def start_listening_loop(self):
+        """
+        When this method is called the client starts listening to the events incoming from the chat server.
+        - Once 'received_message' event  is received the message is presented to the user in a Message Box that opens
+          in a separate thread
 
+        - Same handling for 'ai_response_received' (message from a bot)
+
+        - Once 'new_user_online' event is received the color of the user name in client UI is changed to GREEN
+
+        - Once 'user_has_gone_offline' event is received the color of the user name in client UI is changed to RED
+
+        All server events that will be added in the future will be handled under this method
+        """
         @self.sio.on('received_message')
         def handle_my_custom_event(message):
 
             if self.my_name != message['sender']:
-                print(f"{message['sender']}: {message['content']}")
+                logging.info(f"{message['sender']}: {message['content']}")
                 first_message_conversation = f"{message['sender']}: {message['content']}"
 
                 current_messages_box = self.address_book[message['sender']]
 
                 # First message from given user
                 if current_messages_box is None:
-                    t1 = threading.Thread(target=self.message_box.show_message_box, args=(first_message_conversation, message['sender']))
+                    t1 = threading.Thread(target=self.message_box.show_message_box,
+                                          args=(first_message_conversation, message['sender']))
                     t1.start()
                     time.sleep(6)
 
@@ -163,25 +196,25 @@ class ClientAppCore:
             user_name = message["username"]
 
             if user_name != self.my_name:
-                print(f"Handling: new user is now online: {user_name}")
+                logging.info(f"Handling: new user is now online: {user_name}")
                 # Color the username in 'self.contacts_list_ui_element' in GREEN
                 if not self.color_selected_contact(user_name, "green"):
-                    print(f"Warning: failed to color contact {user_name} in GREEN")
+                    logging.warning(f"Warning: failed to color contact {user_name} in GREEN")
 
         @self.sio.on('user_has_gone_offline')
         def user_has_gone_offline(message):
             user_name = message["username"]
 
             if user_name != self.my_name:
-                print(f"Handling: user has gone offline: {user_name}")
+                logging.info(f"Handling: user has gone offline: {user_name}")
                 # Color the username in 'self.contacts_list_ui_element' in RED
                 if not self.color_selected_contact(user_name, "red"):
-                    print(f"Warning: failed to color contact {user_name} in RED")
-
+                    logging.warning(f"Warning: failed to color contact {user_name} in RED")
 
     def sending_keep_alive_loop(self):
         """
-        This method continuously sends "connection_alive" events to a server using Socket.IO while the user is logged in.
+        This method continuously sends "connection_alive" events to a server using Socket.IO
+        while the user is logged in.
         The function first logs a message indicating that it will send keep-alive signals every
         keep_alive_delay_between_events seconds.
 
@@ -195,21 +228,18 @@ class ClientAppCore:
         to pause the loop for keep_alive_delay_between_events seconds before emitting the next "connection_alive" event.
         :return:
         """
-        logging.info(f"SENDING KEEP ALIVE SIGNALS EVERY {keep_alive_delay_between_events} seconds")
+        logging.info(f"SENDING KEEP ALIVE SIGNALS EVERY {AppConfig.KEEP_ALIVE_DELAY_BETWEEN_EVENTS.value} seconds")
 
         # Sending 'connection_alive' event every X seconds while the user is logged in
         while self.user_logged_in:
-            now = datetime.now()
             self.sio.emit('connection_alive', {'client': self.my_name})
-
-            time.sleep(keep_alive_delay_between_events)
+            time.sleep(AppConfig.KEEP_ALIVE_DELAY_BETWEEN_EVENTS.value)
 
     def color_online_offline_contacts(self, currently_online_contacts_list: list):
         """
         This method is used to color all contacts in CONTACTS LIST UI ELEMENT that are currently ONLINE
         in GREEN, and all other contacts - in RED.
         :param currently_online_contacts_list: list of str
-        :param contacts_list_ui_element: tkinter ui element
         :return: True on success
         """
         try:
@@ -224,7 +254,8 @@ class ClientAppCore:
 
             return True
 
-        except Exception:
+        except Exception as e:
+            logging.error(f"Failed to color online/offline contacts: {e}")
             return False
 
     def color_selected_contact(self, selected_contact, color):
@@ -237,9 +268,7 @@ class ClientAppCore:
 
             return True
 
-        except Exception:
+        except Exception as e:
+            logging.error(f"Failed to color the selected contact: {e}")
             return False
 
-
-# if __name__ == '__main__':
-#     chtr = ChatRoom()
