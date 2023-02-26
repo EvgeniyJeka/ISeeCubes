@@ -5,7 +5,7 @@ import hashlib
 import os
 
 import sqlalchemy
-from sqlalchemy import create_engine, exc
+from sqlalchemy import create_engine, exc, MetaData
 from sqlalchemy_utils import database_exists, create_database
 import sqlalchemy as db
 from sqlalchemy.orm import sessionmaker
@@ -181,7 +181,9 @@ class PostgresIntegration:
             :raises: A ValueError if an error occurs creating or validating any of the required tables.
          """
 
-        tables = self.engine.table_names()
+        metadata = MetaData()
+        metadata.reflect(bind=self.engine)
+        tables = metadata.tables.keys()
 
         # Creating the 'users' table if not exists - column for each "User" object property.
         if USERS_TABLE_NAME not in tables:
@@ -211,11 +213,10 @@ class PostgresIntegration:
         :param table: table name, String
         :return: tuple
         """
-
         metadata = db.MetaData()
-        table_ = db.Table(table, metadata, autoload=True, autoload_with=self.engine)
+        table_ = db.Table(table, metadata, autoload_replace=True, autoload_with=self.engine)
 
-        query = db.select([table_])
+        query = db.select(table_)
         ResultProxy = self.cursor.execute(query)
         result = ResultProxy.fetchall()
 
