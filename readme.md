@@ -132,23 +132,35 @@ The server will parse the 'client_sends_message' event and verify the auth. JWT 
   
 
 ### Connection Health Check
-...
 
-### Disconnection Flow 
-...
-...
-...
+User is considered to be 'online' after he connected until he performs the disconnection procedure - 
+once the client emits <b>'client_disconnection'</b> event he is removed from the 'online users' list
+and the server publishes the <b>'user_has_gone_offline'</b> event to notify all other clients.
 
+Yet the connection can be terminated by client without publishing the 'client_disconnection' event. 
+Therefore the chat server expects each client (that is currently online) to emit 
+the <b>'connection_alive'</b> event every X seconds (configurable on the server side, 
+set to 6 seconds by default).
 
+The chat server keeps a dictionary, that maps the user name to the last time the 'connection_alive'
+event was received from that user. Each time a new 'connection_alive' event is received, the dictionary
+is updated.
+
+In a separate thread every N seconds the server verifies, for each user, that the delta between
+the current server time and the last time the the 'connection_alive'
+event was received doesn't exceed X seconds - if it does, the user is considered to be disconnected, 
+the JWT token is deleted, messages from that user won't be forwarded to other users (until he re login)
+and 'user_has_gone_offline' event will be emitted to all other users. 
 
 
 ## Events :
 
 ### Client - to - server:
 
-1. 'join' - client sends a connection request, tries to join the chat rooms
+1. 'join' - client sends a request to join the specified chat room
 2. 'client_sends_message' - client sends a message to the selected chat room (destination in message content)
-3. 'client_disconnection' - client terminates connection
+3. 'connection_alive' - event used for connection health check validation 
+4. 'client_disconnection' - client terminates connection
 
 ### Server - to - client:
 
