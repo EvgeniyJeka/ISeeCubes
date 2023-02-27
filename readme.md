@@ -103,6 +103,7 @@ The connection procedure performed by the client includes:
 
 
 The server handles each 'join' event - the new user is:
+
 + Joined to the rooms
 + Added to the list of 'active users'  
 
@@ -114,13 +115,21 @@ User must be connected to send a message.
 User can send a message to every existing user from the list provided by the server on connection. 
 The message sent to another user will be available only to the sender and to the receiver.
 
-After the message destination is selected, the client emits the 'client_sends_message' event 
-that contains the sender name, the message and the room it is published to - 
+After the message destination is selected, the client emits the <b>'client_sends_message'</b> event 
+that contains the sender name, the auth. JWT and the message and the room it is published to - 
 only the sender and the receiver are in that room.
 
-The server will parse the 'client_sends_message' event and publish the 'received_message'
-event to the selected room - the former will be received bt the target user, and the message
-will reach its destination. 
+The server will parse the 'client_sends_message' event and verify the auth. JWT is valid. 
+
+- If the message destination is ChatGPT user - the message will be forwarded to OpenAI API.
+
+- If the message destination is another user, that is currently offline - the message will be cached 
+  in Redis  and forwarded to the user once he is online 
+  
+- In other cases the message will be immediately delivered to the target, the server will publish 
+  the 'received_message' event to the Room that contains the target user and the message sender and the message
+  will reach its destination. 
+  
 
 ### Connection Health Check
 ...
