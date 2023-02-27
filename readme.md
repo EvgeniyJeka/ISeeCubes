@@ -4,6 +4,8 @@ Chat application, a simplified version of the 'legendary' well known chat.
 It consists of a Chat Server based on Flask - Socket IO and a desktop client
 implemented on Python. 
 
+/DEMO VIDEOS URLs/
+
 After the connection is established user is presented with a list that contains 
 all other users and can start a chat with any of them. Users that are currently online are 
 colored with green - a message that is sent to such user will be rerouted immediately.
@@ -50,7 +52,7 @@ To run the desktop client you must have Python 3.6 or above installed on your ma
    
 7. If you want to test the app locally you can start one of the test clients 
    (select one from folder 'additional_test_clients' and launch the chat_client_skin_launcher.py).
-   As an alternative, you can 
+   As an alternative, you can:
    + Clone the repo to another machine that is connected to your local network
    + Check the internal network IP of the machine the 'I See Cubes' server is running on 
      (can be done with 'ipconfig' command on Windows).
@@ -61,31 +63,44 @@ To run the desktop client you must have Python 3.6 or above installed on your ma
    + Now run the client on the second machine - you should be able to log in, connect and send messages 
      to your first user. 
      
-     
-   
 
-## Server side:
+## Server side logic:
 
 The server is a Flask - Socket IO server, it communicates with client via HTTP requests
-and websocket messages - each message contains an event.
+and web socket messages - each message contains an event.
 
-The server will keep a list of all registered (existing) users (in DB)
-and a list of all users, that are currently active (connected).
+### Log In Procedure
+
+User must be logged in before he connects. The client sends a HTTP <b>login request</b>, that 
+contains the user's credentials. Those are verified on server side against the user
+credentials stored in Postgres SQL. If the credentials are valid a JWT is generated - 
+it is stored in Redis and returned to the client in HTTP response. 
+
+All HTTP requests the client sends must contain the JWT in request headers ("Authorization").
+
+All web socket messages, events sent from the client to the server (except for 'connection_alive')
+must contain the JWT. 
+
+Once the client disconnects, the JWT is terminated.
 
 ### Connection Establishing Flow ###
 
-When a user connects, his name is paired with each existing username and a new set of rooms is created 
+When a user connects, his name is paired with each existing username and a new set of Rooms is created 
 on the server side - the name of each room consists of the name of the newly joined user 
-and a name of an existing one, for example: 'avi&lisa', 'avi&era'.
+and a name of an existing one, for example: 'Avi&Lisa', 'Avi&Era'.
 
 When the user wishes to send a message to another user, the message is published to the room that
 the user shares with the person he would like to speak to.   
  
-On connection the client send an HTTP request and receives from the server a list of 
-all existing contacts, room names and a list of contacts, that are currently online.
+The connection procedure performed by the client includes:
 
-After that the client emits a 'join' event for each room from the list - it contains the room name
-and the username. 
+   - connection to chat server web socket
+   
+   - contacts list HTTP request (the response includes all existing contacts, those that are currently online
+                                 and a list of room names that the specified user is a member of)
+                                 
+   - emitting a 'join' event (web socket message) to each room on the rooms list
+
 
 The server handles each 'join' event - the new user is:
 + Joined to the rooms
@@ -106,6 +121,9 @@ only the sender and the receiver are in that room.
 The server will parse the 'client_sends_message' event and publish the 'received_message'
 event to the selected room - the former will be received bt the target user, and the message
 will reach its destination. 
+
+### Connection Health Check
+...
 
 ### Disconnection Flow 
 ...
