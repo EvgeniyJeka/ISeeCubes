@@ -64,6 +64,7 @@ To run the desktop client you must have Python 3.6 or above installed on your ma
      to your first user. 
      
 
+
 ## Server side logic:
 
 The server is a Flask - Socket IO server, it communicates with client via HTTP requests
