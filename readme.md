@@ -1,6 +1,6 @@
 #General Logic:
 
-Chat application, a simplified version of the 'legendary' ICQ.
+Chat application, a simplified version of the 'legendary' well known chat.
 It consists of a Chat Server based on Flask - Socket IO and a desktop client
 implemented on Python. 
 
@@ -11,11 +11,58 @@ Users that are offline at the moment are colored with red - a message that is se
 be stored an sent to the user once he is back online. Cached messages for offline users
 are stored in Redis.
 
-User need to log in with his credentials before he can connect. The credentials are 
+User needs to log in with his credentials before he can connect. The credentials are 
 verified against those that are stored in Postgres SQL DB and the server responds with JWT
 generated for the user - all the request sent to the server contain that JWT, and it is verified on 
 the server side. JWT's are also stored in Redis. 
 
+The application supports integration with OpenAI ChatGPT model - if OpenAI key
+is provided (as a value of 'OPENAI_API_KEY' environment variable) the 'ChatGPT' user
+will become online, and all messages sent to that user will be rerouted to ChatGPT API
+by the server. 
+
+## Local Run - How To Use:
+
+The PC must have a Docker app installed and running. 
+To run the desktop client you must have Python 3.6 or above installed on your machine.
+
+1. Clone the 'ISeeCubes' repository.
+
+2. Run the 'docker-compose up' command - the Postgres and the Redis containers 
+   will be fetched from Docker repo and the 'chat server' container will be built and start.
+   Once you see the server is running you can launch the client.
+   
+   If you want to have a conversation with ChatGPT, modify the 'docker-compose.yml' - insert your
+   OpenAI API key as the value of 'OPENAI_API_KEY' environment variable of 'chat_messenger' service. 
+   
+3. Open the 'client_side' folder and install the client requirements (pip install -r requirements.txt)
+4. Run the 'chat_client_skin_launcher.py' (python chat_client_skin_launcher.py)
+
+5. Once the chat client skin has appeared click on "Log In" and enter the credentials of one of the 
+   test users (can be found in users.json file). Providing the log in was successfully performed 
+   the header will change from 'Disconnected' to 'Hello, %your username%!' and the 'Connect' button
+   will become enabled.
+   
+6. Click on the connect button. The client will try to connect. Once the connection is successful
+   the 'Connection status' will change to 'Online' and a list of all other users will be fetched 
+   from the server. If the current user was addressed by other users earlier, while he was offline
+   all those messages will be fetched and presented. 
+   
+7. If you want to test the app locally you can start one of the test clients 
+   (select one from folder 'additional_test_clients' and launch the chat_client_skin_launcher.py).
+   As an alternative, you can 
+   + Clone the repo to another machine that is connected to your local network
+   + Check the internal network IP of the machine the 'I See Cubes' server is running on 
+     (can be done with 'ipconfig' command on Windows).
+   + Open the 'client_side' folder, install the requirements (on the second machine) and modify the 
+     'local_client_config.py' - replace the 'localhost' (CHAT_SERVER_BASE_URL) with the internal IP 
+     of the machine that runs the chat server. 
+     
+   + Now run the client on the second machine - you should be able to log in, connect and send messages 
+     to your first user. 
+     
+     
+   
 
 ## Server side:
 
