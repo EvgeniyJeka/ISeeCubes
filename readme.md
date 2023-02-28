@@ -201,9 +201,12 @@ ClientAppCore opens an instance of MessageBox in a separate thread (it happens w
 to the current user).
 
 While handling the events ClientAppCore is responsible to make the required adjustments in ChatClient UI elements - 
-to color usernames of  users that are currently online in green, to enable/disable buttons e.t.c. 
+to color user names of  users that are currently online in green, to enable/disable buttons e.t.c. 
 
-3. MessageBox..
+3. <b>MessageBox</b> - the MessageBox class is responsible for the Message Box UI component. 
+   Message box opens each time the user receives a message or wishes to send one. 
+   It contains the 'Send' button - once the button is clicked, the 'client_sends_message' event is emitted
+   and the text that the user has entered is sent to the destination 
 
 4. LoginWindow..
  
