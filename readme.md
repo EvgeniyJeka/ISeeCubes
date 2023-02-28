@@ -67,6 +67,8 @@ To run the desktop client you must have Python 3.6 or above installed on your ma
 
 ## Server side logic:
 
+/SERVER SIDE CHART/ 
+
 The server is a Flask - Socket IO server, it communicates with client via HTTP requests
 and web socket messages - each message contains an event.
 
@@ -176,7 +178,7 @@ and 'user_has_gone_offline' event will be emitted to all other users.
 
 The client consists of:
 
-1. ChatClient - application main GUI. Contains the app skin - the contacts list, the buttons and all the methods
+1. <b>ChatClient</b> - application main GUI. Contains the app skin - the contacts list, the buttons and all the methods
 that are used to handle button clicks. Opens secondary windows on request - 
 MessageBox (when user initiates a conversation with another user) and LoginWindow (when user wishes to log in).
 
@@ -187,11 +189,12 @@ One of the properties of the ChatClient is an instance of ClientAppCore, so the 
 all the App Core methods and pass the instance to other components, if required. 
 
 
-2. ClientAppCore - application core methods. This class contains the methods required to communicate with the 
-server side - send a log in request, send a connection request and receive feeds from the server in the response.
-When the 'start_listening_loop' method is called the ClientAppCore starts to listen to all the incoming events (websocket messages)
-in a separate thread and handle each event accordingly. The ChatClient calls 'start_listening_loop' method
-when the 'connect' button is clicked. 
+2. <b>ClientAppCore</b> - application core methods. This class contains the methods required to communicate with the 
+server side - send a log in request, send a connection request and receive feeds from the server in response.
+When the 'start_listening_loop' method is called the ClientAppCore starts to listen to all the incoming 
+events (web socket messages) in a separate thread and handle each event accordingly. 
+
+The ChatClient calls <b>'start_listening_loop'</b> method when the 'connect' button is clicked. 
 
 Note - one of the events that can be handled in ClientAppCore is 'received_message' - in that case 
 ClientAppCore opens an instance of MessageBox in a separate thread (it happens when another user sends a message
