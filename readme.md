@@ -4,7 +4,12 @@ Chat application, a simplified version of the 'legendary' well known chat.
 It consists of a Chat Server based on Flask - Socket IO and a desktop client
 implemented on Python. 
 
-/DEMO VIDEOS URLs/
+Chatting with another user:
+https://www.youtube.com/watch?v=dk44vgkKfPY
+
+Chatting with OpenAI model:
+https://www.youtube.com/watch?v=iOxp3ZvDWnw
+
 
 After the connection is established user is presented with a list that contains 
 all other users and can start a chat with any of them. Users that are currently online are 
@@ -179,36 +184,37 @@ and 'user_has_gone_offline' event will be emitted to all other users.
 The client consists of:
 
 1. <b>ChatClient</b> - application main GUI. Contains the app skin - the contacts list, the buttons and all the methods
-that are used to handle button clicks. Opens secondary windows on request - 
-MessageBox (when user initiates a conversation with another user) and LoginWindow (when user wishes to log in).
-
-Note - each conversation is handled in a separate thread, so the user will be able to have several conversations
-simultaneously, to each time the 'Chat With' button is clicked a new thread starts and a new MessageBox window opens. 
-
-One of the properties of the ChatClient is an instance of ClientAppCore, so the ChatClient will be able to use
-all the App Core methods and pass the instance to other components, if required. 
-
+    that are used to handle button clicks. Opens secondary windows on request - 
+    MessageBox (when user initiates a conversation with another user) and LoginWindow (when user wishes to log in).
+    
+    Note - each conversation is handled in a separate thread, so the user will be able to have several conversations
+    simultaneously, to each time the 'Chat With' button is clicked a new thread starts and a new MessageBox window opens. 
+    
+    One of the properties of the ChatClient is an instance of ClientAppCore, so the ChatClient will be able to use
+    all the App Core methods and pass the instance to other components, if required. 
 
 2. <b>ClientAppCore</b> - application core methods. This class contains the methods required to communicate with the 
-server side - send a log in request, send a connection request and receive feeds from the server in response.
-When the 'start_listening_loop' method is called the ClientAppCore starts to listen to all the incoming 
-events (web socket messages) in a separate thread and handle each event accordingly. 
-
-The ChatClient calls <b>'start_listening_loop'</b> method when the 'connect' button is clicked. 
-
-Note - one of the events that can be handled in ClientAppCore is 'received_message' - in that case 
-ClientAppCore opens an instance of MessageBox in a separate thread (it happens when another user sends a message
-to the current user).
-
-While handling the events ClientAppCore is responsible to make the required adjustments in ChatClient UI elements - 
-to color user names of  users that are currently online in green, to enable/disable buttons e.t.c. 
+    server side - send a log in request, send a connection request and receive feeds from the server in response.
+    When the 'start_listening_loop' method is called the ClientAppCore starts to listen to all the incoming 
+    events (web socket messages) in a separate thread and handle each event accordingly. 
+    
+    The ChatClient calls <b>'start_listening_loop'</b> method when the 'connect' button is clicked. 
+    
+    Note - one of the events that can be handled in ClientAppCore is 'received_message' - in that case 
+    ClientAppCore opens an instance of MessageBox in a separate thread (it happens when another user sends a message
+    to the current user).
+    
+    While handling the events ClientAppCore is responsible to make the required adjustments in ChatClient UI elements - 
+    to color user names of  users that are currently online in green, to enable/disable buttons e.t.c. 
 
 3. <b>MessageBox</b> - the MessageBox class is responsible for the Message Box UI component. 
    Message box opens each time the user receives a message or wishes to send one. 
    It contains the 'Send' button - once the button is clicked, the 'client_sends_message' event is emitted
    and the text that the user has entered is sent to the destination 
 
-4. LoginWindow..
+4. <b>LoginWindow</b> - the LoginWindow class is responsible for Login Window UI component. 
+   Login Window opens each time the 'Login' button is clicked. It contains the 'Confirm' button,
+   once it is clicked an HTTP 'log in' request is sent.
  
 
 
