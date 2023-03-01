@@ -181,6 +181,8 @@ and 'user_has_gone_offline' event will be emitted to all other users.
 
 ### Client Side Structure
 
+<img src="https://github.com/EvgeniyJeka/ISeeCubes/blob/documentation_27_2_23/chat_client_chart.jpg" alt="Screenshot" width="1000" />
+
 The client consists of:
 
 1. <b>ChatClient</b> - application main GUI. Contains the app skin - the contacts list, the buttons and all the methods
@@ -216,7 +218,7 @@ The client consists of:
    Login Window opens each time the 'Login' button is clicked. It contains the 'Confirm' button,
    once it is clicked an HTTP 'log in' request is sent.
    
-   <img src="https://github.com/EvgeniyJeka/ISeeCubes/blob/documentation_27_2_23/chat_client_chart.jpg" alt="Screenshot" width="1000" />
+   
  
 
 
