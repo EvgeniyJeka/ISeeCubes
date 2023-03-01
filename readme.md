@@ -72,10 +72,10 @@ To run the desktop client you must have Python 3.6 or above installed on your ma
 
 ## Server side logic:
 
-/SERVER SIDE CHART/ 
-
 The server is a Flask - Socket IO server, it communicates with client via HTTP requests
 and web socket messages - each message contains an event.
+
+<img src="https://github.com/EvgeniyJeka/ISeeCubes/blob/documentation_27_2_23/i_see_cubes_server_chart.jpg" alt="Screenshot" width="1000" />
 
 ### Log In Procedure
 
@@ -215,6 +215,8 @@ The client consists of:
 4. <b>LoginWindow</b> - the LoginWindow class is responsible for Login Window UI component. 
    Login Window opens each time the 'Login' button is clicked. It contains the 'Confirm' button,
    once it is clicked an HTTP 'log in' request is sent.
+   
+   <img src="https://github.com/EvgeniyJeka/ISeeCubes/blob/documentation_27_2_23/chat_client_chart.jpg" alt="Screenshot" width="1000" />
  
 
 
