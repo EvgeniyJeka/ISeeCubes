@@ -393,6 +393,12 @@ I           If the token generation is successful, the code removes the JWT toke
                4. If the conversation_room does not include the CHAT_GPT_USER, the
                   message is sent as-is to the intended recipients.
 
+                If the target user is offline at the moment, the message will be cached,
+                forwarded to 'handle_messaging_offline_user' method.
+
+                Else it will be sent to the target user - emitted to the Room that contains
+                the target user and the message sender in 'received_message' event.
+
                :param data: Dictionary containing the incoming message data.
                :return: None
             """
