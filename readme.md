@@ -20,7 +20,7 @@ are stored in Redis.
 
 User needs to log in with his credentials before he can connect. The credentials are 
 verified against those that are stored in Postgres SQL DB and the server responds with JWT
-generated for the user - all the request sent to the server contain that JWT, and it is verified on 
+generated for the user - all requests sent to the server contain that JWT, and it is verified on 
 the server side. JWT's are also stored in Redis. 
 
 The application supports integration with OpenAI ChatGPT model - if OpenAI key
