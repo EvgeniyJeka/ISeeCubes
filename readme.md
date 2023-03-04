@@ -1,4 +1,4 @@
-#General Logic:
+# General Logic:
 
 Chat application, a simplified version of the 'legendary' well known chat.
 It consists of a Chat Server based on Flask - Socket IO and a desktop client
