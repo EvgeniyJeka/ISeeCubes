@@ -4,7 +4,7 @@ import logging
 
 USE_TOKENS_TO_TEST_CONNECTION = False
 
-CHAT_GPT_SELECTED_MODEL = 'text-davinci-002'
+CHAT_GPT_SELECTED_MODEL = os.getenv("OPENAI_API_MODEL")
 #CHAT_GPT_SELECTED_MODEL = 'text-babbage-001'
 
 

@@ -49,6 +49,7 @@ services:
         CONNECTIONS_VERIFICATION_INTERVAL: 10
         KEEP_ALIVE_DELAY_BETWEEN_EVENTS: 8
         OPENAI_API_KEY: 0
+        OPENAI_API_MODEL: text-babbage-001
         SQL_HOST: iseecubes_postgres_1
         SQL_USER: postgres
         SQL_PASSWORD: postgres
