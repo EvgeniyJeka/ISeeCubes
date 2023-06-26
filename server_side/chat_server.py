@@ -293,8 +293,8 @@ I           If the token generation is successful, the code removes the JWT toke
         @self.app.route("/admin/get_info", methods=['POST'])
         def admin_get_info():
             """
-            Extracts JSON data from the request which should contain a 'username', 'password' and 'user_token_terminate'
-            field.
+            Extracts JSON data from the request which should contain a 'username' and 'password'
+            fields.
             Uses the 'username' and 'password' fields to generate a JWT token using the 'generate_jwt_token'
             method of an 'auth_manager' object.
             If the token generation is successful, the method returns a list of all users that are currently online.
