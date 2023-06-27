@@ -375,6 +375,14 @@ I           If the token generation is successful, the code removes the JWT toke
                 # Emitting messages that were cached for this user, if there are any
                 self.publish_cached_messages(client_name)
 
+                # Sending the first, initial 'keep alive' message so the client will be added to the
+                # 'keep_alive_tracking" pool
+                current_time = datetime.now()
+                logging.info(f"Client {client_name} sent 'keep alive' signal at {current_time}")
+
+                # Updating the time at which the 'keep alive' signal was last time received for given user
+                self.keep_alive_tracking[client_name] = current_time
+
             return {"result": "success"}
 
         @self.socketio.on('client_sends_message')

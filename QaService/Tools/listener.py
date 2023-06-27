@@ -1,3 +1,5 @@
+import time
+
 import socketio
 import requests
 import json
@@ -14,7 +16,7 @@ class Listener:
     # The method 'start_listening_loop' will run in a separate thread.
     # Every new received event will be inserted into the class variable 'events_received'
     # After test preconditions and test steps are performed the thread with 'start_listening_loop' will stop,
-    # and all the events stored in 'events_received' queue will be fetched from the 'Listener' instance and verified. 
+    # and all the events stored in 'events_received' queue will be fetched from the 'Listener' instance and verified.
 
     events_received = None
     sio = None
@@ -41,7 +43,35 @@ class Listener:
             self.sio = socketio.Client()
 
 
-    def initiate_connection(self, client_name, jwt):
+    def send_log_in_request(self, username, password):
+        """
+        This method is used to send HTTP sign in request to the chat server
+        :param username: str
+        :param password: str
+        """
+
+        logging.info(f"App Core: sending a sign in request to the server, username: {username}, password: {password}")
+
+        response = requests.post(url=CHAT_SERVER_BASE_URL + "/log_in",
+                                 json={"username": username, "password": password})
+        sign_in_data = json.loads(response.text)
+
+        if 'result' in sign_in_data.keys():
+            if sign_in_data['result'] == 'success':
+                self.my_name = username
+                self.current_auth_token = sign_in_data['token']
+                self.user_logged_in = True
+                return {"result": "success"}
+
+            elif sign_in_data['result'] == 'Invalid credentials':
+                return {"result": "Invalid credentials"}
+            else:
+                return {"result": "Unknown server code"}
+        else:
+            return {"result": "server error"}
+
+
+    def initiate_connection(self):
         """
         This method can be used to initiate connection to the chat server after the user is logged in.
         The header of each request contains the JWT that was received from the server after log in.
@@ -67,11 +97,11 @@ class Listener:
                 logging.warning("Core App: user isn't logged in, can't connect!")
                 return False
 
-            headers = {"username": client_name, "jwt": jwt}
+            headers = {"username": self.my_name, "jwt": self.current_auth_token}
 
             # GET CONTACTS request
             self.sio.connect(CHAT_SERVER_BASE_URL)
-            response = requests.get(f"{CHAT_SERVER_BASE_URL}/get_contacts_list/{client_name}",
+            response = requests.get(f"{CHAT_SERVER_BASE_URL}/get_contacts_list/{self.my_name}",
                                     headers=headers)
             server_contacts_data = json.loads(response.text)
 
@@ -90,7 +120,6 @@ class Listener:
                 conversation_room = self.contacts_list[contact]
                 self.sio.emit('join', {"room": conversation_room, "client": self.my_name,
                                        "jwt": self.current_auth_token})
-
 
             # Returning the list of all available contacts received from the server
             logging.info(f"Contacts list received from the server: {self.contacts_list}")
@@ -120,7 +149,8 @@ class Listener:
         """
         @self.sio.on('received_message')
         def handle_my_custom_event(message):
-            pass
+            print(message)
+
 
             # if self.my_name != message['sender']:
             #     logging.info(f"{message['sender']}: {message['content']}")
@@ -192,6 +222,26 @@ class Listener:
             #     # Color the username in 'self.contacts_list_ui_element' in RED
             #     if not self.color_selected_contact(user_name, "red"):
             #         logging.warning(f"Warning: failed to color contact {user_name} in RED")
+
+
+if __name__ == '__main__':
+    lstn = Listener()
+    name = 'Era'
+    password = "Come on"
+    #jwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiTGlzYSJ9.9Jg1IkKdvCGszkyRM5VIKtw-mE4qY57WjZ0YLOPghcE"
+
+    # Logging in, initiating a connection (getting contacts, statuses)
+    print(lstn.send_log_in_request(name, password))
+    first_response = lstn.initiate_connection()
+    print(first_response)
+
+    # Starting listening loop in a separate thread
+    t1 = threading.Thread(target=lstn.start_listening_loop)
+    t1.start()
+
+    # time.sleep(30)
+
+    t1.join(10)
 
 
 
