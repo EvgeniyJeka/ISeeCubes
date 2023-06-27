@@ -8,6 +8,8 @@ import threading
 import logging
 import socketio
 
+from QaService.Requests.postman import Postman
+
 CHAT_SERVER_BASE_URL = "http://localhost:5000"
 
 class Listener:
@@ -33,6 +35,7 @@ class Listener:
     contacts_list_ui_element = None
     current_auth_token = None
 
+    conversation_rooms_list = None
 
     address_book = {}
 
@@ -115,9 +118,12 @@ class Listener:
             # Contacts that are currently online
             self.currently_online_contacts = server_contacts_data["currently_online"]
 
+            self.conversation_rooms_list = []
+
             # Establishing contacts with all persons from the Contacts List
             for contact in self.contacts_list:
                 conversation_room = self.contacts_list[contact]
+                self.conversation_rooms_list.append(conversation_room)
                 self.sio.emit('join', {"room": conversation_room, "client": self.my_name,
                                        "jwt": self.current_auth_token})
 
@@ -149,7 +155,9 @@ class Listener:
         """
         @self.sio.on('received_message')
         def handle_my_custom_event(message):
-            print(message)
+            self.events_received.put(message)
+
+            #print(message)
 
 
             # if self.my_name != message['sender']:
@@ -223,6 +231,21 @@ class Listener:
             #     if not self.color_selected_contact(user_name, "red"):
             #         logging.warning(f"Warning: failed to color contact {user_name} in RED")
 
+    def stop_listening(self):
+        self.sio.disconnect()
+
+    def list_recorder_messages(self):
+        result = []
+
+        while not self.events_received.empty():
+            result.append(self.events_received.get())
+
+        return result
+
+    def get_conversaion_rooms_list(self):
+        return self.conversation_rooms_list
+
+
 
 if __name__ == '__main__':
     lstn = Listener()
@@ -235,13 +258,31 @@ if __name__ == '__main__':
     first_response = lstn.initiate_connection()
     print(first_response)
 
+    second_listener = Listener()
+    second_listener.send_log_in_request("Lisa", "TestMe")
+    second_listener.initiate_connection()
+
+
+
     # Starting listening loop in a separate thread
     t1 = threading.Thread(target=lstn.start_listening_loop)
     t1.start()
 
-    # time.sleep(30)
+    # Sending a message as Lisa to Era. No client is used. 
+    postman = Postman()
+    postman.emit_send_message(second_listener.sio, "Lisa", 'Era&Lisa', "Test_Auto_Send" , second_listener.current_auth_token)
 
-    t1.join(10)
 
+
+    t1.join(timeout=10)
+    time.sleep(10)
+
+    lstn.stop_listening()
+    second_listener.stop_listening()
+
+    print("Extracting content")
+
+    print(lstn.list_recorder_messages())
+    print(lstn.get_conversaion_rooms_list())
 
 

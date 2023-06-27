@@ -70,12 +70,12 @@ class Postman:
 
 
 
-    def emit_send_message(self, client_name, conversation_room_, message_content, jwt):
+    def emit_send_message(self, sio, client_name, conversation_room_, message_content, jwt):
 
         try:
 
             # SEND the message to the server
-            sio = socketio.Client()
+            # sio = socketio.Client()
             sio.emit('client_sends_message', {"sender": client_name,
                                               "content": message_content,
                                               "conversation_room": conversation_room_,
