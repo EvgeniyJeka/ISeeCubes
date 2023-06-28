@@ -6,6 +6,7 @@ import logging
 import json
 
 KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 6
+ADMIN_REQUEST_URL = 'http://127.0.0.1:5000/admin/get_info'
 
 
 class Postman:
@@ -22,7 +23,14 @@ class Postman:
 
     # POST
     def send_get_admin_info_request(self, username, password):
-        pass
+
+        payload = {
+                "username": "Admin",
+                "password": "AdminPassword"
+                }
+        response = requests.post(ADMIN_REQUEST_URL, json=payload)
+
+        return response
 
     # POST
     def send_admin_kill_token_request(self, username, password, token_to_terminate):

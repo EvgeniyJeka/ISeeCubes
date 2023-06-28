@@ -12,6 +12,7 @@ from QaService.Requests.postman import Postman
 
 CHAT_SERVER_BASE_URL = "http://localhost:5000"
 
+
 class Listener:
 
     # A connection to Chat Server will be established (same way as the client does).
@@ -24,10 +25,10 @@ class Listener:
     sio = None
     user_logged_in = False
 
-    entry = None
+    # entry = None
     contacts_list = None
     currently_online_contacts = None
-    message_box = None
+    # message_box = None
 
     connected = False
     my_name = None
@@ -36,11 +37,15 @@ class Listener:
     current_auth_token = None
 
     conversation_rooms_list = None
+    id = None
 
     address_book = {}
 
-    def __init__(self):
+    def __init__(self, id=None):
         self.events_received = queue.Queue()
+
+        if id:
+            self.id = id
 
         if self.sio is None:
             self.sio = socketio.Client()
@@ -53,7 +58,7 @@ class Listener:
         :param password: str
         """
 
-        logging.info(f"App Core: sending a sign in request to the server, username: {username}, password: {password}")
+        logging.info(f"QA Automation: sending a sign in request to the server, username: {username}, password: {password}")
 
         response = requests.post(url=CHAT_SERVER_BASE_URL + "/log_in",
                                  json={"username": username, "password": password})
@@ -137,6 +142,12 @@ class Listener:
         except Exception as e:
             logging.error(f"Failed to connect: {e}")
             return False
+
+    def __repr__(self):
+        if self.id:
+            return str(self.id)
+        else:
+            return "QA Automation Test Listener "
 
 
     def start_listening_loop(self):
@@ -268,7 +279,7 @@ if __name__ == '__main__':
     t1 = threading.Thread(target=lstn.start_listening_loop)
     t1.start()
 
-    # Sending a message as Lisa to Era. No client is used. 
+    # Sending a message as Lisa to Era. No client is used.
     postman = Postman()
     postman.emit_send_message(second_listener.sio, "Lisa", 'Era&Lisa', "Test_Auto_Send" , second_listener.current_auth_token)
 
