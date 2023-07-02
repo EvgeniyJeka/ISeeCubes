@@ -8,27 +8,33 @@ import threading
 import logging
 import socketio
 
-from QaService.Requests.postman import Postman
 
 CHAT_SERVER_BASE_URL = "http://localhost:5000"
+ADMIN_REQUEST_URL = 'http://127.0.0.1:5000/admin/get_info'
 
 
 class Listener:
+    """
+    The 'Listener' class emulates the Chat Client for testing purposes - it sends
+    requests to Chat Service, parses the responses and keeps the relevant data, emits web socket events
+    and receives events that were emitted by other clients (while listening in a separate thread).
 
-    # A connection to Chat Server will be established (same way as the client does).
-    # The method 'start_listening_loop' will run in a separate thread.
-    # Every new received event will be inserted into the class variable 'events_received'
-    # After test preconditions and test steps are performed the thread with 'start_listening_loop' will stop,
-    # and all the events stored in 'events_received' queue will be fetched from the 'Listener' instance and verified.
+    This functionality is used for Chat Server tests.
+
+    A connection to Chat Server will be established (same way as the client does).
+    The method 'start_listening_loop' will run in a separate thread.
+    Every new received event will be inserted into the class variable 'events_received'
+    After test preconditions and test steps are performed the thread with 'start_listening_loop' will stop,
+    and all the events stored in 'events_received' queue will be fetched from the 'Listener' instance and verified.
+
+    """
 
     events_received = None
     sio = None
     user_logged_in = False
 
-    # entry = None
     contacts_list = None
     currently_online_contacts = None
-    # message_box = None
 
     connected = False
     my_name = None
@@ -77,7 +83,6 @@ class Listener:
                 return {"result": "Unknown server code"}
         else:
             return {"result": "server error"}
-
 
     def initiate_connection(self):
         """
@@ -143,12 +148,37 @@ class Listener:
             logging.error(f"Failed to connect: {e}")
             return False
 
+    def emit_send_message(self, client_name, conversation_room_, message_content, jwt):
+
+        try:
+
+            self.sio.emit('client_sends_message', {"sender": client_name,
+                                                   "content": message_content,
+                                                   "conversation_room": conversation_room_,
+                                                   "jwt": jwt})
+
+            return True
+
+        except Exception as e:
+            logging.error(f"Failed to emit web socket event CLIENT SENDS MESSAGE - {e}")
+            return False
+
+    def send_get_admin_info_request(self, username, password):
+        # TEMP
+
+        payload = {
+                "username": "Admin",
+                "password": "AdminPassword"
+                }
+        response = requests.post(ADMIN_REQUEST_URL, json=payload)
+
+        return response
+
     def __repr__(self):
         if self.id:
             return str(self.id)
         else:
             return "QA Automation Test Listener "
-
 
     def start_listening_loop(self):
         """
@@ -246,6 +276,13 @@ class Listener:
         self.sio.disconnect()
 
     def list_recorder_messages(self):
+        """
+        When this method is called all the messages that were received
+        (while the method 'start_listening_loop' was running) are extracted from the queue 'events_received'
+        and moved to a list, which is returned.
+        :return: list
+        """
+
         result = []
 
         while not self.events_received.empty():
@@ -258,42 +295,42 @@ class Listener:
 
 
 
-if __name__ == '__main__':
-    lstn = Listener()
-    name = 'Era'
-    password = "Come on"
-    #jwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiTGlzYSJ9.9Jg1IkKdvCGszkyRM5VIKtw-mE4qY57WjZ0YLOPghcE"
-
-    # Logging in, initiating a connection (getting contacts, statuses)
-    print(lstn.send_log_in_request(name, password))
-    first_response = lstn.initiate_connection()
-    print(first_response)
-
-    second_listener = Listener()
-    second_listener.send_log_in_request("Lisa", "TestMe")
-    second_listener.initiate_connection()
-
-
-
-    # Starting listening loop in a separate thread
-    t1 = threading.Thread(target=lstn.start_listening_loop)
-    t1.start()
-
-    # Sending a message as Lisa to Era. No client is used.
-    postman = Postman()
-    postman.emit_send_message(second_listener.sio, "Lisa", 'Era&Lisa', "Test_Auto_Send" , second_listener.current_auth_token)
-
-
-
-    t1.join(timeout=10)
-    time.sleep(10)
-
-    lstn.stop_listening()
-    second_listener.stop_listening()
-
-    print("Extracting content")
-
-    print(lstn.list_recorder_messages())
-    print(lstn.get_conversaion_rooms_list())
+# if __name__ == '__main__':
+#     lstn = Listener()
+#     name = 'Era'
+#     password = "Come on"
+#     #jwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiTGlzYSJ9.9Jg1IkKdvCGszkyRM5VIKtw-mE4qY57WjZ0YLOPghcE"
+#
+#     # Logging in, initiating a connection (getting contacts, statuses)
+#     print(lstn.send_log_in_request(name, password))
+#     first_response = lstn.initiate_connection()
+#     print(first_response)
+#
+#     second_listener = Listener()
+#     second_listener.send_log_in_request("Lisa", "TestMe")
+#     second_listener.initiate_connection()
+#
+#
+#
+#     # Starting listening loop in a separate thread
+#     t1 = threading.Thread(target=lstn.start_listening_loop)
+#     t1.start()
+#
+#     # Sending a message as Lisa to Era. No client is used.
+#     postman = Postman()
+#     postman.emit_send_message(second_listener.sio, "Lisa", 'Era&Lisa', "Test_Auto_Send" , second_listener.current_auth_token)
+#
+#
+#
+#     t1.join(timeout=10)
+#     time.sleep(10)
+#
+#     lstn.stop_listening()
+#     second_listener.stop_listening()
+#
+#     print("Extracting content")
+#
+#     print(lstn.list_recorder_messages())
+#     print(lstn.get_conversaion_rooms_list())
 
 

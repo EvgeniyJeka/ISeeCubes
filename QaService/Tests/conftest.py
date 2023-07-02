@@ -6,7 +6,6 @@ import json
 import pytest
 import os
 
-from QaService.Requests.postman import Postman
 from QaService.Tools.listener import Listener
 
 logging.basicConfig(level=logging.INFO)
@@ -30,7 +29,10 @@ def send_single_message(request):
 
     1. Sender - logs in, connects
     2. Receiver - logs in, connects.
-    3.
+    3. Receiver starts to listen to the web socket event emitted by the Chat Server in a separate thread
+    4. Verifying the status of both 'Sender' and  the 'Receiver' is "online" (so the messages won't be cached)
+    5. Sender sends a single message (emits a web socket event)
+    6. Listening loop is stopped, all the messages that were received by the Receiver are returned to the calling test
 
     :param request:
     :return:
@@ -78,10 +80,8 @@ def send_single_message(request):
     listening_thread.start()
     listening_thread.join(timeout=6)
 
-    postman = Postman()
-
     # Verifying both SENDER and RECEIVER are ONLINE when the test is performed
-    response = postman.send_get_admin_info_request(admin_username, admin_password)
+    response = first_user_websocket_listener.send_get_admin_info_request(admin_username, admin_password)
     data = json.loads(response.content)
     users_online = data['online_clients_list']
 
@@ -89,11 +89,103 @@ def send_single_message(request):
     assert receiver_username in users_online, logging.error(f"Receiver {receiver_username} not online")
 
     # Sending a message as Era to Lisa. No client is used.
-    postman.emit_send_message(first_user_websocket_listener.sio,
+    first_user_websocket_listener.emit_send_message(
                               sender_username,
                               f'{sender_username}&{receiver_username}',
                               message_content,
                               first_user_websocket_listener.current_auth_token)
+
+    time.sleep(7)
+
+    stop_all_listeners([first_user_websocket_listener, second_user_websocket_listener])
+
+    print("Extracting content")
+
+    result = second_user_websocket_listener.list_recorder_messages()
+    print(result)
+    return result
+
+
+@pytest.fixture(scope="class")
+def send_several_messages(request):
+    """
+       This fixture sends a SEVERAL messages from one user to another.
+       Credentials and message content are taken from provided params.
+
+       1. Sender - logs in, connects
+       2. Receiver - logs in, connects.
+       3. Receiver starts to listen to the web socket event emitted by the Chat Server in a separate thread
+       4. Verifying the status of both 'Sender' and  the 'Receiver' is "online" (so the messages won't be cached)
+       5. Sender sends the first message (emits a web socket event)
+       6. Sender sends the second message (emits a web socket event)
+       6. Listening loop is stopped, all the messages that were received by the Receiver are returned to the calling test
+
+       :param request:
+       :return:
+       """
+    test_params = request.param[0]
+
+    sender_username = test_params['sender_username']
+    sender_password = test_params['sender_password']
+
+    receiver_username = test_params['receiver_username']
+    receiver_password = test_params['receiver_password']
+
+    first_message, second_message = test_params['messages_content']
+
+    # First user (sender) - log in and connect
+    first_user_websocket_listener = Listener(sender_username)
+    response = first_user_websocket_listener.send_log_in_request(sender_username, sender_password)
+
+    logging.info(f"First user - sending log in request, server responds: {response}")
+    assert response['result'] == 'success', logging.error("User sign in failed!")
+
+    response = first_user_websocket_listener.initiate_connection()
+    logging.info(f"First user - sending the 'JOIN' event, trying to connect to Chat Server websocket: {response}")
+
+    # # Waiting for  user status to change (so he/she will be ONLINE when the message is sent).
+    time.sleep(3)
+
+    # Second user (receiver) - log in and connect
+    second_user_websocket_listener = Listener(receiver_username)
+    response = second_user_websocket_listener.send_log_in_request(receiver_username, receiver_password)
+
+    logging.info(f"Second user - sending log in request, server responds: {response}")
+    assert response['result'] == 'success', logging.error("User sign in failed!")
+
+    response = second_user_websocket_listener.initiate_connection()
+    logging.info(
+        f"Second user - sending the 'JOIN' event, trying to connect to Chat Server websocket: {response}")
+
+    # Waiting for  user status to change (so he/she will be ONLINE when the message is sent).
+    time.sleep(5)
+
+    # Starting listening loop in a separate thread
+    listening_thread = threading.Thread(target=second_user_websocket_listener.start_listening_loop)
+    listening_thread.start()
+    listening_thread.join(timeout=6)
+
+    # Verifying both SENDER and RECEIVER are ONLINE when the test is performed
+    response = first_user_websocket_listener.send_get_admin_info_request(admin_username, admin_password)
+    data = json.loads(response.content)
+    users_online = data['online_clients_list']
+
+    assert sender_username in users_online, logging.error(f"Sender {sender_username} not online")
+    assert receiver_username in users_online, logging.error(f"Receiver {receiver_username} not online")
+
+    # Sending the first message as Era to Lisa.
+    first_user_websocket_listener.emit_send_message(
+        sender_username,
+        f'{sender_username}&{receiver_username}',
+        first_message,
+        first_user_websocket_listener.current_auth_token)
+
+    # Sending the second message as Era to Lisa.
+    first_user_websocket_listener.emit_send_message(
+        sender_username,
+        f'{sender_username}&{receiver_username}',
+        second_message,
+        first_user_websocket_listener.current_auth_token)
 
     time.sleep(7)
 

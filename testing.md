@@ -22,6 +22,7 @@ Future versions of the project are to provide solutions for those issues.
     1.5 Status Change - verify user's status is set to 'offline' after he signs out and published to all other users
     1.6 Expired token - verify messages sent with expired authorization token are declined (token expires after sign out)
     1.7 Invald token (including blank token) - verify messages sent with invalid token are declined 
+    1.8 Initiating connection - verify client can connect to Chat Server websocket only with a valid JWT
     
     
 ### 2. Getting initial data from the server 
