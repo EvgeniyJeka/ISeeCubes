@@ -14,6 +14,17 @@ test_file_name = os.path.basename(__file__)
 
 
 class TestMessaging:
+    """
+    In this test we verify, that a chat message is forwarded to the selected contact.
+    In test preconditions both the sender and the receiver log in (2 'Listener' instances are initiated),
+    the message is sent while the receiver is listening in a separate thread.
+
+    After the message is sent the connection is terminated and all received messages are verified
+    in the test.
+
+    1. Verifying the message sent by the first user (the sender) is forwarded to the second user (the receiver)
+       providing both users are online.
+    """
 
     @pytest.mark.parametrize('send_single_message', [[{"sender_username": sender_username,
                                                        "sender_password": sender_password,
