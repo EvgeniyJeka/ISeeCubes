@@ -32,13 +32,14 @@ Future versions of the project are to provide solutions for those issues.
     2.4 Verifying the list of users that are currently offline provided by Chat Server upon request
     
 ### 3. Sending messages from one user to another 
-    3.1 Sending a single message from user A to user B while both are online 
-    3.2 Sending several messages from user A to user B while both are online 
-    3.3 Verifying only the user that the message was sent to gets the message 
-    3.4 Sending one message from user A to user B and sending two messages from user A to user C 
-    3.5 Verifying messages sent to a users that are currently offline are cached 
-    3.6 Verifying messages can be sent after relogin 
-    3.7 Verifying messages sent to non-existing users are declined (negative) 
+    3.1   Sending a single message from user A to user B while both are online 
+    3.2   Sending several messages from user A to user B while both are online 
+    3.3   Verifying only the user that the message was sent to gets the message 
+    3.4   Sending one message from user A to user B and sending two messages from user A to user C 
+    3.5   Verifying messages sent to a users that are currently offline are cached
+    3.5.1 Sending a message to a user while he is offline, sending another one when he is online - verifying both are received  
+    3.6   Verifying messages can be sent after relogin 
+    3.7   Verifying messages sent to non-existing users doesn't disrupt the server workflow (negative) 
 
 ### 4. Status updates 
     4.1 Verifying that all connected users receive an update via a web socket message when a new user is online

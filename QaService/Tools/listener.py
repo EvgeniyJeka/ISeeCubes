@@ -180,6 +180,34 @@ class Listener:
         else:
             return "QA Automation Test Listener "
 
+    def terminate_connection(self):
+        """
+        Terminates the connection to the Chat Server established by given listener.
+        The client emits 'client_disconnection' events and disconnects from the chat server web socket.
+        :return:
+        """
+        logging.info(f"QA Automation: Terminating a connection, Listener # {self.id}")
+
+        # Emitting 'client_disconnection' event to the server
+        self.sio.emit('client_disconnection',
+                      {"client": self.my_name,
+                       "jwt": self.current_auth_token})
+
+        # Disconnecting, closing the SIO instance
+        self.sio.disconnect()
+
+        # Connection is terminated, user is logged out
+        self.user_logged_in = False
+        self.contacts_list = None
+        self.currently_online_contacts = None
+
+        self.current_auth_token = None
+        self.connected = False
+        self.my_name = None
+        self.conversation_rooms_list = None
+
+
+
     def start_listening_loop(self):
         """
         When this method is called the client starts listening to the events incoming from the chat server.
