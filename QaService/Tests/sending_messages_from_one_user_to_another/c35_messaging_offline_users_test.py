@@ -1,4 +1,4 @@
-from QaService.Tests.conftest import *
+from ..conftest import *
 
 
 sender_username = "Era"
@@ -24,7 +24,7 @@ class TestMessaging:
     he is expected to the message that was cached for him.
 
      1. Verifying the message sent by the first user (the sender)  while the second user was offline
-        is cached and forwarded to the second user (the receiver) once he logs in.
+        is cached and forwarded to the second user (the receiver) once he connects to the Chat Server.
 
     """
 

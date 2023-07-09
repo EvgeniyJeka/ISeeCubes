@@ -1,4 +1,4 @@
-from QaService.Tests.conftest import *
+from ..conftest import *
 
 
 sender_username = "Era"
@@ -22,8 +22,8 @@ class TestMessaging:
     Then the sender reconnects, and sends a message to the receiver.
     In the test we verify, that the message was received.
 
-     1. Verifying the message sent by the first user (the sender) is forwarded to the second user (the receiver)
-        providing both users are online.
+     1. Verifying the message sent by the first user AFTER RE LOGIN(the sender) is forwarded to the second user
+        (the receiver).
     """
 
     @pytest.mark.parametrize('send_message_after_relogin', [[{"sender_username": sender_username,

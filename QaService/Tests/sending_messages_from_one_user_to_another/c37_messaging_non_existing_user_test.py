@@ -9,35 +9,42 @@ receiver_password = "TestMe"
 
 test_message = 'Test_Auto_Send'
 
-test_id = 31
+test_id = 37
 test_file_name = os.path.basename(__file__)
 
 
 class TestMessaging:
     """
-    In this test we verify, that a chat message is forwarded to the selected contact.
-    In test preconditions both the sender and the receiver log in (2 'Listener' instances are initiated),
-    the message is sent while the receiver is listening in a separate thread.
+    This test comes to verify, that a message that was sent to non-existing user
+    doesn't disrupt the workflow of the Chat Server (negative test).
+    For that purpose TWO messages are sent - the first message is sent to NON EXISTING user,
+    and the second message to a valid user. The test verifies, that the second message
+    is received, meaning - the system works as expected AFTER receiving an invalid message
+    to non existing user.
 
-    After the message is sent the connection is terminated and all received messages are verified
-    in the test.
+    In Chat Server logs the following line will be printed:
+    ERROR:root:Trying to send a message to non-existing user.
+
+    NOTE: The native client allows to send messages only to user from a contact list,
+    but it is assumed that third party client that connects to the Chat Server might
+    publish an invalid message..
 
     1. Verifying the message sent by the first user (the sender) is forwarded to the second user (the receiver)
        providing both users are online.
     """
 
-    @pytest.mark.parametrize('send_single_message', [[{"sender_username": sender_username,
+    @pytest.mark.parametrize('messaging_non_existing_user', [[{"sender_username": sender_username,
                                                        "sender_password": sender_password,
                                                        "receiver_username": receiver_username,
                                                        "receiver_password": receiver_password,
                                                        "message_content": test_message}]],
                                                        indirect=True)
-    def test_single_message_sent_and_received(self, send_single_message):
+    def test_single_message_sent_and_received(self, messaging_non_existing_user):
 
         try:
             # Checking the messages that were received by the 'receiver' (currently Lisa)  -
             # verifying message sender (Era) and message content against expected.
-            messages_forwarded_to_receiver = send_single_message
+            messages_forwarded_to_receiver = messaging_non_existing_user
 
             assert len(messages_forwarded_to_receiver) == 1, logging.error("QA Automation: Expecting for a ONE message")
 

@@ -44,6 +44,8 @@ Future versions of the project are to provide solutions for those issues.
 ### 4. Status updates 
     4.1 Verifying that all connected users receive an update via a web socket message when a new user is online
     4.2 Verifying that all connected users receive an update via a web socket message when a user goes offline
+    4.3 Verifying that client receives a list of all users that are currently ONLINE when he connects to the Chat Server
+    4.4 Verifying that client receives a list of all users that are currently OFFLINE when he connects to the Chat Server
     
 ### 5. Keep Alive signals 
     5.1 Verifying client that are not sending the signal for more then X seconds is automatically disconnected
@@ -53,6 +55,7 @@ Future versions of the project are to provide solutions for those issues.
     6.1 Verify all users that are currently connected are logged out when the Chat Server is restarted 
     6.2 Verify users can relogin after Chat Server restart 
     6.3 Verify users can message each other after Chat Server restart (covers reconnection to databases) 
+    6.4 Verify messages that were cached in Redis aren't lost after Chat Server restart
     
 ### 7. Databases unavailable (critical error handling) 
     7.1 Verify all users that are currently connected are logged out when Postgress SQL DB becomes unavailable

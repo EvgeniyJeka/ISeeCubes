@@ -1,4 +1,4 @@
-from QaService.Tests.conftest import *
+from ..conftest import *
 
 
 sender_username = "Era"

@@ -1,4 +1,4 @@
-from QaService.Tests.conftest import *
+from ..conftest import *
 
 
 sender_username = "Era"
@@ -14,6 +14,12 @@ test_file_name = os.path.basename(__file__)
 
 
 class TestMessaging:
+    """
+     In this test we verify, that several messages can be sent to another user, and
+     all messages will be received, while messages order is maintained.
+
+
+    """
 
     @pytest.mark.parametrize('send_several_messages', [[{"sender_username": sender_username,
                                                        "sender_password": sender_password,
