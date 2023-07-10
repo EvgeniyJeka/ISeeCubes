@@ -8,9 +8,11 @@ import os
 
 try:
     from ..Tools.listener import Listener
+    from ..Config.baseconfig import BaseConfig
 
 except ModuleNotFoundError:
     from .Tools.listener import Listener
+    from .Config.baseconfig import BaseConfig
 
 
 logging.basicConfig(level=logging.INFO)
@@ -53,6 +55,9 @@ def send_single_message(request):
     receiver_password = test_params['receiver_password']
 
     message_content = test_params['message_content']
+
+    logging.info(f"Sender username: {sender_username}")
+    logging.info(f"Receiver username: {receiver_username}")
 
     time.sleep(10)
 

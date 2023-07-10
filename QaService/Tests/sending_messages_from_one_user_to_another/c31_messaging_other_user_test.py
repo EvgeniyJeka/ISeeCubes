@@ -1,11 +1,11 @@
 from ..conftest import *
 
 
-sender_username = "Era"
-sender_password = "Come on"
+sender_username = BaseConfig.SENDER_USERNAME
+sender_password = BaseConfig.SENDER_PASSWORD
 
-receiver_username = "Lisa"
-receiver_password = "TestMe"
+receiver_username = BaseConfig.RECEIVER_USERNAME
+receiver_password = BaseConfig.RECEIVER_PASSWORD
 
 test_message = 'Test_Auto_Send'
 
@@ -13,6 +13,8 @@ test_id = 31
 test_file_name = os.path.basename(__file__)
 
 
+@pytest.mark.sending_messages
+@pytest.mark.end2end
 class TestMessaging:
     """
     In this test we verify, that a chat message is forwarded to the selected contact.

@@ -8,9 +8,14 @@ import threading
 import logging
 import socketio
 
+try:
+    from ..Config.baseconfig import BaseConfig
 
-CHAT_SERVER_BASE_URL = "http://localhost:5000"
-ADMIN_REQUEST_URL = 'http://127.0.0.1:5000/admin/get_info'
+except ModuleNotFoundError:
+    from .Config.baseconfig import BaseConfig
+
+CHAT_SERVER_BASE_URL = BaseConfig.BASE_URL
+ADMIN_REQUEST_URL = f'{CHAT_SERVER_BASE_URL}/admin/get_info'
 
 
 class Listener:
@@ -66,8 +71,10 @@ class Listener:
 
         logging.info(f"QA Automation: sending a sign in request to the server, username: {username}, password: {password}")
 
+        logging.critical(f"Using URL: {CHAT_SERVER_BASE_URL}")
+
         response = requests.post(url=CHAT_SERVER_BASE_URL + "/log_in",
-                                 json={"username": username, "password": password})
+                                 json={"username": username, "password": password}, timeout=10)
         sign_in_data = json.loads(response.text)
 
         if 'result' in sign_in_data.keys():
@@ -115,7 +122,7 @@ class Listener:
             # GET CONTACTS request
             self.sio.connect(CHAT_SERVER_BASE_URL)
             response = requests.get(f"{CHAT_SERVER_BASE_URL}/get_contacts_list/{self.my_name}",
-                                    headers=headers)
+                                    headers=headers, timeout=10)
             server_contacts_data = json.loads(response.text)
 
             # All existing contacts
@@ -170,7 +177,7 @@ class Listener:
                 "username": "Admin",
                 "password": "AdminPassword"
                 }
-        response = requests.post(ADMIN_REQUEST_URL, json=payload)
+        response = requests.post(ADMIN_REQUEST_URL, json=payload, timeout=10)
 
         return response
 

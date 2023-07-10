@@ -1,14 +1,14 @@
 from ..conftest import *
 
 
-sender_username = "Era"
-sender_password = "Come on"
+sender_username = BaseConfig.SENDER_USERNAME
+sender_password = BaseConfig.SENDER_PASSWORD
 
-first_receiver_username = "Lisa"
-first_receiver_password = "TestMe"
+first_receiver_username = BaseConfig.RECEIVER_USERNAME
+first_receiver_password = BaseConfig.RECEIVER_PASSWORD
 
-second_receiver_username = "Tsahi"
-second_receiver_password = "Virtual Environment"
+second_receiver_username = BaseConfig.SECOND_RECEIVER_NAME
+second_receiver_password = BaseConfig.SECOND_RECEIVER_PASSWORD
 
 test_messages = ['first_message: Hi, Lisa!', 'second_message: Hi, Tsahi!']
 
@@ -16,6 +16,8 @@ test_id = 33
 test_file_name = os.path.basename(__file__)
 
 
+@pytest.mark.sending_messages
+@pytest.mark.end2end
 class TestMessaging:
     """
     This test comes to verify, that a message that was sent to from one user to another
