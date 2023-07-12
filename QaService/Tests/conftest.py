@@ -29,6 +29,13 @@ def stop_all_listeners(list_of_listeners):
             listener.stop_listening()
 
 
+def listen_for_events(listener: Listener, listening_time):
+    # Starting listening loop in a separate thread
+    listening_thread = threading.Thread(target=listener.start_listening_loop)
+    listening_thread.start()
+    listening_thread.join(timeout=listening_time)
+
+
 @pytest.fixture(scope="class")
 def send_single_message(request):
     """
@@ -809,6 +816,102 @@ def messaging_non_existing_user(request):
     result = second_user_websocket_listener.list_recorder_messages()
     print(result)
     return result
+
+
+@pytest.fixture(scope="class")
+def status_change_events_user_goes_online(request):
+    """
+    ..
+    :param request:
+    :return:
+    """
+
+    test_params = request.param[0]
+
+    sender_username = test_params['sender_username']
+    sender_password = test_params['sender_password']
+
+    receiver_username = test_params['receiver_username']
+    receiver_password = test_params['receiver_password']
+
+    # message_content = test_params['message_content']
+
+    logging.info(f"Sender username: {sender_username}")
+    logging.info(f"Receiver username: {receiver_username}")
+
+    # time.sleep(10)
+
+    # First user (sender) - log in and connect
+    first_user_websocket_listener = Listener(sender_username)
+    response = first_user_websocket_listener.send_log_in_request(sender_username, sender_password)
+
+    logging.info(f"First user - sending log in request, server responds: {response}")
+    assert response['result'] == 'success', logging.error("User sign in failed!")
+
+
+    # # Waiting for  user status to change (so he/she will be ONLINE when the message is sent).
+    time.sleep(3)
+
+    # Second user (receiver) - log in
+    second_user_websocket_listener = Listener(receiver_username)
+    response = second_user_websocket_listener.send_log_in_request(receiver_username, receiver_password)
+
+    logging.info(f"Second user - sending log in request, server responds: {response}")
+    assert response['result'] == 'success', logging.error("User sign in failed!")
+
+    response = second_user_websocket_listener.initiate_connection()
+    logging.info(f"Second user - sending the 'JOIN' event, trying to connect to Chat Server websocket: {response}")
+
+    return first_user_websocket_listener, second_user_websocket_listener
+
+
+@pytest.fixture(scope="class")
+def status_change_events_has_gone_offline(request):
+    """
+    ..
+    :param request:
+    :return:
+    """
+
+    test_params = request.param[0]
+
+    sender_username = test_params['sender_username']
+    sender_password = test_params['sender_password']
+
+    receiver_username = test_params['receiver_username']
+    receiver_password = test_params['receiver_password']
+
+    # message_content = test_params['message_content']
+
+    logging.info(f"Sender username: {sender_username}")
+    logging.info(f"Receiver username: {receiver_username}")
+
+    # time.sleep(10)
+
+    # First user (sender) - log in and connect
+    first_user_websocket_listener = Listener(sender_username)
+    response = first_user_websocket_listener.send_log_in_request(sender_username, sender_password)
+
+    logging.info(f"First user - sending log in request, server responds: {response}")
+    assert response['result'] == 'success', logging.error("User sign in failed!")
+
+    response = first_user_websocket_listener.initiate_connection()
+    logging.info(f"First user - sending the 'JOIN' event, trying to connect to Chat Server websocket: {response}")
+
+    # # Waiting for  user status to change (so he/she will be ONLINE when the message is sent).
+    time.sleep(3)
+
+    # Second user (receiver) - log in
+    second_user_websocket_listener = Listener(receiver_username)
+    response = second_user_websocket_listener.send_log_in_request(receiver_username, receiver_password)
+
+    logging.info(f"Second user - sending log in request, server responds: {response}")
+    assert response['result'] == 'success', logging.error("User sign in failed!")
+
+    response = second_user_websocket_listener.initiate_connection()
+    logging.info(f"Second user - sending the 'JOIN' event, trying to connect to Chat Server websocket: {response}")
+
+    return first_user_websocket_listener, second_user_websocket_listener
 
 if __name__ == "__main__":
     send_single_message()

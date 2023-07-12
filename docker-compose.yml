@@ -69,6 +69,7 @@ services:
        - i_see_cubes_main
     environment:
       - BASE_URL=http://iseecubes_chat_messenger_1:5000
+      - HTTP_REQUEST_TIMEOUT=10
       - SENDER_NAME=Era
       - SENDER_PASSWORD=Come on
       - RECEIVER_NAME=Lisa

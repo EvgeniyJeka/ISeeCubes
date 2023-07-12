@@ -44,9 +44,7 @@ Future versions of the project are to provide solutions for those issues.
 ### 4. Status updates 
     4.1 Verifying that all connected users receive an update via a web socket message when a new user is online
     4.2 Verifying that all connected users receive an update via a web socket message when a user goes offline
-    4.3 Verifying that client receives a list of all users that are currently ONLINE when he connects to the Chat Server
-    4.4 Verifying that client receives a list of all users that are currently OFFLINE when he connects to the Chat Server
-    
+   
 ### 5. Keep Alive signals 
     5.1 Verifying client that are not sending the signal for more then X seconds is automatically disconnected
     5.2 Verifying client that is sending the signal every X seconds remains connected 

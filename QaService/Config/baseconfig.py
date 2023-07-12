@@ -27,6 +27,8 @@ class BaseConfig(object):
         SECOND_RECEIVER_NAME = parser.get('TEST_DATA', 'SECOND_RECEIVER_NAME')
         SECOND_RECEIVER_PASSWORD = parser.get('TEST_DATA', 'SECOND_RECEIVER_PASSWORD')
 
+        HTTP_REQUEST_TIMEOUT = int(parser.get('URL', 'HTTP_REQUEST_TIMEOUT'))
+
 
     # Running in Docker container
     else:
@@ -40,6 +42,8 @@ class BaseConfig(object):
 
         SECOND_RECEIVER_NAME = os.getenv('SECOND_RECEIVER_NAME')
         SECOND_RECEIVER_PASSWORD = os.getenv('SECOND_RECEIVER_PASSWORD')
+
+        HTTP_REQUEST_TIMEOUT = int(os.getenv('HTTP_REQUEST_TIMEOUT'))
 
 
 

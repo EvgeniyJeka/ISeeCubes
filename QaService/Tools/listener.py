@@ -1,10 +1,8 @@
 import time
 
-import socketio
 import requests
 import json
 import queue
-import threading
 import logging
 import socketio
 
@@ -16,6 +14,7 @@ except ModuleNotFoundError:
 
 CHAT_SERVER_BASE_URL = BaseConfig.BASE_URL
 ADMIN_REQUEST_URL = f'{CHAT_SERVER_BASE_URL}/admin/get_info'
+HTTP_REQUESTS_TIMEOUT = BaseConfig.HTTP_REQUEST_TIMEOUT
 
 
 class Listener:
@@ -35,16 +34,15 @@ class Listener:
     """
 
     events_received = None
+    status_updates_received = None
+
     sio = None
     user_logged_in = False
 
-    contacts_list = None
     currently_online_contacts = None
 
     connected = False
     my_name = None
-
-    contacts_list_ui_element = None
     current_auth_token = None
 
     conversation_rooms_list = None
@@ -54,6 +52,7 @@ class Listener:
 
     def __init__(self, id=None):
         self.events_received = queue.Queue()
+        self.status_updates_received = queue.Queue()
 
         if id:
             self.id = id
@@ -74,7 +73,7 @@ class Listener:
         logging.critical(f"Using URL: {CHAT_SERVER_BASE_URL}")
 
         response = requests.post(url=CHAT_SERVER_BASE_URL + "/log_in",
-                                 json={"username": username, "password": password}, timeout=10)
+                                 json={"username": username, "password": password}, timeout=HTTP_REQUESTS_TIMEOUT)
         sign_in_data = json.loads(response.text)
 
         if 'result' in sign_in_data.keys():
@@ -122,7 +121,7 @@ class Listener:
             # GET CONTACTS request
             self.sio.connect(CHAT_SERVER_BASE_URL)
             response = requests.get(f"{CHAT_SERVER_BASE_URL}/get_contacts_list/{self.my_name}",
-                                    headers=headers, timeout=10)
+                                    headers=headers, timeout=HTTP_REQUESTS_TIMEOUT)
             server_contacts_data = json.loads(response.text)
 
             # All existing contacts
@@ -174,8 +173,8 @@ class Listener:
         # TEMP
 
         payload = {
-                "username": "Admin",
-                "password": "AdminPassword"
+                "username": username,
+                "password": password
                 }
         response = requests.post(ADMIN_REQUEST_URL, json=payload, timeout=10)
 
@@ -233,30 +232,7 @@ class Listener:
         def handle_my_custom_event(message):
             self.events_received.put(message)
 
-            #print(message)
 
-
-            # if self.my_name != message['sender']:
-            #     logging.info(f"{message['sender']}: {message['content']}")
-            #     first_message_conversation = f"{message['sender']}: {message['content']}"
-            #
-            #     current_messages_box = self.address_book[message['sender']]
-            #
-            #     # First message from given user
-            #     if current_messages_box is None:
-            #         t1 = threading.Thread(target=self.message_box.show_message_box,
-            #                               args=(first_message_conversation, message['sender']))
-            #         t1.start()
-            #         time.sleep(6)
-            #
-            #     # The conversation with the given user is going on, and a Chat Room is already open
-            #     else:
-            #         current_messages_box.configure(state="normal")
-            #         current_messages_box.insert(INSERT, "\n")
-            #         current_messages_box.insert(INSERT, f"{message['sender']}: {message['content']}")
-            #         current_messages_box.insert(INSERT, "\n")
-            #         current_messages_box.see("end")
-            #         current_messages_box.configure(state="disabled")
 
         @self.sio.on('ai_response_received')
         def handle_my_custom_event(message):
@@ -285,27 +261,12 @@ class Listener:
 
         @self.sio.on('new_user_online')
         def handle_new_user_online(message):
-            pass
+            self.status_updates_received.put({'new_user_online': message})
 
-            # user_name = message["username"]
-            #
-            # if user_name != self.my_name:
-            #     logging.info(f"Handling: new user is now online: {user_name}")
-            #     # Color the username in 'self.contacts_list_ui_element' in GREEN
-            #     if not self.color_selected_contact(user_name, "green"):
-            #         logging.warning(f"Warning: failed to color contact {user_name} in GREEN")
 
         @self.sio.on('user_has_gone_offline')
         def user_has_gone_offline(message):
-            pass
-
-            # user_name = message["username"]
-            #
-            # if user_name != self.my_name:
-            #     logging.info(f"Handling: user has gone offline: {user_name}")
-            #     # Color the username in 'self.contacts_list_ui_element' in RED
-            #     if not self.color_selected_contact(user_name, "red"):
-            #         logging.warning(f"Warning: failed to color contact {user_name} in RED")
+            self.status_updates_received.put({'user_has_gone_offline': message})
 
     def stop_listening(self):
         self.sio.disconnect()
@@ -325,47 +286,19 @@ class Listener:
 
         return result
 
+    def list_recorded_status_updates(self):
+        result = []
+
+        while not self.status_updates_received.empty():
+            result.append(self.status_updates_received.get())
+
+        return result
+
     def get_conversaion_rooms_list(self):
         return self.conversation_rooms_list
 
 
 
-# if __name__ == '__main__':
-#     lstn = Listener()
-#     name = 'Era'
-#     password = "Come on"
-#     #jwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiTGlzYSJ9.9Jg1IkKdvCGszkyRM5VIKtw-mE4qY57WjZ0YLOPghcE"
-#
-#     # Logging in, initiating a connection (getting contacts, statuses)
-#     print(lstn.send_log_in_request(name, password))
-#     first_response = lstn.initiate_connection()
-#     print(first_response)
-#
-#     second_listener = Listener()
-#     second_listener.send_log_in_request("Lisa", "TestMe")
-#     second_listener.initiate_connection()
-#
-#
-#
-#     # Starting listening loop in a separate thread
-#     t1 = threading.Thread(target=lstn.start_listening_loop)
-#     t1.start()
-#
-#     # Sending a message as Lisa to Era. No client is used.
-#     postman = Postman()
-#     postman.emit_send_message(second_listener.sio, "Lisa", 'Era&Lisa', "Test_Auto_Send" , second_listener.current_auth_token)
-#
-#
-#
-#     t1.join(timeout=10)
-#     time.sleep(10)
-#
-#     lstn.stop_listening()
-#     second_listener.stop_listening()
-#
-#     print("Extracting content")
-#
-#     print(lstn.list_recorder_messages())
-#     print(lstn.get_conversaion_rooms_list())
+
 
 
