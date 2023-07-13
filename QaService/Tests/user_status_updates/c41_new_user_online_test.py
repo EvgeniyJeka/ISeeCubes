@@ -14,7 +14,8 @@ test_id = 41
 test_file_name = os.path.basename(__file__)
 
 
-
+@pytest.mark.sanity
+@pytest.mark.status_updates
 class TestStatusUpdates:
     """
     In this this test we verify, that all clients receive status update event via web socket

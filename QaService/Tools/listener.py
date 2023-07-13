@@ -61,7 +61,7 @@ class Listener:
             self.sio = socketio.Client()
 
 
-    def send_log_in_request(self, username, password):
+    def send_log_in_request(self, username, password, return_full_response=False):
         """
         This method is used to send HTTP sign in request to the chat server
         :param username: str
@@ -81,6 +81,10 @@ class Listener:
                 self.my_name = username
                 self.current_auth_token = sign_in_data['token']
                 self.user_logged_in = True
+
+                if return_full_response:
+                    return sign_in_data
+
                 return {"result": "success"}
 
             elif sign_in_data['result'] == 'Invalid credentials':
@@ -169,6 +173,22 @@ class Listener:
             logging.error(f"Failed to emit web socket event CLIENT SENDS MESSAGE - {e}")
             return False
 
+    def send_request_for_contacts(self):
+        """
+        This method is used for testing purposes only - it sends a HTTP 'get_contacts_list' request
+        to Chat Server. This request should be send after a successful log in, since it takes
+        the username and the JWT from Listener instance variables.
+
+        :return:
+        """
+
+        headers = {"username": self.my_name, "jwt": self.current_auth_token}
+
+        response = requests.get(f"{CHAT_SERVER_BASE_URL}/get_contacts_list/{self.my_name}",
+                                headers=headers, timeout=HTTP_REQUESTS_TIMEOUT)
+
+        return response
+
     def send_get_admin_info_request(self, username, password):
         # TEMP
 
@@ -238,26 +258,7 @@ class Listener:
         def handle_my_custom_event(message):
             pass
 
-            # print(f"{message['sender']}: {message['content']}")
-            # first_message_conversation = f"{message['sender']}: {message['content']}"
-            #
-            # current_messages_box = self.address_book[message['sender']]
-            #
-            # # First message from given user
-            # if current_messages_box is None:
-            #     t1 = threading.Thread(target=self.message_box.show_message_box,
-            #                           args=(first_message_conversation, message['sender']))
-            #     t1.start()
-            #     time.sleep(6)
-            #
-            # # The conversation with the given user is going on, and a Chat Room is already open
-            # else:
-            #     current_messages_box.configure(state="normal")
-            #     current_messages_box.insert(INSERT, "\n")
-            #     current_messages_box.insert(INSERT, f"{message['sender']}: {message['content']}")
-            #     current_messages_box.insert(INSERT, "\n")
-            #     current_messages_box.see("end")
-            #     current_messages_box.configure(state="disabled")
+
 
         @self.sio.on('new_user_online')
         def handle_new_user_online(message):

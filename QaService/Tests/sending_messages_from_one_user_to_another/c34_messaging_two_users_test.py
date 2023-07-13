@@ -16,6 +16,7 @@ test_id = 34
 test_file_name = os.path.basename(__file__)
 
 
+@pytest.mark.sanity
 @pytest.mark.sending_messages
 @pytest.mark.end2end
 class TestMessaging:

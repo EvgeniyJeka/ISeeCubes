@@ -18,11 +18,11 @@ Future versions of the project are to provide solutions for those issues.
     1.1 Sign in - Happy Path
     1.2 Sign out - verify authorization token expired after user signs out and can't be reused
     1.3 Negative - verify user can't sign in with incorrect password or with other user password 
-    1.4 Status Change - verify user's status is set to 'online' after he signs in and published to all other users
-    1.5 Status Change - verify user's status is set to 'offline' after he signs out and published to all other users
-    1.6 Expired token - verify messages sent with expired authorization token are declined (token expires after sign out)
-    1.7 Invald token (including blank token) - verify messages sent with invalid token are declined 
-    1.8 Initiating connection - verify client can connect to Chat Server websocket only with a valid JWT
+    1.4 Expired token - verify messages sent with expired authorization token are declined (token expires after sign out)
+    1.5 Invald token (including blank token) - verify messages sent with invalid token are declined 
+    1.6 Initiating connection - verify client can connect to Chat Server websocket only with a valid JWT
+    1.7 Verifying user is considered 'online' only after connection was successfully initiated
+    1.8 Verifying valid JWT is required to get server data (contacts list e.t.c.) from the Chat Server
     
     
 ### 2. Getting initial data from the server 
@@ -30,6 +30,7 @@ Future versions of the project are to provide solutions for those issues.
     2.2 Verifying the list of all existing customers provided by Chat Server upon request
     2.3 Verifying the list of users that are currently online provided by Chat Server upon request
     2.4 Verifying the list of users that are currently offline provided by Chat Server upon request
+    
     
 ### 3. Sending messages from one user to another 
     3.1   Sending a single message from user A to user B while both are online 

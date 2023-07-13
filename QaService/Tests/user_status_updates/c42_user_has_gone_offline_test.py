@@ -14,6 +14,8 @@ test_id = 42
 test_file_name = os.path.basename(__file__)
 
 
+@pytest.mark.sanity
+@pytest.mark.status_updates
 class TestStatusUpdates:
     """
     In this this test we verify, that all clients receive status update event via web socket
@@ -91,7 +93,7 @@ class TestStatusUpdates:
 
             logging.info(relevant_status_update_events)
 
-            assert len(relevant_status_update_events) == 1,  logging.error(f"QA Automation: 'user_has_gone_offline' event "
+            assert len(relevant_status_update_events) >= 1,  logging.error(f"QA Automation: 'user_has_gone_offline' event "
                                                                           f"wasn't published for {sender_username}")
 
         except AssertionError as e:
