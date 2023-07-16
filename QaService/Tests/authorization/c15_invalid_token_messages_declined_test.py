@@ -9,28 +9,30 @@ receiver_username = BaseConfig.RECEIVER_USERNAME
 receiver_password = BaseConfig.RECEIVER_PASSWORD
 
 test_duration_seconds = 10
-first_message, second_message = "first message", "second_message"
+first_message, second_message, third_message = "first message", "second_message", "third_message"
 
 expected_error_message = f"Error! User '{sender_username}' must disconnect, re login and reconnect so the " \
     f"conversation can be resumed."
 
 
-test_id = 14
+test_id = 15
 test_file_name = os.path.basename(__file__)
 
 
 class TestAuthorization:
     """
-    This test comes to verify, that messages are declined when the authorization token expires or blocked
-    on the server side (meaning - removed from Redis DB in both cases).
+    This test comes to verify, that messages with an invalid or blank JWT will be declined.
+    The first user, the Sender, sends three messages (while the Receiver is listening in a separate thread):
+    - First message with valid JWT
+    - Second message with invalid JWT
+    - Third message with blank JWT
 
-    The first user, the Sender, sends two messages, and the JWT is teminated after the first one.
-    The second user, the Receiver, is expected to get ONLY the first message. The second one is declined,
-    AND an error message is automatically sent to the message sender (from chat Admin).
+    Only the FIRST message is expected to be forwarded to the receiver.
 
-    1. Sending the first message, terminating the JWT on the server side, sending the second message
-    2. Verifying ONLY the first message was forwarded to the Receiver
-    3. Verifying relevant error message was sent by Admin to the Sender (expired/deleted JWT used)
+    1. Emitting a WS message with valid JWT
+    2. Emitting a WS message with invalid JWT
+    3. Emitting a WS message with blank JWT
+    4. Verifying ONLY the first message was forwarded to the receiver
 
     """
 
@@ -44,7 +46,7 @@ class TestAuthorization:
                                                        "receiver_password": receiver_password
                                                        }]],
                                                        indirect=True)
-    def test_sending_messages_before_after_jwt_removal(self, status_change_events_user_goes_online):
+    def test_sending_messages_valid_token(self, status_change_events_user_goes_online):
 
         try:
             # Both listeners are logged in, the RECEIVER is connected
@@ -52,8 +54,6 @@ class TestAuthorization:
 
             # The RECEIVER listener is set to listen to incoming events and status updates in a separate thread
             listen_for_events(TestAuthorization.receiver_listener, test_duration_seconds)
-
-            listen_for_events(TestAuthorization.sender_listener, test_duration_seconds)
 
             # The SENDER listener initiates a connection (while the RECEIVER is listening for new status updates)
             time.sleep(int(test_duration_seconds / 4))
@@ -67,18 +67,29 @@ class TestAuthorization:
                 TestAuthorization.sender_listener.current_auth_token)
             time.sleep(int(test_duration_seconds / 4))
 
-            # Deleting the Sender's JWT on server side (using special Admin request for test purposes)
-            TestAuthorization.sender_listener.kill_token_admin_request(admin_username, admin_password, sender_username)
+        except AssertionError as e:
+            stop_all_listeners([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
+            logging.warning(f"Test {test_file_name} - step failed: {e}")
+            raise e
 
-            # Trying to reconnect after the token was DELETED ON SERVER SIDE
-            TestAuthorization.sender_listener.initiate_connection()
+        except Exception as e:
+            stop_all_listeners([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
+            logging.warning(f"Test {test_file_name} is broken: {e}")
+            raise e
 
-            # Sending a message with a expired JWT (after sign out)
+        logging.info(f"----------------------- Step Passed: Emitting a WS message with valid JWT"
+                     f" ----------------------------------\n")
+
+    def test_sending_messages_invalid_token(self):
+
+        try:
+            # Sending a message with INVALID JWT
+            TestAuthorization.sender_listener.current_auth_token = "%invalid token%"
+
             TestAuthorization.sender_listener.emit_send_message(
                 sender_username,
                 f'{sender_username}&{receiver_username}',
-                second_message,
-
+                first_message,
                 TestAuthorization.sender_listener.current_auth_token)
             time.sleep(int(test_duration_seconds / 4))
 
@@ -92,9 +103,35 @@ class TestAuthorization:
             logging.warning(f"Test {test_file_name} is broken: {e}")
             raise e
 
-        logging.info(f"----------------------- Step Passed: Sending the first message, terminating the JWT on the server side, sending the second message"
+        logging.info(f"----------------------- Step Passed: Emitting a WS message with invalid JWT"
                      f" ----------------------------------\n")
 
+    def test_sending_messages_blank_token(self):
+
+        try:
+            # Sending a message with INVALID JWT
+            TestAuthorization.sender_listener.current_auth_token = ""
+
+            TestAuthorization.sender_listener.emit_send_message(
+                sender_username,
+                f'{sender_username}&{receiver_username}',
+                first_message,
+                TestAuthorization.sender_listener.current_auth_token)
+            time.sleep(int(test_duration_seconds / 4))
+
+        except AssertionError as e:
+            stop_all_listeners([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
+            logging.warning(f"Test {test_file_name} - step failed: {e}")
+            raise e
+
+        except Exception as e:
+            stop_all_listeners([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
+            logging.warning(f"Test {test_file_name} is broken: {e}")
+            raise e
+
+        logging.info(
+            f"----------------------- Step Passed: Emitting a WS message with blank JWT"
+            f" ----------------------------------\n")
 
     def test_verifying_only_first_message_received(self):
 
@@ -120,38 +157,5 @@ class TestAuthorization:
             logging.warning(f"Test {test_file_name} is broken: {e}")
             raise e
 
-        logging.info(
-            f"----------------------- Step Passed: Verifying ONLY the first message was forwarded to the Receiver"
-            f" ----------------------------------\n")
-
-    def test_sender_receives_error_message(self):
-
-        try:
-            messages_received_by_sender = TestAuthorization.sender_listener.list_recorder_messages()
-            logging.info(messages_received_by_sender)
-
-            admin_messages = []
-
-            for message in messages_received_by_sender:
-                if message['sender'] == 'Admin':
-                    admin_messages.append(message)
-
-            assert len(admin_messages) == 1
-            assert admin_messages[0]['content'] == expected_error_message
-
-        except AssertionError as e:
-            logging.warning(f"Test {test_file_name} - step failed: {e}")
-            raise e
-
-        except Exception as e:
-            logging.warning(f"Test {test_file_name} is broken: {e}")
-            raise e
-
         logging.info(f"----------------------- Test Passed: {test_id} : {test_file_name} ---------------------"
                      f"-------------\n")
-
-
-
-
-
-
