@@ -16,9 +16,9 @@ Future versions of the project are to provide solutions for those issues.
 
 ### 1. Authorization
     1.1 Sign in - Happy Path
-    1.2 Sign out - verify authorization token expired after user signs out and can't be reused
+    1.2 Sign out - verify authorization token expired after user signs out and can't be reused (JWT expires after sign out)
     1.3 Negative - verify user can't sign in with incorrect password or with other user password 
-    1.4 Expired token - verify messages sent with expired authorization token are declined (token expires after sign out)
+    1.4 Expired token - verify messages sent with expired authorization token are declined 
     1.5 Invald token (including blank token) - verify messages sent with invalid token are declined 
     1.6 Initiating connection - verify client can connect to Chat Server websocket only with a valid JWT
     1.7 Verifying user is considered 'online' only after connection was successfully initiated

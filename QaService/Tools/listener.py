@@ -190,13 +190,29 @@ class Listener:
         return response
 
     def send_get_admin_info_request(self, username, password):
-        # TEMP
+
+        url = f'{CHAT_SERVER_BASE_URL}/admin/get_info'
 
         payload = {
                 "username": username,
                 "password": password
                 }
-        response = requests.post(ADMIN_REQUEST_URL, json=payload, timeout=10)
+        response = requests.post(url, json=payload, timeout=10)
+
+        return response
+
+
+    def kill_token_admin_request(self, username, password, kill_token_for_user):
+
+        url = f'{CHAT_SERVER_BASE_URL}/admin/kill_token'
+
+        payload = {
+                        "username": username,
+                        "password": password,
+                        "user_token_terminate": kill_token_for_user
+                  }
+
+        response = requests.post(url, json=payload, timeout=10)
 
         return response
 
@@ -297,6 +313,8 @@ class Listener:
 
     def get_conversaion_rooms_list(self):
         return self.conversation_rooms_list
+
+
 
 
 

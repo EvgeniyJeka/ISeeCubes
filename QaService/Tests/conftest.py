@@ -27,6 +27,17 @@ def stop_all_listeners(list_of_listeners):
             logging.warning(f"Stopping Listener {listener}")
             listener.terminate_connection()
             listener.stop_listening()
+            listener.connected = False
+
+
+def stop_all_listeners_gentle(list_of_listeners):
+    for listener in list_of_listeners:
+        if listener:
+            if listener.connected:
+                logging.warning(f"Stopping Listener {listener}")
+                listener.terminate_connection()
+                listener.stop_listening()
+                listener.connected = False
 
 
 def listen_for_events(listener: Listener, listening_time):

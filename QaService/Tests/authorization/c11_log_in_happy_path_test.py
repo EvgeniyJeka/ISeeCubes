@@ -8,6 +8,7 @@ test_id = 11
 test_file_name = os.path.basename(__file__)
 
 
+@pytest.mark.sanity
 class TestAuthorization:
     """
     In this test we verify user gets a valid JWT in response to log in request, if the former contains
