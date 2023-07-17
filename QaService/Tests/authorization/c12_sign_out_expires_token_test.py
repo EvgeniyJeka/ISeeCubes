@@ -15,6 +15,7 @@ test_id = 12
 test_file_name = os.path.basename(__file__)
 
 
+@pytest.mark.authorization
 class TestAuthorization:
     """
     This test comes to verify the SIGN OUT functionality.

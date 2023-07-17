@@ -76,6 +76,7 @@ services:
       - RECEIVER_PASSWORD=TestMe
       - SECOND_RECEIVER_NAME=Tsahi
       - SECOND_RECEIVER_PASSWORD=Virtual Environment
+      - KEEP_ALIVE_DELAY_BETWEEN_EVENTS=8
 
 
 

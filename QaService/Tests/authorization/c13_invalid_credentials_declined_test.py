@@ -11,6 +11,7 @@ test_id = 13
 test_file_name = os.path.basename(__file__)
 
 
+@pytest.mark.authorization
 class TestAuthorization:
     """
     This test comes to verify, that invalid log in request will be declined by the Chat Server.

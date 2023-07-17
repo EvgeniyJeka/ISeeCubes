@@ -19,9 +19,11 @@ test_id = 15
 test_file_name = os.path.basename(__file__)
 
 
+@pytest.mark.authorization
 class TestAuthorization:
     """
     This test comes to verify, that messages with an invalid or blank JWT will be declined.
+    Valid JWT must be attached to EACH message.
     The first user, the Sender, sends three messages (while the Receiver is listening in a separate thread):
     - First message with valid JWT
     - Second message with invalid JWT

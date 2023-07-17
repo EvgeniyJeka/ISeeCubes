@@ -21,13 +21,12 @@ Future versions of the project are to provide solutions for those issues.
     1.4 Expired token - verify messages sent with expired authorization token are declined 
     1.5 Invald token (including blank token) - verify messages sent with invalid token are declined 
     1.6 Initiating connection - verify client can connect to Chat Server websocket only with a valid JWT
-    1.7 Verifying user is considered 'online' only after connection was successfully initiated
-    1.8 Verifying valid JWT is required to get server data (contacts list e.t.c.) from the Chat Server
+    1.7 Verifying valid JWT is required to get server data (contacts list e.t.c.) from the Chat Server
     
     
 ### 2. Getting initial data from the server 
     2.1 Verifying the list of list of Room Names provided by Chat Server upon request
-    2.2 Verifying the list of all existing customers provided by Chat Server upon request
+    2.2 Verifying the list of all existing users provided by Chat Server upon request
     2.3 Verifying the list of users that are currently online provided by Chat Server upon request
     2.4 Verifying the list of users that are currently offline provided by Chat Server upon request
     

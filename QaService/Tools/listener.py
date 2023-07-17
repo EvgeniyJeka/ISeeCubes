@@ -184,8 +184,13 @@ class Listener:
 
         headers = {"username": self.my_name, "jwt": self.current_auth_token}
 
+        logging.info(f"QA Automation: sending request for contacts for {self.my_name}")
+
         response = requests.get(f"{CHAT_SERVER_BASE_URL}/get_contacts_list/{self.my_name}",
                                 headers=headers, timeout=HTTP_REQUESTS_TIMEOUT)
+
+        received_data = json.loads(response.text)
+        logging.info(f"QA Automation: request for contacts responded with {received_data}")
 
         return response
 
