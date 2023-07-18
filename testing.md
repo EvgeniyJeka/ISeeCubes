@@ -28,7 +28,7 @@ Future versions of the project are to provide solutions for those issues.
     2.1 Verifying the list of list of Room Names provided by Chat Server upon request
     2.2 Verifying the list of all existing users provided by Chat Server upon request
     2.3 Verifying the list of users that are currently online provided by Chat Server upon request
-    2.4 Verifying the list of users that are currently offline provided by Chat Server upon request
+
     
     
 ### 3. Sending messages from one user to another 

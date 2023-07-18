@@ -28,6 +28,7 @@ class BaseConfig(object):
         SECOND_RECEIVER_PASSWORD = parser.get('TEST_DATA', 'SECOND_RECEIVER_PASSWORD')
 
         HTTP_REQUEST_TIMEOUT = int(parser.get('URL', 'HTTP_REQUEST_TIMEOUT'))
+        KEEP_ALIVE_DELAY_BETWEEN_EVENTS = int(parser.get('TEST_DATA', 'KEEP_ALIVE_DELAY_BETWEEN_EVENTS'))
 
 
     # Running in Docker container
@@ -44,6 +45,7 @@ class BaseConfig(object):
         SECOND_RECEIVER_PASSWORD = os.getenv('SECOND_RECEIVER_PASSWORD')
 
         HTTP_REQUEST_TIMEOUT = int(os.getenv('HTTP_REQUEST_TIMEOUT'))
+        KEEP_ALIVE_DELAY_BETWEEN_EVENTS = int(os.getenv('KEEP_ALIVE_DELAY_BETWEEN_EVENTS'))
 
 
 

@@ -459,6 +459,8 @@ def messaging_offline_user(request):
     :return:
     """
 
+    time.sleep(10)
+
     test_params = request.param[0]
 
     sender_username = test_params['sender_username']
@@ -489,8 +491,14 @@ def messaging_offline_user(request):
 
     logging.warning(users_online)
 
-    assert sender_username in users_online, logging.error(f"Sender {sender_username} not online")
-    assert receiver_username not in users_online, logging.error(f"Receiver {receiver_username} is online")
+    try:
+        assert sender_username in users_online, logging.error(f"Sender {sender_username} not online")
+        assert receiver_username not in users_online, logging.error(f"Receiver {receiver_username} is online")
+
+    except AssertionError as e:
+        logging.warning(f"Fixture 'messaging_offline_user' - preconditions set failed: {e}")
+        first_user_websocket_listener.sio.disconnect()
+        raise e
 
     # Sending a message as Era to Lisa. No client is used.
     first_user_websocket_listener.emit_send_message(
@@ -503,8 +511,14 @@ def messaging_offline_user(request):
     second_user_websocket_listener = Listener(receiver_username)
     response = second_user_websocket_listener.send_log_in_request(receiver_username, receiver_password)
 
-    logging.info(f"Second user - sending log in request, server responds: {response}")
-    assert response['result'] == 'success', logging.error("User sign in failed!")
+    try:
+        logging.info(f"Second user - sending log in request, server responds: {response}")
+        assert response['result'] == 'success', logging.error("User sign in failed!")
+
+    except AssertionError as e:
+        logging.warning(f"Fixture 'messaging_offline_user' - preconditions set failed: {e}")
+        second_user_websocket_listener.sio.disconnect()
+        raise e
 
     response = second_user_websocket_listener.initiate_connection()
     logging.info(

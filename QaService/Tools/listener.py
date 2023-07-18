@@ -60,7 +60,6 @@ class Listener:
         if self.sio is None:
             self.sio = socketio.Client()
 
-
     def send_log_in_request(self, username, password, return_full_response=False):
         """
         This method is used to send HTTP sign in request to the chat server
@@ -173,6 +172,13 @@ class Listener:
             logging.error(f"Failed to emit web socket event CLIENT SENDS MESSAGE - {e}")
             return False
 
+    def emit_keep_alive(self):
+        """
+        Sending 'keep alive' signal.
+        :return:
+        """
+        self.sio.emit('connection_alive', {'client': self.my_name})
+
     def send_request_for_contacts(self):
         """
         This method is used for testing purposes only - it sends a HTTP 'get_contacts_list' request
@@ -205,7 +211,6 @@ class Listener:
         response = requests.post(url, json=payload, timeout=10)
 
         return response
-
 
     def kill_token_admin_request(self, username, password, kill_token_for_user):
 
@@ -253,8 +258,6 @@ class Listener:
         self.my_name = None
         self.conversation_rooms_list = None
 
-
-
     def start_listening_loop(self):
         """
         When this method is called the client starts listening to the events incoming from the chat server.
@@ -273,18 +276,13 @@ class Listener:
         def handle_my_custom_event(message):
             self.events_received.put(message)
 
-
-
         @self.sio.on('ai_response_received')
         def handle_my_custom_event(message):
             pass
 
-
-
         @self.sio.on('new_user_online')
         def handle_new_user_online(message):
             self.status_updates_received.put({'new_user_online': message})
-
 
         @self.sio.on('user_has_gone_offline')
         def user_has_gone_offline(message):
