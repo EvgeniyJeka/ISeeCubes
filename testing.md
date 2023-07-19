@@ -22,15 +22,12 @@ Future versions of the project are to provide solutions for those issues.
     1.5 Invald token (including blank token) - verify messages sent with invalid token are declined 
     1.6 Initiating connection - verify client can connect to Chat Server websocket only with a valid JWT
     1.7 Verifying valid JWT is required to get server data (contacts list e.t.c.) from the Chat Server
-    
-    
+      
 ### 2. Getting initial data from the server 
-    2.1 Verifying the list of list of Room Names provided by Chat Server upon request
-    2.2 Verifying the list of all existing users provided by Chat Server upon request
+    2.1 Verifying the list of all existing users provided by Chat Server upon request
+    2.2 Verifying the list of list of Room Names provided by Chat Server upon request
     2.3 Verifying the list of users that are currently online provided by Chat Server upon request
-
-    
-    
+     
 ### 3. Sending messages from one user to another 
     3.1   Sending a single message from user A to user B while both are online 
     3.2   Sending several messages from user A to user B while both are online 

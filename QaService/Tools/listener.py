@@ -172,6 +172,34 @@ class Listener:
             logging.error(f"Failed to emit web socket event CLIENT SENDS MESSAGE - {e}")
             return False
 
+    def room_names_generator(self, listed_users: list) -> list:
+        """
+           Generate a list of strings representing the possible combinations of two users' names that will be used
+           to name the rooms.
+
+           Args:
+               listed_users (list): A list of user names to generate the combinations from.
+
+           Returns:
+               list: A list of strings in the format "<user1>&<user2>" representing the possible combinations
+                     of two users' names.
+
+           Example:
+               Input :room_names_generator(["Alice", "Bob", "Charlie"])
+               Output: ["Alice&Bob", "Alice&Charlie", "Bob&Charlie"]
+        """
+        listed_users.sort()
+
+        res = []
+
+        for i in range(0, len(listed_users)):
+            current_user = listed_users[i]
+
+            for user in listed_users[i + 1:]:
+                res.append(f"{current_user}&{user}")
+
+        return res
+
     def emit_keep_alive(self):
         """
         Sending 'keep alive' signal.

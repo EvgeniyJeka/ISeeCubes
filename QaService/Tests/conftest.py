@@ -20,6 +20,7 @@ logging.basicConfig(level=logging.INFO)
 admin_username = "Admin"
 admin_password = "AdminPassword"
 
+test_users_list = ['Admin', 'Avi', 'ChatGPT', 'Era', 'Lisa', 'Tsahi']
 
 def stop_all_listeners(list_of_listeners):
     for listener in list_of_listeners:
