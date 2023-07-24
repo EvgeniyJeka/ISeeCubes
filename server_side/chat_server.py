@@ -64,6 +64,9 @@ class ChatServer:
         self.users_list = self.postgres_integration.get_all_available_users_list()
         self.auth_manager = AuthManager(self.postgres_integration, self.redis_integration)
 
+        # Consider - deleting ALL existing tokens from Redis ON START, publish DISCONNECTION event for each user
+        # in order to handle Chat Server crash (stop-start)
+
     def room_names_generator(self, listed_users: list) -> list:
         """
            Generate a list of strings representing the possible combinations of two users' names that will be used

@@ -48,18 +48,20 @@ Future versions of the project are to provide solutions for those issues.
     5.1 Verifying client that are not sending the signal for more then X seconds is automatically disconnected
     5.2 Verifying client that is sending the signal every X seconds remains connected 
     
-### 6. Chat Server restarted (recovery flow)
+### 6. Chat Server restarted (recovery flow) - T.B.D.
     6.1 Verify all users that are currently connected are logged out when the Chat Server is restarted 
     6.2 Verify users can relogin after Chat Server restart 
     6.3 Verify users can message each other after Chat Server restart (covers reconnection to databases) 
     6.4 Verify messages that were cached in Redis aren't lost after Chat Server restart
     
-### 7. Databases unavailable (critical error handling) 
+    (T.B.D.: Recovery flow - consider to LOG OUT ALL USERS when the Chat Server starts)
+    
+### 7. Databases unavailable (critical error handling) - T.B.D.
     7.1 Verify all users that are currently connected are logged out when Postgress SQL DB becomes unavailable
     7.2 Verify all users that are currently connected are logged out when Redis DB becomes unavailable 
     7.3 Verify users get a relevant error message when trying to relogin while databases are unavailble 
     
-### 8. Third party integration (ChatGPT and other integrated chat bots)
+### 8. Third party integration (ChatGPT and other integrated chat bots) - T.B.D.
     8.1 Verify messages sent to ChatGPT by end users are forwarded to ChatGPT API 
     8.2 Verify messages sent by ChatGPT to end users are forwarded to end users by Chat Server
     8.3 Verify each user gets a response for his prompt from ChatGPT API (when several users 
