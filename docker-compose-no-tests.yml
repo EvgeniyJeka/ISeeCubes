@@ -1,0 +1,65 @@
+version: '3'
+
+networks:
+  i_see_cubes_main:
+    driver: bridge
+
+volumes:
+  db:
+    driver: local
+
+  redis_data:
+
+services:
+
+  postgres:
+      image: postgres:14.1-alpine
+      restart: always
+      environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=postgres
+      ports:
+        - '5432:5432'
+      volumes:
+        - db:/var/lib/postgresql/data
+      networks:
+        - i_see_cubes_main
+
+  redis:
+    image: redis:7.0.8
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - i_see_cubes_main
+
+
+  chat_messenger:
+      image: chat_messenger_server:latest
+      build: ./server_side
+      ports:
+        - 5000:5000
+      depends_on:
+        - postgres
+      networks:
+        - i_see_cubes_main
+      environment:
+        KEEP_ALIVE_LOGGING: 10
+        CONNECTIONS_VERIFICATION_INTERVAL: 10
+        KEEP_ALIVE_DELAY_BETWEEN_EVENTS: 8
+        OPENAI_API_KEY: 0
+        SQL_HOST: iseecubes_postgres_1
+        SQL_USER: postgres
+        SQL_PASSWORD: postgres
+        SQL_DB_NAME: chat_db
+        REDIS_HOST: iseecubes_redis_1
+        REDIS_DB_NUMBER: 0
+        AUTH_TOKEN_HASHMAP: auth_tokens
+        PENDING_CONVERSATIONS_HASHMAP: pending_conversations
+
+
+
+
+
+
