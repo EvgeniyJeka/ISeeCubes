@@ -14,6 +14,7 @@ NOTE: The goal of this STP is to maximize the test coverage.  At the moment not 
 that are covered in this STP are implemented - there is no error handling for databases crash, for example. 
 Future versions of the project are to provide solutions for those issues.
 
+
 ### 1. Authorization
     1.1 Sign in - Happy Path
     1.2 Sign out - verify authorization token expired after user signs out and can't be reused (JWT expires after sign out)
