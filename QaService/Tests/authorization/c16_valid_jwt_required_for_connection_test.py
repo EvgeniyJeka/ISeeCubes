@@ -41,7 +41,7 @@ class TestAuthorization:
     sender_listener = None
     receiver_listener = None
 
-
+    @pytest.mark.incremental
     @pytest.mark.parametrize('status_change_events_user_goes_online', [[{"sender_username": sender_username,
                                                        "sender_password": sender_password,
                                                        "receiver_username": receiver_username,
@@ -66,21 +66,22 @@ class TestAuthorization:
                 logging.error(f"QA Automation: user {sender_username} has failed to "
                               f"initiate a connection with a valid JWT!")
 
-
         except AssertionError as e:
             stop_all_listeners([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
             logging.warning(f"Test {test_file_name} - step failed: {e}")
+            ResultsReporter.report_failure(test_id, e)
             raise e
 
         except Exception as e:
             stop_all_listeners([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
             logging.warning(f"Test {test_file_name} is broken: {e}")
+            ResultsReporter.report_broken_test(test_id, e)
             raise e
 
         logging.info(f"----------------------- Step Passed: Logging in and establishing a connection with a valid JWT"
                      f" ----------------------------------\n")
 
-
+    @pytest.mark.incremental
     def test_initiating_connection_invalid_token(self):
 
         try:
@@ -109,12 +110,16 @@ class TestAuthorization:
         except AssertionError as e:
             stop_all_listeners([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
             logging.warning(f"Test {test_file_name} - step failed: {e}")
+            ResultsReporter.report_failure(test_id, e)
             raise e
 
         except Exception as e:
             stop_all_listeners([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
             logging.warning(f"Test {test_file_name} is broken: {e}")
+            ResultsReporter.report_broken_test(test_id, e)
             raise e
+
+        ResultsReporter.report_success(test_id)
 
         logging.info(f"----------------------- Test Passed: {test_id} : {test_file_name} ---------------------"
                      f"-------------\n")

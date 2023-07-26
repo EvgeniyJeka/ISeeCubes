@@ -61,7 +61,7 @@ services:
 
   i_see_cubes_tests_container:
     image: i_see_cubes_tests_container:latest
-    command: ["pytest", "-v", "-m", "sanity"]
+    command: ["pytest", "-v", "-m", "authorization"]
     build: ./QaService
     depends_on:
        - chat_messenger
@@ -77,6 +77,9 @@ services:
       - SECOND_RECEIVER_NAME=Tsahi
       - SECOND_RECEIVER_PASSWORD=Virtual Environment
       - KEEP_ALIVE_DELAY_BETWEEN_EVENTS=8
+
+    volumes:
+      - ../volumes/ISeeCubes/Test_Results_Report:/var/www/html/QaService/Logs
 
 
 

@@ -6,13 +6,16 @@ import json
 import pytest
 import os
 
+
 try:
     from ..Tools.listener import Listener
     from ..Config.baseconfig import BaseConfig
+    from ..Tools.test_results_reporter import ResultsReporter
 
 except ModuleNotFoundError:
     from .Tools.listener import Listener
     from .Config.baseconfig import BaseConfig
+    from .Tools.test_results_reporter import ResultsReporter
 
 
 logging.basicConfig(level=logging.INFO)
@@ -939,5 +942,15 @@ def status_change_events_has_gone_offline(request):
 
     return first_user_websocket_listener, second_user_websocket_listener
 
-if __name__ == "__main__":
-    send_single_message()
+
+# Support for @pytest.mark.incremental
+def pytest_runtest_makereport(item, call):
+    if "incremental" in item.keywords:
+        if call.excinfo is not None:
+            parent = item.parent
+            parent._previousfailed = item
+
+def pytest_runtest_setup(item):
+    previousfailed = getattr(item.parent, "_previousfailed", None)
+    if previousfailed is not None:
+        pytest.xfail(f"previous test step failed {previousfailed.name}, test flow is terminated")

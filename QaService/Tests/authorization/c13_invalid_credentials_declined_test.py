@@ -25,28 +25,30 @@ class TestAuthorization:
 
     test_listener = Listener(sender_username)
 
+    @pytest.mark.incremental
     def test_sign_in_no_username(self):
 
         try:
             response = TestAuthorization.test_listener.send_log_in_request(None, sender_password,
                                                                            return_full_response=True)
-
             logging.info(response)
 
             assert response['result'] == 'Invalid credentials'
 
-
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
+            ResultsReporter.report_failure(test_id, e)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
+            ResultsReporter.report_broken_test(test_id, e)
             raise e
 
         logging.info(f"----------------------- Step Passed: Verifying log in request with no username is declined -----"
                      f"-----------------------------\n")
 
+    @pytest.mark.incremental
     def test_sign_in_no_password(self):
 
         try:
@@ -57,41 +59,44 @@ class TestAuthorization:
 
             assert response['result'] == 'server error'
 
-
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
+            ResultsReporter.report_failure(test_id, e)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
+            ResultsReporter.report_broken_test(test_id, e)
             raise e
 
         logging.info(f"----------------------- Step Passed: Verifying log in request with no password is declined. -----"
                      f"-----------------------------\n")
 
+    @pytest.mark.incremental
     def test_sign_in_no_username_no_password(self):
 
         try:
             response = TestAuthorization.test_listener.send_log_in_request(None, None,
                                                                            return_full_response=True)
-
             logging.info(response)
 
             assert response['result'] == 'Invalid credentials'
 
-
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
+            ResultsReporter.report_failure(test_id, e)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
+            ResultsReporter.report_broken_test(test_id, e)
             raise e
 
         logging.info(
             f"----------------------- Step Passed: Verifying log in request with no username and no password is declined. -----"
             f"-----------------------------\n")
 
+    @pytest.mark.incremental
     def test_sign_in_invalid_username(self):
 
         try:
@@ -105,16 +110,19 @@ class TestAuthorization:
 
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
+            ResultsReporter.report_failure(test_id, e)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
+            ResultsReporter.report_broken_test(test_id, e)
             raise e
 
         logging.info(
             f"----------------------- Step Passed: Verifying log in request with invalid (non existing) username is declined. -----"
             f"-----------------------------\n")
 
+    @pytest.mark.incremental
     def test_sign_in_other_user_password(self):
 
         try:
@@ -125,14 +133,17 @@ class TestAuthorization:
 
             assert response['result'] == 'Invalid credentials'
 
-
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
+            ResultsReporter.report_failure(test_id, e)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
+            ResultsReporter.report_broken_test(test_id, e)
             raise e
+
+        ResultsReporter.report_success(test_id)
 
         logging.info(f"----------------------- Test Passed: {test_id} : {test_file_name} ---------------------"
                      f"-------------\n")

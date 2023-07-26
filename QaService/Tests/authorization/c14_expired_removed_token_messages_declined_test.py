@@ -39,6 +39,7 @@ class TestAuthorization:
     receiver_listener = None
     sender_listener = None
 
+    @pytest.mark.incremental
     @pytest.mark.parametrize('status_change_events_user_goes_online', [[{"sender_username": sender_username,
                                                        "sender_password": sender_password,
                                                        "receiver_username": receiver_username,
@@ -86,17 +87,19 @@ class TestAuthorization:
         except AssertionError as e:
             stop_all_listeners([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
             logging.warning(f"Test {test_file_name} - step failed: {e}")
+            ResultsReporter.report_failure(test_id, e)
             raise e
 
         except Exception as e:
             stop_all_listeners([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
             logging.warning(f"Test {test_file_name} is broken: {e}")
+            ResultsReporter.report_broken_test(test_id, e)
             raise e
 
         logging.info(f"----------------------- Step Passed: Sending the first message, terminating the JWT on the server side, sending the second message"
                      f" ----------------------------------\n")
 
-
+    @pytest.mark.incremental
     def test_verifying_only_first_message_received(self):
 
         try:
@@ -114,17 +117,20 @@ class TestAuthorization:
         except AssertionError as e:
             stop_all_listeners([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
             logging.warning(f"Test {test_file_name} - step failed: {e}")
+            ResultsReporter.report_failure(test_id, e)
             raise e
 
         except Exception as e:
             stop_all_listeners([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
             logging.warning(f"Test {test_file_name} is broken: {e}")
+            ResultsReporter.report_broken_test(test_id, e)
             raise e
 
         logging.info(
             f"----------------------- Step Passed: Verifying ONLY the first message was forwarded to the Receiver"
             f" ----------------------------------\n")
 
+    @pytest.mark.incremental
     def test_sender_receives_error_message(self):
 
         try:
@@ -142,11 +148,15 @@ class TestAuthorization:
 
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
+            ResultsReporter.report_failure(test_id, e)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
+            ResultsReporter.report_broken_test(test_id, e)
             raise e
+
+        ResultsReporter.report_success(test_id)
 
         logging.info(f"----------------------- Test Passed: {test_id} : {test_file_name} ---------------------"
                      f"-------------\n")
