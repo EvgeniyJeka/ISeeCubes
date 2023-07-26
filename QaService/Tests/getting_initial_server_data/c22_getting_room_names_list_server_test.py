@@ -22,6 +22,7 @@ class TestServerDataReceived:
     test_listener = Listener(sender_username)
     server_data = None
 
+    @pytest.mark.incremental
     def test_getting_initial_data(self):
 
         try:
@@ -42,16 +43,19 @@ class TestServerDataReceived:
 
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
+            ResultsReporter.report_failure(test_id, e)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
+            ResultsReporter.report_broken_test(test_id, e)
             raise e
 
         logging.info(
             f"----------------------- Step Passed: verifying Chat Server provides server data to client upon request"
             f" ----------------------------------\n")
 
+    @pytest.mark.incremental
     def test_verifying_room_names_list(self):
 
         try:
@@ -69,11 +73,15 @@ class TestServerDataReceived:
 
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
+            ResultsReporter.report_failure(test_id, e)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
+            ResultsReporter.report_broken_test(test_id, e)
             raise e
+
+        ResultsReporter.report_success(test_id)
 
         logging.info(f"----------------------- Test Passed: {test_id} : {test_file_name} ---------------------"
                      f"-------------\n")

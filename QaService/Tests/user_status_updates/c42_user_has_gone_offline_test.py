@@ -35,7 +35,7 @@ class TestStatusUpdates:
 
     second_listener_events = None
 
-
+    @pytest.mark.incremental
     @pytest.mark.parametrize('status_change_events_has_gone_offline', [[{"sender_username": sender_username,
                                                        "sender_password": sender_password,
                                                        "receiver_username": receiver_username,
@@ -68,6 +68,8 @@ class TestStatusUpdates:
 
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
+            stop_all_listeners([sender_listener, receiver_listener])
+            ResultsReporter.report_failure(test_id, e)
             raise e
 
         except Exception as e:
@@ -78,6 +80,7 @@ class TestStatusUpdates:
         logging.info(f"----------------------- Step Passed: Status Update events were published -----"
                      f"-----------------------------\n")
 
+    @pytest.mark.incremental
     def test_status_update_events_content_verified(self):
 
         try:
@@ -98,11 +101,15 @@ class TestStatusUpdates:
 
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
+            ResultsReporter.report_failure(test_id, e)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
+            ResultsReporter.report_broken_test(test_id, e)
             raise e
+
+        ResultsReporter.report_success(test_id)
 
         logging.info(f"----------------------- Test Passed: {test_id} : {test_file_name} ---------------------"
                      f"-------------\n")

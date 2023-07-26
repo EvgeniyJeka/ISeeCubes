@@ -27,6 +27,7 @@ class TestMessaging:
 
     messages_forwarded_to_receiver = None
 
+    @pytest.mark.incremental
     @pytest.mark.parametrize('messaging_user_offline_online', [[{"sender_username": sender_username,
                                                        "sender_password": sender_password,
                                                        "receiver_username": receiver_username,
@@ -54,15 +55,18 @@ class TestMessaging:
 
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
+            ResultsReporter.report_failure(test_id, e)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
+            ResultsReporter.report_broken_test(test_id, e)
             raise e
 
         logging.info(f"----------------------- Step Passed: Message that was cached in Redis is forwarded to the "
                      f"receiver once he is online ----------------------------------\n")
 
+    @pytest.mark.incremental
     def test_verifying_second_message_forwarded(self):
 
         try:
@@ -72,11 +76,15 @@ class TestMessaging:
 
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
+            ResultsReporter.report_failure(test_id, e)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
+            ResultsReporter.report_broken_test(test_id, e)
             raise e
+
+        ResultsReporter.report_success(test_id)
 
         logging.info(f"----------------------- Test Passed: {test_id} : {test_file_name} ---------------------"
                      f"-------------\n")

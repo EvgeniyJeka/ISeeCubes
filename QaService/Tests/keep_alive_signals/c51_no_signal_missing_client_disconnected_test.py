@@ -26,6 +26,7 @@ class TestKeepAliveSignal:
 
     test_listener = Listener(sender_username)
 
+    @pytest.mark.incremental
     def test_sign_in_connect(self):
 
         try:
@@ -52,16 +53,19 @@ class TestKeepAliveSignal:
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
             TestKeepAliveSignal.test_listener.terminate_connection()
+            ResultsReporter.report_failure(test_id, e)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
             TestKeepAliveSignal.test_listener.terminate_connection()
+            ResultsReporter.report_broken_test(test_id, e)
             raise e
 
         logging.info(f"----------------------- Step Passed: User logs in and connects - verifying he was added to the 'online users' list"
                      f" ----------------------------------\n")
 
+    @pytest.mark.incremental
     def test_no_signal_connection_terminated(self):
 
         try:
@@ -79,14 +83,18 @@ class TestKeepAliveSignal:
 
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
+            ResultsReporter.report_failure(test_id, e)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
+            ResultsReporter.report_broken_test(test_id, e)
             raise e
 
         finally:
             TestKeepAliveSignal.test_listener.terminate_connection()
+
+        ResultsReporter.report_success(test_id)
 
         logging.info(f"----------------------- Test Passed: {test_id} : {test_file_name} ---------------------"
                      f"-------------\n")
