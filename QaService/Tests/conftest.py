@@ -868,7 +868,7 @@ def status_change_events_user_goes_online(request):
     logging.info(f"Sender username: {sender_username}")
     logging.info(f"Receiver username: {receiver_username}")
 
-    # time.sleep(10)
+    time.sleep(5)
 
     # First user (sender) - log in and connect
     first_user_websocket_listener = Listener(sender_username)

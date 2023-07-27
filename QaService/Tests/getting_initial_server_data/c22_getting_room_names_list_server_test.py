@@ -9,6 +9,7 @@ test_file_name = os.path.basename(__file__)
 
 
 @pytest.mark.server_data_provided
+@pytest.mark.regression
 class TestServerDataReceived:
     """
     This test comes to verify, that the data received from Chat Server contains valid room names required for client.
@@ -43,12 +44,12 @@ class TestServerDataReceived:
 
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
-            ResultsReporter.report_failure(test_id, e)
+            ResultsReporter.report_failure(test_id, e, test_file_name)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
-            ResultsReporter.report_broken_test(test_id, e)
+            ResultsReporter.report_broken_test(test_id, e, test_file_name)
             raise e
 
         logging.info(
@@ -73,15 +74,15 @@ class TestServerDataReceived:
 
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
-            ResultsReporter.report_failure(test_id, e)
+            ResultsReporter.report_failure(test_id, e, test_file_name)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
-            ResultsReporter.report_broken_test(test_id, e)
+            ResultsReporter.report_broken_test(test_id, e, test_file_name)
             raise e
 
-        ResultsReporter.report_success(test_id)
+        ResultsReporter.report_success(test_id, test_file_name)
 
         logging.info(f"----------------------- Test Passed: {test_id} : {test_file_name} ---------------------"
                      f"-------------\n")

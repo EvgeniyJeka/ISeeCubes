@@ -19,6 +19,7 @@ test_file_name = os.path.basename(__file__)
 @pytest.mark.sanity
 @pytest.mark.sending_messages
 @pytest.mark.end2end
+@pytest.mark.regression
 class TestMessaging:
 
     messages_received = None
@@ -49,12 +50,12 @@ class TestMessaging:
 
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
-            ResultsReporter.report_failure(test_id, e)
+            ResultsReporter.report_failure(test_id, e, test_file_name)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
-            ResultsReporter.report_broken_test(test_id, e)
+            ResultsReporter.report_broken_test(test_id, e, test_file_name)
             raise e
 
         logging.info(f"----------------------- Step Passed: Verifying messages received by the first user -----"
@@ -76,15 +77,15 @@ class TestMessaging:
 
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
-            ResultsReporter.report_failure(test_id, e)
+            ResultsReporter.report_failure(test_id, e, test_file_name)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
-            ResultsReporter.report_broken_test(test_id, e)
+            ResultsReporter.report_broken_test(test_id, e, test_file_name)
             raise e
 
-        ResultsReporter.report_success(test_id)
+        ResultsReporter.report_success(test_id, test_file_name)
 
         logging.info(f"----------------------- Test Passed: {test_id} : {test_file_name} ---------------------"
                      f"-------------\n")

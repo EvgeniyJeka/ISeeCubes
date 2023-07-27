@@ -11,6 +11,7 @@ test_file_name = os.path.basename(__file__)
 
 @pytest.mark.sanity
 @pytest.mark.keep_alive_signals
+@pytest.mark.regression
 class TestKeepAliveSignal:
     """
     This test comes to verify, that client isn't disconnected by Chat Server while he is sending
@@ -51,13 +52,13 @@ class TestKeepAliveSignal:
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
             TestKeepAliveSignal.test_listener.terminate_connection()
-            ResultsReporter.report_failure(test_id, e)
+            ResultsReporter.report_failure(test_id, e, test_file_name)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
             TestKeepAliveSignal.test_listener.terminate_connection()
-            ResultsReporter.report_broken_test(test_id, e)
+            ResultsReporter.report_broken_test(test_id, e, test_file_name)
             raise e
 
         logging.info(f"----------------------- Step Passed: User logs in and connects - verifying he was added to the 'online users' list"
@@ -86,18 +87,18 @@ class TestKeepAliveSignal:
 
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
-            ResultsReporter.report_failure(test_id, e)
+            ResultsReporter.report_failure(test_id, e, test_file_name)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
-            ResultsReporter.report_broken_test(test_id, e)
+            ResultsReporter.report_broken_test(test_id, e, test_file_name)
             raise e
 
         finally:
             TestKeepAliveSignal.test_listener.terminate_connection()
 
-        ResultsReporter.report_success(test_id)
+        ResultsReporter.report_success(test_id, test_file_name)
 
         logging.info(f"----------------------- Test Passed: {test_id} : {test_file_name} ---------------------"
                      f"-------------\n")

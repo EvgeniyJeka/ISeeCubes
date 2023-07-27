@@ -3,6 +3,9 @@ import traceback
 from datetime import datetime
 import logging
 
+from .results_publisher import ResultsPublisher
+
+publisher = ResultsPublisher()
 
 class ResultsReporter:
 
@@ -29,17 +32,19 @@ class ResultsReporter:
         return os.path.join(project_path, "Logs")
 
     @staticmethod
-    def report_success(test_id):
+    def report_success(test_id, test_file_name):
         base_path = ResultsReporter.set_results_file_path()
         original_path = os.path.join(base_path, 'test_results_report.txt')
 
         with open(original_path, "a+") as f:
             f.write(f"\nTest {test_id} have PASSED: {datetime.now()}\n")
 
+        publisher.report_success(test_id, test_file_name)
+
         logging.info(f"\n\n---------------------- Reporting: TEST {test_id}_ PASSED! ----------------------\n\n")
 
     @staticmethod
-    def report_failure(test_id, exception_):
+    def report_failure(test_id, exception_, test_file_name):
         base_path = ResultsReporter.set_results_file_path()
         original_path = os.path.join(base_path, 'test_results_report.txt')
 
@@ -47,15 +52,19 @@ class ResultsReporter:
             f.write(f"\nTest {test_id} have FAILED: {datetime.now()}\n")
             f.write(f"\n{exception_}\n")
 
+        publisher.report_failure(test_id, test_file_name)
+
         logging.error(f"\n\n----------------------Reporting: TEST {test_id}_ FAILED!----------------------\n\n")
 
     @staticmethod
-    def report_broken_test(test_id, exception_):
+    def report_broken_test(test_id, exception_, test_file_name):
         base_path = ResultsReporter.set_results_file_path()
         original_path = os.path.join(base_path, 'test_results_report.txt')
 
         with open(original_path, "a+") as f:
             f.write(f"\nTest {test_id} is BROKEN: {datetime.now()}\n")
             f.write(f"\n{exception_}\n")
+
+        publisher.report_broken_test(test_id, test_file_name, exception_)
 
         logging.error(f"\n\n----------------------Reporting: TEST {test_id}_ IS BROKEN! {exception_}\n\n----------------------")

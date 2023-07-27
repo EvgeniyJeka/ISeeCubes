@@ -77,6 +77,8 @@ services:
       - SECOND_RECEIVER_NAME=Tsahi
       - SECOND_RECEIVER_PASSWORD=Virtual Environment
       - KEEP_ALIVE_DELAY_BETWEEN_EVENTS=8
+      - SLACK_RESULTS_REPORTING_CHANNEL_NAME=# tests-reports
+      - SLACK_API_TOKEN=0
 
     volumes:
       - ../volumes/ISeeCubes/Test_Results_Report:/var/www/html/QaService/Logs

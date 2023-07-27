@@ -16,6 +16,7 @@ test_file_name = os.path.basename(__file__)
 
 
 @pytest.mark.authorization
+@pytest.mark.regression
 class TestAuthorization:
     """
     This test comes to verify the SIGN OUT functionality.
@@ -83,13 +84,13 @@ class TestAuthorization:
         except AssertionError as e:
             stop_all_listeners_gentle([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
             logging.warning(f"Test {test_file_name} - step failed: {e}")
-            ResultsReporter.report_failure(test_id, e)
+            ResultsReporter.report_failure(test_id, e, test_file_name)
             raise e
 
         except Exception as e:
             stop_all_listeners_gentle([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
             logging.warning(f"Test {test_file_name} is broken: {e}")
-            ResultsReporter.report_broken_test(test_id, e)
+            ResultsReporter.report_broken_test(test_id, e, test_file_name)
             raise e
 
         logging.info(f"----------------------- Step Passed: Sending the first message, signing out, sending the second message"
@@ -113,16 +114,16 @@ class TestAuthorization:
         except AssertionError as e:
             stop_all_listeners_gentle([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
             logging.warning(f"Test {test_file_name} - step failed: {e}")
-            ResultsReporter.report_failure(test_id, e)
+            ResultsReporter.report_failure(test_id, e, test_file_name)
             raise e
 
         except Exception as e:
             stop_all_listeners_gentle([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
             logging.warning(f"Test {test_file_name} is broken: {e}")
-            ResultsReporter.report_broken_test(test_id, e)
+            ResultsReporter.report_broken_test(test_id, e, test_file_name)
             raise e
 
-        ResultsReporter.report_success(test_id)
+        ResultsReporter.report_success(test_id, test_file_name)
 
         logging.info(f"----------------------- Test Passed: {test_id} : {test_file_name} ---------------------"
                      f"-------------\n")

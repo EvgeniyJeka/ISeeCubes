@@ -30,7 +30,6 @@ class BaseConfig(object):
         HTTP_REQUEST_TIMEOUT = int(parser.get('URL', 'HTTP_REQUEST_TIMEOUT'))
         KEEP_ALIVE_DELAY_BETWEEN_EVENTS = int(parser.get('TEST_DATA', 'KEEP_ALIVE_DELAY_BETWEEN_EVENTS'))
 
-
     # Running in Docker container
     else:
         BASE_URL = os.getenv('BASE_URL')

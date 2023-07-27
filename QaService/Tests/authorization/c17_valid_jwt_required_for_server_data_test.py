@@ -16,6 +16,7 @@ test_file_name = os.path.basename(__file__)
 
 
 @pytest.mark.authorization
+@pytest.mark.regression
 class TestAuthorization:
     """
     This test comes to verify, that server data can be acquired only if the request sent from client to Chat Server
@@ -54,13 +55,13 @@ class TestAuthorization:
         except AssertionError as e:
             stop_all_listeners([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
             logging.warning(f"Test {test_file_name} - step failed: {e}")
-            ResultsReporter.report_failure(test_id, e)
+            ResultsReporter.report_failure(test_id, e, test_file_name)
             raise e
 
         except Exception as e:
             stop_all_listeners([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
             logging.warning(f"Test {test_file_name} is broken: {e}")
-            ResultsReporter.report_broken_test(test_id, e)
+            ResultsReporter.report_broken_test(test_id, e, test_file_name)
             raise e
 
         logging.info(f"----------------------- Step Passed: Logging in and establishing a connection with a valid JWT"
@@ -91,19 +92,19 @@ class TestAuthorization:
 
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
-            ResultsReporter.report_failure(test_id, e)
+            ResultsReporter.report_failure(test_id, e, test_file_name)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
-            ResultsReporter.report_broken_test(test_id, e)
+            ResultsReporter.report_broken_test(test_id, e, test_file_name)
             raise e
 
         finally:
             TestAuthorization.sender_listener.sio.disconnect()
             TestAuthorization.receiver_listener.sio.disconnect()
 
-        ResultsReporter.report_success(test_id)
+        ResultsReporter.report_success(test_id, test_file_name)
 
         logging.info(f"----------------------- Test Passed: {test_id} : {test_file_name} ---------------------"
                      f"-------------\n")

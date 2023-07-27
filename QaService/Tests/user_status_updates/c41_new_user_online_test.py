@@ -16,6 +16,7 @@ test_file_name = os.path.basename(__file__)
 
 @pytest.mark.sanity
 @pytest.mark.status_updates
+@pytest.mark.regression
 class TestStatusUpdates:
     """
     In this this test we verify, that all clients receive status update event via web socket
@@ -68,13 +69,13 @@ class TestStatusUpdates:
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
             stop_all_listeners([sender_listener, receiver_listener])
-            ResultsReporter.report_failure(test_id, e)
+            ResultsReporter.report_failure(test_id, e, test_file_name)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
             stop_all_listeners([sender_listener, receiver_listener])
-            ResultsReporter.report_broken_test(test_id, e)
+            ResultsReporter.report_broken_test(test_id, e, test_file_name)
             raise e
 
         logging.info(f"----------------------- Step Passed: Status Update events were published -----"
@@ -101,15 +102,15 @@ class TestStatusUpdates:
 
         except AssertionError as e:
             logging.warning(f"Test {test_file_name} - step failed: {e}")
-            ResultsReporter.report_failure(test_id, e)
+            ResultsReporter.report_failure(test_id, e, test_file_name)
             raise e
 
         except Exception as e:
             logging.warning(f"Test {test_file_name} is broken: {e}")
-            ResultsReporter.report_broken_test(test_id, e)
+            ResultsReporter.report_broken_test(test_id, e, test_file_name)
             raise e
 
-        ResultsReporter.report_success(test_id)
+        ResultsReporter.report_success(test_id, test_file_name)
 
         logging.info(f"----------------------- Test Passed: {test_id} : {test_file_name} ---------------------"
                      f"-------------\n")
