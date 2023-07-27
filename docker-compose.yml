@@ -61,7 +61,7 @@ services:
 
   i_see_cubes_tests_container:
     image: i_see_cubes_tests_container:latest
-    command: ["pytest", "-v", "-m", "regression"]
+    command: ["pytest", "-v", "-m", "authorization"]
     build: ./QaService
     depends_on:
        - chat_messenger
@@ -78,7 +78,7 @@ services:
       - SECOND_RECEIVER_PASSWORD=Virtual Environment
       - KEEP_ALIVE_DELAY_BETWEEN_EVENTS=8
       - SLACK_RESULTS_REPORTING_CHANNEL_NAME=# tests-reports
-      - SLACK_API_TOKEN=xoxb-4899210694050-4892613731974-y1bLR6pAnaFYvuCfTahS5S4M
+      - SLACK_API_TOKEN=0
 
     volumes:
       - ../volumes/ISeeCubes/Test_Results_Report:/var/www/html/QaService/Logs

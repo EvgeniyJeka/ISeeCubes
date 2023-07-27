@@ -24,19 +24,20 @@ class ResultsPublisher:
         if not len(slack_token) > 1:
             logging.error(f"Can't send report to Slack - invalid slack token: {slack_token}")
 
-        client = WebClient(token=slack_token)
+        else:
+            client = WebClient(token=slack_token)
 
-        try:
-            response = client.chat_postMessage(
-                channel=slack_channel_name,
-                text=data
-            )
-            logging.info(f"Test Result Published To Slack Channel Successfully: {response}")
-            return True
+            try:
+                response = client.chat_postMessage(
+                    channel=slack_channel_name,
+                    text=data
+                )
+                logging.info(f"Test Result Published To Slack Channel Successfully: {response}")
+                return True
 
-        except SlackApiError as e:
-            logging.error(f"Error sending message: {e}")
-            raise e
+            except SlackApiError as e:
+                logging.error(f"Error sending message: {e}")
+                raise e
 
     def report_success(self, test_id, test_file_name):
         report = f"Test PASSED : #{test_id} , {test_file_name}"
