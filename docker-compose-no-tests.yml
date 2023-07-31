@@ -59,29 +59,7 @@ services:
         PENDING_CONVERSATIONS_HASHMAP: pending_conversations
 
 
-  i_see_cubes_tests_container:
-    image: i_see_cubes_tests_container:latest
-    command: ["pytest", "-v", "-m", "regression", "--reruns", "2"]
-    build: ./QaService
-    depends_on:
-       - chat_messenger
-    networks:
-       - i_see_cubes_main
-    environment:
-      - BASE_URL=http://iseecubes_chat_messenger_1:5000
-      - HTTP_REQUEST_TIMEOUT=10
-      - SENDER_NAME=Era
-      - SENDER_PASSWORD=Come on
-      - RECEIVER_NAME=Lisa
-      - RECEIVER_PASSWORD=TestMe
-      - SECOND_RECEIVER_NAME=Tsahi
-      - SECOND_RECEIVER_PASSWORD=Virtual Environment
-      - KEEP_ALIVE_DELAY_BETWEEN_EVENTS=8
-      - SLACK_RESULTS_REPORTING_CHANNEL_NAME=# tests-reports
-      - SLACK_API_TOKEN=0
 
-    volumes:
-      - ../volumes/ISeeCubes/Test_Results_Report:/var/www/html/QaService/Logs
 
 
 

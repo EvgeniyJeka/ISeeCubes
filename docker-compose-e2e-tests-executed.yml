@@ -61,7 +61,7 @@ services:
 
   i_see_cubes_tests_container:
     image: i_see_cubes_tests_container:latest
-    command: ["pytest", "-v", "-m", "regression", "--reruns", "2"]
+    command: ["pytest", "-v", "-m", "end2end", "--reruns", "2"]
     build: ./QaService
     depends_on:
        - chat_messenger
