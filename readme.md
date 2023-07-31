@@ -10,6 +10,7 @@ https://www.youtube.com/watch?v=dk44vgkKfPY
 Chatting with OpenAI model:
 https://www.youtube.com/watch?v=iOxp3ZvDWnw
 
+Version 1.1
 
 After the connection is established user is presented with a list that contains 
 all other users and can start a chat with any of them. Users that are currently online are 

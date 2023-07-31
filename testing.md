@@ -1,4 +1,4 @@
-# 1 General Description
+# 1. General Description
 
 <b>QaService</b> - a framework and a set of automated tests that cover
 the server side of the "I See Cubes" application, the Chat Server. 
@@ -27,18 +27,18 @@ is executed by the Docker Compose tool.
 
 The tests can be integrated into Jenkins based CI flow - for example, the following command will
 initiate an execution of all "sanity" tests, and the docker container exit code '0' will indicate,
-that all tests passed :
+that all tests have passed :
 
 <b>docker-compose -f docker-compose-sanity_tests_executed.yml up -d</b>
 
 
-# 2 Test Groups and Server Side STP 
+# 2. Test Groups and Server Side STP 
 
 The tests are divided into several groups according to the STP below.
 
 Each test group can be executed separately. For example - in order to execute
 all tests marked as 'sanity' we can either use the yml file 'docker-compose-sanity_tests_executed.yml'
-or use the following CMD command in  "i_see_cubes_tests_container" configuration:
+or set the following CMD command in  "i_see_cubes_tests_container" configuration:
 
 <b>command: ["pytest", "-v", "-m", "sanity"]</b>
 
