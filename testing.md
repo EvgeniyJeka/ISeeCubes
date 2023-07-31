@@ -57,6 +57,9 @@ The Test Plan below covers the vast majority of the server side features.
 Most of the Test Scenarios are automated (work is in progress at the moment) - the emphasis 
 is on regression and e2e tests, that are needed for future development. 
 
+Test results can be published to a Slack app, providing Slack API token and channel name are 
+set in environment variables.
+
 <b>Tests that are already automated</b>:
 
 ### 1. Authorization
