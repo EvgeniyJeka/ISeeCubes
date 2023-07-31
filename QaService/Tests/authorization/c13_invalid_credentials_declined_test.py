@@ -144,6 +144,9 @@ class TestAuthorization:
             ResultsReporter.report_broken_test(test_id, e, test_file_name)
             raise e
 
+        finally:
+            TestAuthorization.test_listener = None
+
         ResultsReporter.report_success(test_id, test_file_name)
 
         logging.info(f"----------------------- Test Passed: {test_id} : {test_file_name} ---------------------"

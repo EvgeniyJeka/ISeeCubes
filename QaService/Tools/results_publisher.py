@@ -21,7 +21,7 @@ class ResultsPublisher:
             logging.error("Can't send report to Slack - token or channel name missing in environment variables")
             return False
 
-        if not len(slack_token) > 1:
+        if not len(slack_token) > 3:
             logging.error(f"Can't send report to Slack - invalid slack token: {slack_token}")
 
         else:
@@ -37,7 +37,9 @@ class ResultsPublisher:
 
             except SlackApiError as e:
                 logging.error(f"Error sending message: {e}")
-                raise e
+
+            except Exception as e:
+                logging.error(f"Error sending message: {e}")
 
     def report_success(self, test_id, test_file_name):
         report = f"Test PASSED : #{test_id} , {test_file_name}"

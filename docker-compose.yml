@@ -61,7 +61,7 @@ services:
 
   i_see_cubes_tests_container:
     image: i_see_cubes_tests_container:latest
-    command: ["pytest", "-v", "-m", "authorization"]
+    command: ["pytest", "-v", "-m", "sanity"]
     build: ./QaService
     depends_on:
        - chat_messenger

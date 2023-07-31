@@ -1,20 +1,63 @@
-# I See Cubes - Server Side STP 
+# 1 General Description
 
-This Test Plan covers the vast majority of the server side features.
-Most of the Test Scenarios are automated (work is in progress at the moment) - the emphasis 
-is on regression and e2e tests, that are needed for future development. 
+<b>QaService</b> - a framework and a set of automated tests that cover
+the server side of the "I See Cubes" application, the Chat Server. 
 
-The tests are implemented on Python and based on PyTest framework. 
+The purpose of the "QaService" is to perform automated testing of the Chat Server for the "I See Cubes" 
+application.
+
+The tests are not part of the "I See Cubes" project (since those aren't unit tests), but a set of 'black box' 
+tests - each test generates an <b>INPUT</b> for the Chat Server and verifies the produced <b>OUTPUT</b>.
 
 The general approach is 'Black Box' testing - the tests emulate a client, they send 
 HTTP requests and web socket messages to Chat Server, parse it's responses and emitted messages
 in the same way the desktop client does and verify the output against the expected. 
 
-NOTE: The goal of this STP is to maximize the test coverage.  At the moment not all features 
-that are covered in this STP are implemented - there is no error handling for databases crash, for example. 
-Future versions of the project are to provide solutions for those issues.
+In some tests several instances of client emulators are running simultaneously in several threads   
+while the tested features are verified - messages are delivered to the right client, 
+status updates and other events are published via web socket by Chat Server as expected e.t.c.
+ 
+The tests are based on <b>Pytest</b> framework and an run in a <b>Docker</b> container, 
+"i_see_cubes_tests_container". Test results are saved into the 'test_results_report.txt' 
+file that is created during the test run and saved in "i_see_cubes_tests_container" volumes. 
+
+Test container configuration and env. variables are written in the 'yml' files. The docker image is built 
+(if missing) and test container is started together with Chat Server container when one of the 'yml' files 
+is executed by the Docker Compose tool.
+
+The tests can be integrated into Jenkins based CI flow - for example, the following command will
+initiate an execution of all "sanity" tests, and the docker container exit code '0' will indicate,
+that all tests passed :
+
+<b>docker-compose -f docker-compose-sanity_tests_executed.yml up -d</b>
 
 
+# 2 Test Groups and Server Side STP 
+
+The tests are divided into several groups according to the STP below.
+
+Each test group can be executed separately. For example - in order to execute
+all tests marked as 'sanity' we can either use the yml file 'docker-compose-sanity_tests_executed.yml'
+or use the following CMD command in  "i_see_cubes_tests_container" configuration:
+
+<b>command: ["pytest", "-v", "-m", "sanity"]</b>
+
+#### Available Test Groups (listed in pytest.ini):
+    sending_messages: sending messages from one user to other users, caching messages for offline users
+    status_updates: getting notifications on other users statuses (online/offline) via web socket
+    authorization: authorization mechanisms are verified
+    keep_alive_signals: verifying client remains connected only as long as he sends 'keep alive' signals
+    server_data_provided: verifying server provides to client all the relevant data upon request
+    sanity: sanity tests
+    end2end: end to end tests, full flow
+    regression: full regression test run, most of all existing automated test cases
+
+
+The Test Plan below covers the vast majority of the server side features.
+Most of the Test Scenarios are automated (work is in progress at the moment) - the emphasis 
+is on regression and e2e tests, that are needed for future development. 
+
+<b>Tests that are already automated</b>:
 
 ### 1. Authorization
     1.1 Sign in - Happy Path
@@ -47,6 +90,9 @@ Future versions of the project are to provide solutions for those issues.
 ### 5. Keep Alive signals 
     5.1 Verifying client that are not sending the signal for more then X seconds is automatically disconnected
     5.2 Verifying client that is sending the signal every X seconds remains connected 
+  
+  
+<b>Tests that are can be performed manually only at the moment:</b>  
     
 ### 6. Chat Server restarted (recovery flow) - T.B.D.
     6.1 Verify all users that are currently connected are logged out when the Chat Server is restarted 

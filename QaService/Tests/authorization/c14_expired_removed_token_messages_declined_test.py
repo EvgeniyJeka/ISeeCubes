@@ -26,7 +26,7 @@ class TestAuthorization:
     This test comes to verify, that messages are declined when the authorization token expires or blocked
     on the server side (meaning - removed from Redis DB in both cases).
 
-    The first user, the Sender, sends two messages, and the JWT is teminated after the first one.
+    The first user, the Sender, sends two messages, and the JWT is terminated after the first one.
     The second user, the Receiver, is expected to get ONLY the first message. The second one is declined,
     AND an error message is automatically sent to the message sender (from chat Admin).
 
@@ -50,6 +50,7 @@ class TestAuthorization:
     def test_sending_messages_before_after_jwt_removal(self, status_change_events_user_goes_online):
 
         try:
+
             # Both listeners are logged in, the RECEIVER is connected
             TestAuthorization.sender_listener, TestAuthorization.receiver_listener = status_change_events_user_goes_online
 
@@ -60,6 +61,7 @@ class TestAuthorization:
 
             # The SENDER listener initiates a connection (while the RECEIVER is listening for new status updates)
             time.sleep(int(test_duration_seconds / 4))
+
             TestAuthorization.sender_listener.initiate_connection()
 
             # Sending a message with a valid JWT (before sign out)
@@ -116,13 +118,15 @@ class TestAuthorization:
             stop_all_listeners([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
 
         except AssertionError as e:
-            stop_all_listeners([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
+            TestAuthorization.sender_listener.sio.disconnect()
+            TestAuthorization.receiver_listener.sio.disconnect()
             logging.warning(f"Test {test_file_name} - step failed: {e}")
             ResultsReporter.report_failure(test_id, e, test_file_name)
             raise e
 
         except Exception as e:
-            stop_all_listeners([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
+            TestAuthorization.sender_listener.sio.disconnect()
+            TestAuthorization.receiver_listener.sio.disconnect()
             logging.warning(f"Test {test_file_name} is broken: {e}")
             ResultsReporter.report_broken_test(test_id, e, test_file_name)
             raise e
@@ -156,6 +160,10 @@ class TestAuthorization:
             logging.warning(f"Test {test_file_name} is broken: {e}")
             ResultsReporter.report_broken_test(test_id, e, test_file_name)
             raise e
+
+        finally:
+            TestAuthorization.sender_listener = None
+            TestAuthorization.receiver_listener = None
 
         ResultsReporter.report_success(test_id, test_file_name)
 

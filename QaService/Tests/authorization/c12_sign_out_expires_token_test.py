@@ -82,13 +82,15 @@ class TestAuthorization:
             time.sleep(int(test_duration_seconds / 4))
 
         except AssertionError as e:
-            stop_all_listeners_gentle([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
+            TestAuthorization.sender_listener.sio.disconnect()
+            TestAuthorization.receiver_listener.sio.disconnect()
             logging.warning(f"Test {test_file_name} - step failed: {e}")
             ResultsReporter.report_failure(test_id, e, test_file_name)
             raise e
 
         except Exception as e:
-            stop_all_listeners_gentle([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
+            TestAuthorization.sender_listener.sio.disconnect()
+            TestAuthorization.receiver_listener.sio.disconnect()
             logging.warning(f"Test {test_file_name} is broken: {e}")
             ResultsReporter.report_broken_test(test_id, e, test_file_name)
             raise e
@@ -112,13 +114,15 @@ class TestAuthorization:
             TestAuthorization.receiver_listener.terminate_connection()
 
         except AssertionError as e:
-            stop_all_listeners_gentle([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
+            TestAuthorization.sender_listener.sio.disconnect()
+            TestAuthorization.receiver_listener.sio.disconnect()
             logging.warning(f"Test {test_file_name} - step failed: {e}")
             ResultsReporter.report_failure(test_id, e, test_file_name)
             raise e
 
         except Exception as e:
-            stop_all_listeners_gentle([TestAuthorization.sender_listener, TestAuthorization.receiver_listener])
+            TestAuthorization.sender_listener.sio.disconnect()
+            TestAuthorization.receiver_listener.sio.disconnect()
             logging.warning(f"Test {test_file_name} is broken: {e}")
             ResultsReporter.report_broken_test(test_id, e, test_file_name)
             raise e

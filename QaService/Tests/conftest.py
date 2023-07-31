@@ -868,7 +868,7 @@ def status_change_events_user_goes_online(request):
     logging.info(f"Sender username: {sender_username}")
     logging.info(f"Receiver username: {receiver_username}")
 
-    time.sleep(5)
+    time.sleep(10)
 
     # First user (sender) - log in and connect
     first_user_websocket_listener = Listener(sender_username)
@@ -887,6 +887,11 @@ def status_change_events_user_goes_online(request):
 
     logging.info(f"Second user - sending log in request, server responds: {response}")
     assert response['result'] == 'success', logging.error("User sign in failed!")
+
+    second_user_websocket_listener.sio.disconnect()
+    second_user_websocket_listener.connected = False
+
+    time.sleep(5)
 
     response = second_user_websocket_listener.initiate_connection()
     logging.info(f"Second user - sending the 'JOIN' event, trying to connect to Chat Server websocket: {response}")

@@ -29,6 +29,7 @@ class TestKeepAliveSignal:
     def test_sign_in_connect(self):
 
         try:
+            time.sleep(6)
             response = TestKeepAliveSignal.test_listener.send_log_in_request(sender_username, sender_password,
                                                                            return_full_response=True)
 

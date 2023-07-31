@@ -53,6 +53,7 @@ class TestAuthorization:
     def test_sending_messages_valid_token(self, status_change_events_user_goes_online):
 
         try:
+            # time.sleep(10)
             # Both listeners are logged in, the RECEIVER is connected
             TestAuthorization.sender_listener, TestAuthorization.receiver_listener = status_change_events_user_goes_online
 
@@ -61,6 +62,8 @@ class TestAuthorization:
 
             # The SENDER listener initiates a connection (while the RECEIVER is listening for new status updates)
             time.sleep(int(test_duration_seconds / 4))
+            # TestAuthorization.sender_listener.sio.disconnect()
+            # time.sleep(3)
             TestAuthorization.sender_listener.initiate_connection()
 
             # Sending a message with a valid JWT (before sign out)
@@ -171,6 +174,10 @@ class TestAuthorization:
             logging.warning(f"Test {test_file_name} is broken: {e}")
             ResultsReporter.report_broken_test(test_id, e, test_file_name)
             raise e
+
+        finally:
+            TestAuthorization.sender_listener = None
+            TestAuthorization.receiver_listener = None
 
         ResultsReporter.report_success(test_id, test_file_name)
 
