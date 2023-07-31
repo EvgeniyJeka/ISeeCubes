@@ -7,7 +7,7 @@ The purpose of the "QaService" is to perform automated testing of the Chat Serve
 application.
 
 The tests are not part of the "I See Cubes" project (since those aren't unit tests) and run separately -  
-tests - each test generates an <b>INPUT</b> for the Chat Server and verifies the produced <b>OUTPUT</b>.
+each test generates an <b>INPUT</b> for the Chat Server and verifies the produced <b>OUTPUT</b>.
 
 The general approach is 'Black Box' testing - the tests emulate a client, they send 
 HTTP requests and web socket messages to Chat Server, parse it's responses and emitted messages
