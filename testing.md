@@ -25,7 +25,7 @@ Test container configuration and env. variables are written in the 'yml' files. 
 (if missing) and test container is started together with Chat Server container when one of the 'yml' files 
 is executed by the Docker Compose tool.
 
-The tests can be integrated into Jenkins based CI flow - for example, the following command will
+The tests can be integrated into <b>Jenkins based CI flow</b> - for example, the following command will
 initiate an execution of all "sanity" tests, and the docker container exit code '0' will indicate,
 that all tests have passed :
 
