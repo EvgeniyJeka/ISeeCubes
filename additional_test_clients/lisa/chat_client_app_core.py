@@ -243,10 +243,19 @@ class ClientAppCore:
 
             except socketio.exceptions.BadNamespaceError as e:
                 # Server is down - the handling will START here (temp)
-                print(f"Connection terminated - server is unavailable! {e}")
-                print("Server is down - handling the situation")
-                time.sleep(5)
-                self.user_logged_in = False
+                logging.error(f"Connection terminated - server is unavailable! {e}")
+                self.handle_server_connection_lost()
+
+    def handle_server_connection_lost(self):
+        # time.sleep(5)
+        logging.error(f"Handling critical issue - connection lost with the Chat Server")
+
+        self.user_logged_in = False
+        self.connected = False
+        self.sio = None
+
+        self.contacts_list_ui_element.delete(0, END)
+        self.connection_indicator_ui_element.config(text="Server Error", fg="red4")
 
     def color_online_offline_contacts(self, currently_online_contacts_list: list):
         """

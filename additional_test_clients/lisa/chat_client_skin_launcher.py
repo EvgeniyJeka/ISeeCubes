@@ -208,13 +208,18 @@ class ChatClient:
         # Removing the user name in window header
         self.main_ui_window.title(f"Please log in")
 
-        # Emitting 'client_disconnection' event to the server
-        self.client_app_core.sio.emit('client_disconnection',
-                                      {"client": self.client_app_core.my_name,
-                                       "jwt": self.client_app_core.current_auth_token})
 
-        # Disconnecting, closing the SIO instance
-        self.client_app_core.sio.disconnect()
+        try:
+            # Emitting 'client_disconnection' event to the server
+            self.client_app_core.sio.emit('client_disconnection',
+                                          {"client": self.client_app_core.my_name,
+                                           "jwt": self.client_app_core.current_auth_token})
+
+            # Disconnecting, closing the SIO instance
+            self.client_app_core.sio.disconnect()
+
+        except AttributeError as e:
+            logging.error(f"Chat Server is down -  'client_disconnection' event can't be emitted, {e}")
 
         # Stopping the Listening Loop thread
         self.listening_loop_thread.join(timeout=2)
