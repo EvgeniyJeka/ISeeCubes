@@ -78,7 +78,7 @@ class ChatClient:
         self.contacts_list_ui_element.place(x=17, y=220)
 
         # This instance of ClientAppCore will be used to handle connections, disconnections and conversations
-        self.client_app_core = ClientAppCore(self.contacts_list_ui_element)
+        self.client_app_core = ClientAppCore(self.contacts_list_ui_element, self.connection_indicator_ui_element)
 
         # Log In window
         self.log_in_window = LoginWindow(self.client_app_core)

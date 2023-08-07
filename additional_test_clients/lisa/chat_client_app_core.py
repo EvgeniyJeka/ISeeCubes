@@ -8,6 +8,8 @@ import json
 import threading
 import logging
 
+from socketio import exceptions
+
 from additional_test_clients.lisa.local_client_config import AppConfig
 
 logging.basicConfig(level=logging.INFO)
@@ -29,14 +31,17 @@ class ClientAppCore:
     my_name = None
 
     contacts_list_ui_element = None
+    connection_indicator_ui_element = None
+
     current_auth_token = None
 
     user_logged_in = False
 
     address_book = {}
 
-    def __init__(self, contacts_list_ui_element):
-        self.contacts_list_ui_element = contacts_list_ui_element
+    def __init__(self, contacts_list_ui_element, connection_indicator_ui_element):
+        self.contacts_list_ui_element, self.connection_indicator_ui_element = \
+            contacts_list_ui_element, connection_indicator_ui_element
 
     def send_log_in_request(self, username, password):
         """
@@ -232,8 +237,16 @@ class ClientAppCore:
 
         # Sending 'connection_alive' event every X seconds while the user is logged in
         while self.user_logged_in:
-            self.sio.emit('connection_alive', {'client': self.my_name})
-            time.sleep(AppConfig.KEEP_ALIVE_DELAY_BETWEEN_EVENTS.value)
+            try:
+                self.sio.emit('connection_alive', {'client': self.my_name})
+                time.sleep(AppConfig.KEEP_ALIVE_DELAY_BETWEEN_EVENTS.value)
+
+            except socketio.exceptions.BadNamespaceError as e:
+                # Server is down - the handling will START here (temp)
+                print(f"Connection terminated - server is unavailable! {e}")
+                print("Server is down - handling the situation")
+                time.sleep(5)
+                self.user_logged_in = False
 
     def color_online_offline_contacts(self, currently_online_contacts_list: list):
         """
