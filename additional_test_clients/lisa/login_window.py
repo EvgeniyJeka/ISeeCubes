@@ -3,6 +3,7 @@ import logging
 import requests
 
 from additional_test_clients.lisa.local_client_config import LoginWindowConfig, LoginWindowErrorMessages
+from additional_test_clients.lisa.pop_up_window import PopupWindow
 
 
 class LoginWindow:
@@ -105,7 +106,9 @@ class LoginWindow:
             logging.error(f"Login window: Failed to log in - {e}")
             username_entry.delete(0, 'end')
             password_entry.delete(0, 'end')
-            password_entry.insert(0, LoginWindowErrorMessages.SERVER_UNAVAILABLE.value)
+
+            error_message = PopupWindow('CONNECTION_ATTEMPT_FAILED')
+            error_message.show_pop_up()
             return False
 
         except Exception as e:

@@ -19,6 +19,15 @@ class MessageBoxConfig(Enum):
     MESSAGE_BOX_SIZE = "600x400"
 
 
+class ErrorTypes:
+
+    @staticmethod
+    def errors_map():
+        result = {"SERVER_TEMPORARY_DOWN": "Error: Chat Server is temporary down.\nPlease re login and re connect.",
+                  "CONNECTION_ATTEMPT_FAILED": "Error: Log In failed.\n Chat Server isn't available at the moment."}
+        return result
+
+
 class AppConfig(Enum):
     KEEP_ALIVE_DELAY_BETWEEN_EVENTS = 6
     CHAT_SERVER_BASE_URL = "http://localhost:5000"

@@ -11,6 +11,7 @@ import logging
 from socketio import exceptions
 
 from additional_test_clients.lisa.local_client_config import AppConfig
+from additional_test_clients.lisa.pop_up_window import PopupWindow
 
 logging.basicConfig(level=logging.INFO)
 
@@ -256,6 +257,11 @@ class ClientAppCore:
 
         self.contacts_list_ui_element.delete(0, END)
         self.connection_indicator_ui_element.config(text="Server Error", fg="red4")
+
+        # Presenting the error message defined for given case
+        error_message = PopupWindow('SERVER_TEMPORARY_DOWN')
+        error_message.show_pop_up()
+
 
     def color_online_offline_contacts(self, currently_online_contacts_list: list):
         """
