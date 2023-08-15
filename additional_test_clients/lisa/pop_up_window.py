@@ -1,7 +1,7 @@
 from tkinter import *
 import logging
 
-from additional_test_clients.lisa.local_client_config import ErrorTypes
+from additional_test_clients.lisa.local_client_config import ErrorTypes, ErrorMessagePopConfig
 
 logging.basicConfig(level=logging.INFO)
 
@@ -20,7 +20,7 @@ class PopupWindow:
     def show_pop_up(self):
 
         # Window size
-        size = "350x180"
+        size = ErrorMessagePopConfig.ERROR_POP_UP_SIZE.value
 
         # Window
         self.pop_up_window = Tk()
