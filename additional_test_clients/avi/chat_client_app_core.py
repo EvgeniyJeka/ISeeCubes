@@ -8,7 +8,10 @@ import json
 import threading
 import logging
 
-from additional_test_clients.avi.local_client_config import AppConfig
+from socketio import exceptions
+
+from additional_test_clients.lisa.local_client_config import AppConfig
+from additional_test_clients.lisa.pop_up_window import PopupWindow
 
 logging.basicConfig(level=logging.INFO)
 
@@ -29,14 +32,17 @@ class ClientAppCore:
     my_name = None
 
     contacts_list_ui_element = None
+    connection_indicator_ui_element = None
+
     current_auth_token = None
 
     user_logged_in = False
 
     address_book = {}
 
-    def __init__(self, contacts_list_ui_element):
-        self.contacts_list_ui_element = contacts_list_ui_element
+    def __init__(self, contacts_list_ui_element, connection_indicator_ui_element):
+        self.contacts_list_ui_element, self.connection_indicator_ui_element = \
+            contacts_list_ui_element, connection_indicator_ui_element
 
     def send_log_in_request(self, username, password):
         """
@@ -232,8 +238,30 @@ class ClientAppCore:
 
         # Sending 'connection_alive' event every X seconds while the user is logged in
         while self.user_logged_in:
-            self.sio.emit('connection_alive', {'client': self.my_name})
-            time.sleep(AppConfig.KEEP_ALIVE_DELAY_BETWEEN_EVENTS.value)
+            try:
+                self.sio.emit('connection_alive', {'client': self.my_name})
+                time.sleep(AppConfig.KEEP_ALIVE_DELAY_BETWEEN_EVENTS.value)
+
+            except socketio.exceptions.BadNamespaceError as e:
+                # Server is down - the handling will START here (temp)
+                logging.error(f"Connection terminated - server is unavailable! {e}")
+                self.handle_server_connection_lost()
+
+    def handle_server_connection_lost(self):
+        # time.sleep(5)
+        logging.error(f"Handling critical issue - connection lost with the Chat Server")
+
+        self.user_logged_in = False
+        self.connected = False
+        self.sio = None
+
+        self.contacts_list_ui_element.delete(0, END)
+        self.connection_indicator_ui_element.config(text="Server Error", fg="red4")
+
+        # Presenting the error message defined for given case
+        error_message = PopupWindow('SERVER_TEMPORARY_DOWN')
+        error_message.show_pop_up()
+
 
     def color_online_offline_contacts(self, currently_online_contacts_list: list):
         """
