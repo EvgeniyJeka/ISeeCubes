@@ -294,3 +294,4 @@ class ClientAppCore:
         except Exception as e:
             logging.error(f"Failed to color the selected contact: {e}")
             return False
+

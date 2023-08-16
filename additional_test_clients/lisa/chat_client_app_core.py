@@ -15,6 +15,8 @@ from additional_test_clients.lisa.pop_up_window import PopupWindow
 
 logging.basicConfig(level=logging.INFO)
 
+# Check the following scenario - server is down AFTER login but BEFORE connect. Find handling.
+
 
 # Default window size when there are no bookmarks
 from additional_test_clients.lisa.message_box import MessageBox

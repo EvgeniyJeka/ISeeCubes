@@ -46,10 +46,6 @@ class LoginWindow:
         cancel_button = Button(login_window, text="Cancel", command=lambda: self.close_window(login_window), width=20,
                                bg="red", fg="white")
 
-        # # TEMPORARY STUB !! Remove on Prod
-        # username_entry.insert(0, "Avi")
-        # password_entry.insert(0, "MoreMoreMore")
-
         username_label.grid(row=0, column=0, sticky=E)
         username_entry.grid(row=0, column=1)
 
@@ -114,7 +110,7 @@ class LoginWindow:
             username_entry.delete(0, 'end')
             password_entry.delete(0, 'end')
             # Error message pop up
-            error_message = PopupWindow('CONNECTION_ATTEMPT_FAILED')
+            error_message = PopupWindow('LOGIN_REQUEST_FAILED')
             error_message.show_pop_up()
             return False
 

@@ -114,7 +114,7 @@ class LoginWindow:
             username_entry.delete(0, 'end')
             password_entry.delete(0, 'end')
             # Error message pop up
-            error_message = PopupWindow('CONNECTION_ATTEMPT_FAILED')
+            error_message = PopupWindow('LOGIN_REQUEST_FAILED')
             error_message.show_pop_up()
             return False
 

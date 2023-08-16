@@ -10,10 +10,12 @@ import logging
 
 from socketio import exceptions
 
-from additional_test_clients.lisa.local_client_config import AppConfig
-from additional_test_clients.lisa.pop_up_window import PopupWindow
+from additional_test_clients.tsahi.local_client_config import AppConfig
+from additional_test_clients.tsahi.pop_up_window import PopupWindow
 
 logging.basicConfig(level=logging.INFO)
+
+# Check the following scenario - server is down AFTER login but BEFORE connect. Find handling.
 
 
 # Default window size when there are no bookmarks

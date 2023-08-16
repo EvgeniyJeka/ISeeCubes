@@ -8,6 +8,7 @@ logging.basicConfig(level=logging.INFO)
 
 from additional_test_clients.tsahi.chat_client_app_core import ClientAppCore
 from additional_test_clients.tsahi.login_window import LoginWindow
+from additional_test_clients.tsahi.pop_up_window import PopupWindow
 
 
 class ChatClient:
@@ -148,6 +149,10 @@ class ChatClient:
             logging.info("Client App Core: Error, failed to connect")
             self.connection_indicator_ui_element.config(text="Error", fg="red4")
             self.client_app_core.user_logged_in = False
+            # Error message pop up
+            error_message = PopupWindow('CONNECTION_ATTEMPT_FAILED')
+            self.button_connect["state"] = DISABLED
+            error_message.show_pop_up()
             return
 
         contacts_list = server_initiate_feed['contacts']

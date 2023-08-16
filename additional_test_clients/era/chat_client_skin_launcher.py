@@ -2,12 +2,13 @@ from tkinter import *
 from PIL import ImageTk, Image
 import threading
 import logging
-from additional_test_clients.lisa.local_client_config import MainWindowConfig
+from additional_test_clients.era.local_client_config import MainWindowConfig
 
 logging.basicConfig(level=logging.INFO)
 
 from additional_test_clients.era.chat_client_app_core import ClientAppCore
 from additional_test_clients.era.login_window import LoginWindow
+from additional_test_clients.era.pop_up_window import PopupWindow
 
 
 class ChatClient:
@@ -148,6 +149,10 @@ class ChatClient:
             logging.info("Client App Core: Error, failed to connect")
             self.connection_indicator_ui_element.config(text="Error", fg="red4")
             self.client_app_core.user_logged_in = False
+            # Error message pop up
+            error_message = PopupWindow('CONNECTION_ATTEMPT_FAILED')
+            self.button_connect["state"] = DISABLED
+            error_message.show_pop_up()
             return
 
         contacts_list = server_initiate_feed['contacts']
