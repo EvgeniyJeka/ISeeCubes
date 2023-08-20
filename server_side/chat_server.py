@@ -6,6 +6,8 @@ from flask_socketio import SocketIO, join_room
 import logging
 import os
 import configparser
+import redis
+import sys
 
 
 try:
@@ -66,6 +68,8 @@ class ChatServer:
 
         # Consider - deleting ALL existing tokens from Redis ON START, publish DISCONNECTION event for each user
         # in order to handle Chat Server crash (stop-start)
+        global emergency_flag
+        emergency_flag = False
 
     def room_names_generator(self, listed_users: list) -> list:
         """
@@ -234,6 +238,10 @@ class ChatServer:
 
             :return: dict
             """
+            # if emergency_flag:
+            #     return {"error": "System was stopped due to a critical error. "
+            #                      "Log in is blocked until the issue is resolved."}
+
             request_content = request.get_json()
 
             try:
@@ -424,30 +432,37 @@ I           If the token generation is successful, the code removes the JWT toke
                 logging.error(f"Invalid message, missing required field: {e}")
                 return
 
-            # Invalid JWT token in client message
-            if not self.auth_manager.validate_jwt_token(client_name, client_token):
-                return send_error_message(f"User '{client_name}' must disconnect, re login and reconnect so the "
-                                          f"conversation can be resumed.", client_name)
+            try:
+                # Invalid JWT token in client message
+                if not self.auth_manager.validate_jwt_token(client_name, client_token):
+                    return send_error_message(f"User '{client_name}' must disconnect, re login and reconnect so the "
+                                              f"conversation can be resumed.", client_name)
 
-            # Message sent to ChatGPT
-            if CHAT_GPT_USER in conversation_room:
-                chat_gpt_response = self.chatgpt_instance.send_input(content)
-                return send_bot_response(CHAT_GPT_USER, chat_gpt_response, conversation_room)
+                # Message sent to ChatGPT
+                if CHAT_GPT_USER in conversation_room:
+                    chat_gpt_response = self.chatgpt_instance.send_input(content)
+                    return send_bot_response(CHAT_GPT_USER, chat_gpt_response, conversation_room)
 
-            # Extracting message target
-            message_destination = _extract_target_user(conversation_room, client_name)
+                # Extracting message target
+                message_destination = _extract_target_user(conversation_room, client_name)
 
-            if message_destination not in self.users_list or message_destination is False:
-                logging.error(f"Trying to send a message to non-existing user.")
-                return
+                if message_destination not in self.users_list or message_destination is False:
+                    logging.error(f"Trying to send a message to non-existing user.")
+                    return
 
-            # Handling messages sent to OFFLINE users
-            if message_destination not in self.users_currently_online:
-                return self.handle_messaging_offline_user(client_name, message_destination, content, conversation_room)
+                # Handling messages sent to OFFLINE users
+                if message_destination not in self.users_currently_online:
+                    return self.handle_messaging_offline_user(client_name, message_destination, content, conversation_room)
 
-            # Happy Path - message is instantly delivered to it's destination
-            else:
-                return send_message(client_name, content, conversation_room)
+                # Happy Path - message is instantly delivered to it's destination
+                else:
+                    return send_message(client_name, content, conversation_room)
+
+            except redis.exceptions.ConnectionError as e:
+                logging.critical(f"Redis is dead! Killing all! {e}")
+                # global emergency_flag
+                # emergency_flag = True
+                self.socketio.stop()
 
         def send_message(sender, content, conversation_room):
             """
@@ -649,3 +664,4 @@ if __name__ == '__main__':
     connection_verification_thread = threading.Thread(target=connection_checker, args=(my_chat_server,))
     connection_verification_thread.start()
     my_chat_server.run()
+
