@@ -3,6 +3,7 @@ import logging
 import requests
 
 from additional_test_clients.lisa.local_client_config import LoginWindowConfig, LoginWindowErrorMessages
+from additional_test_clients.lisa.pop_up_window import PopupWindow
 
 
 class LoginWindow:
@@ -41,6 +42,7 @@ class LoginWindow:
                                 self.handle_confirm(login_window, username_entry, password_entry),
                                 width=20, bg="blue",
                                 fg="white")
+
         cancel_button = Button(login_window, text="Cancel", command=lambda: self.close_window(login_window), width=20,
                                bg="red", fg="white")
 
@@ -90,13 +92,19 @@ class LoginWindow:
             elif response['result'] == "Invalid credentials":
                 username_entry.delete(0, 'end')
                 password_entry.delete(0, 'end')
-                password_entry.insert(0, LoginWindowErrorMessages.WRONG_CREDENTIALS.value)
+                # Error message pop up
+                error_message = PopupWindow('INVALID_CREDENTIALS')
+                error_message.show_pop_up()
+                return False
 
             # Unexpected response
             elif response['result'] == "Unknown server code":
                 username_entry.delete(0, 'end')
                 password_entry.delete(0, 'end')
-                password_entry.insert(0, "Log In failed. Please restart the client and verify internet connection")
+                # Error message pop up
+                error_message = PopupWindow('UNEXPECTED_SERVER_RESPONSE')
+                error_message.show_pop_up()
+                return False
 
             return True
 
@@ -105,14 +113,18 @@ class LoginWindow:
             logging.error(f"Login window: Failed to log in - {e}")
             username_entry.delete(0, 'end')
             password_entry.delete(0, 'end')
-            password_entry.insert(0, LoginWindowErrorMessages.SERVER_UNAVAILABLE.value)
+            # Error message pop up
+            error_message = PopupWindow('LOGIN_REQUEST_FAILED')
+            error_message.show_pop_up()
             return False
 
         except Exception as e:
             logging.error(f"Login window: Failed to log in - {e}")
             username_entry.delete(0, 'end')
             password_entry.delete(0, 'end')
-            password_entry.insert(0, LoginWindowErrorMessages.UNKNOWN_SERVER_CODE.value)
+            # Error message pop up
+            error_message = PopupWindow('UNEXPECTED_SERVER_RESPONSE')
+            error_message.show_pop_up()
             return False
 
     def close_window(self, window):

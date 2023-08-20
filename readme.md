@@ -220,7 +220,22 @@ The client consists of:
    once it is clicked an HTTP 'log in' request is sent.
    
    
- 
+### Recovery Flow
+
+The system has the ability to recover after a failure. 
+The handling for the cases that are supported at the moment is described bellow:
+
+1. <b>Chat Server crash</b> - handled on the client side. The client is continuously  sending the <b>'connection_alive'</b>
+   event while connected. When Chat Server is down the client fails to send the event (since websocket session is terminated)
+   and <b>BadNamespaceError</b> exception is raised. For the client it means that the Chat Server is down.  
+   
+   Once the Chat Server is down the user is logged out, 'Connection status' label changes from 'Online'
+   to 'Server Error', the Contacts List is cleared and the user is presented with the relevant error message.
+   The user is asked to re login ('Login' button is enabled) and reconnect.
+   Note - while the server is down the option to send messages is blocked on the client side to prevent data loss. 
+   
+2. <b>Redis DB crash</b> - T.B.D.
+     
 
 
 
