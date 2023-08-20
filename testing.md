@@ -96,14 +96,16 @@ set in environment variables.
   
   
 <b>Tests that are can be performed manually only at the moment:</b>  
-    
-### 6. Chat Server restarted (recovery flow) - T.B.D.
-    6.1 Verify all users that are currently connected are logged out when the Chat Server is restarted 
+
+    Note: Chat Server recovery flow is handled mostly on the Client Side. The server is just to restore 
+    connection to the databases.  
+        
+### 6. Chat Server restarted (recovery flow) - client side, not covered by automated tests.
+    6.1 Verify all users that are currently connected are logged out and getting the relevant error message 
+        when the Chat Server is restarted. 
     6.2 Verify users can relogin after Chat Server restart 
-    6.3 Verify users can message each other after Chat Server restart (covers reconnection to databases) 
+    6.3 Verify users can message each other after Chat Server restart 
     6.4 Verify messages that were cached in Redis aren't lost after Chat Server restart
-    
-    (T.B.D.: Recovery flow - consider to LOG OUT ALL USERS when the Chat Server starts)
     
 ### 7. Databases unavailable (critical error handling) - T.B.D.
     7.1 Verify all users that are currently connected are logged out when Postgress SQL DB becomes unavailable
