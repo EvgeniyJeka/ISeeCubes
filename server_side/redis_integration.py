@@ -16,6 +16,13 @@ class RedisIntegration:
         try:
             self.read_config(config_file_path)
             self.redis_client = redis.Redis(host=self.hst, port=REDIS_PORT, db=self.db_number)
+            all_keys = self.redis_client.keys('*')
+
+            logging.info(f'Existing keys: {all_keys}')
+
+        except redis.exceptions.ConnectionError as e:
+            logging.critical(f"Failed to establish a connection with the Redis server: {e}")
+            raise e
 
         except Exception as e:
             logging.critical(f"Redis integration: Error! Failed to connect to Redis DB container - {e}")
@@ -156,7 +163,7 @@ class RedisIntegration:
             self.redis_client.hdel(self.redis_jwt_hashmap_name, username)
             return True
 
-        except redis.exceptions.RedisError as e:
+        except (redis.exceptions.RedisError, redis.exceptions.ConnectionError) as e:
             logging.error(f"Redis Integration: Redis Error! - {e}")
             raise e
 

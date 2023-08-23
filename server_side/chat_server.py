@@ -7,7 +7,6 @@ import logging
 import os
 import configparser
 import redis
-import sys
 
 
 try:
@@ -56,20 +55,27 @@ class ChatServer:
 
         self.chatgpt_instance = ChatGPTIntegration()
 
+        global emergency_flag
+        emergency_flag = False
+
         # Verifying the ChatGPT service is available
         if self.chatgpt_instance.is_chatgpt_available():
             self.users_currently_online.add(CHAT_GPT_USER)
 
-        self.postgres_integration = PostgresIntegration(config_file_path)
-        self.redis_integration = RedisIntegration(config_file_path)
+        try:
+            self.postgres_integration = PostgresIntegration(config_file_path)
+            self.redis_integration = RedisIntegration(config_file_path)
 
-        self.users_list = self.postgres_integration.get_all_available_users_list()
-        self.auth_manager = AuthManager(self.postgres_integration, self.redis_integration)
+            self.users_list = self.postgres_integration.get_all_available_users_list()
+            self.auth_manager = AuthManager(self.postgres_integration, self.redis_integration)
 
-        # Consider - deleting ALL existing tokens from Redis ON START, publish DISCONNECTION event for each user
-        # in order to handle Chat Server crash (stop-start)
-        global emergency_flag
-        emergency_flag = False
+        # The Chat Service won't start unless Redis DB is available.
+        except redis.exceptions.ConnectionError as e:
+            logging.critical(f"Redis server isn't available - Chat Server goes down. "
+                             f"Please make sure Redis DB is up'{e}")
+
+            # Redis unavailable - activating the emergency flag.
+            emergency_flag = True
 
     def room_names_generator(self, listed_users: list) -> list:
         """
@@ -185,6 +191,14 @@ class ChatServer:
             logging.error(f"Failed to publish cached messages to user {user_name} - {e}")
             return False
 
+    def stop_chat_server_because_redis_down(self, e):
+        logging.critical(f" Alert! Redis DB is down - {e}")
+        logging.critical(f"Chat server is going down to prevent further data loss")
+        logging.critical(f"Please make sure Redis DB is up and running. "
+                         f"After that please RESTART the Chat Server instance.")
+        self.socketio.stop()
+
+
     def run(self):
         """
         This method handles incoming HTTP requests and websocket messages
@@ -215,10 +229,14 @@ class ChatServer:
 
             logging.info(f"Received a request for contacts, username: '{user_name}',  JWT: {jwt_token}")
 
-            # Validating JWT before allowing the user to get the contacts list
-            if not self.auth_manager.validate_jwt_token(user_name, jwt_token):
-                logging.error(f"Invalid JWT: {jwt_token}")
-                return {"error": "Invalid JWT"}
+            try:
+                # Validating JWT before allowing the user to get the contacts list
+                if not self.auth_manager.validate_jwt_token(user_name, jwt_token):
+                    logging.error(f"Invalid JWT: {jwt_token}")
+                    return {"error": "Invalid JWT"}
+
+            except redis.exceptions.ConnectionError as e:
+                self.stop_chat_server_because_redis_down(e)
 
             contacts_data = {"contacts": self.prepare_rooms_for(username),
                              "currently_online": list(self.users_currently_online),
@@ -238,9 +256,6 @@ class ChatServer:
 
             :return: dict
             """
-            # if emergency_flag:
-            #     return {"error": "System was stopped due to a critical error. "
-            #                      "Log in is blocked until the issue is resolved."}
 
             request_content = request.get_json()
 
@@ -251,8 +266,13 @@ class ChatServer:
             except KeyError:
                 return {"error": "Invalid Log In request"}
 
-            logging.info(f"New log in request received, username: {username}, password: {password}")
-            requested_token = self.auth_manager.generate_jwt_token(username, password)
+            try:
+                logging.info(f"New log in request received, username: {username}, password: {password}")
+                requested_token = self.auth_manager.generate_jwt_token(username, password)
+
+            except redis.exceptions.ConnectionError as e:
+                self.stop_chat_server_because_redis_down(e)
+                return {"result": "error", "token": "unavailable"}
 
             return requested_token
 
@@ -324,8 +344,13 @@ I           If the token generation is successful, the code removes the JWT toke
             except KeyError as e:
                 return {"error": f"Invalid request, missing required field: {e}"}
 
-            logging.info(f"Admin user request received, username: {username}, password: {password}")
-            requested_token = self.auth_manager.generate_jwt_token(username, password)
+            try:
+                logging.info(f"Admin user request received, username: {username}, password: {password}")
+                requested_token = self.auth_manager.generate_jwt_token(username, password)
+
+            except redis.exceptions.ConnectionError as e:
+                self.stop_chat_server_because_redis_down(e)
+                return
 
             if requested_token['result'] == 'success':
                 return {"online_clients_list": list(self.users_currently_online)}
@@ -366,10 +391,15 @@ I           If the token generation is successful, the code removes the JWT toke
                 logging.error(f"Invalid request, missing required field: {e}")
                 return {"error": f"Invalid request, missing required field: {e}"}
 
-            # Validating JWT before allowing the user to JOIN
-            if not self.auth_manager.validate_jwt_token(client_name, client_token):
-                logging.error(f"Invalid JWT: {client_token}")
-                return {"error": "Invalid JWT"}
+            try:
+                # Validating JWT before allowing the user to JOIN
+                if not self.auth_manager.validate_jwt_token(client_name, client_token):
+                    logging.error(f"Invalid JWT: {client_token}")
+                    return {"error": "Invalid JWT"}
+
+            except redis.exceptions.ConnectionError as e:
+                self.stop_chat_server_because_redis_down(e)
+                return {"result": "error"}
 
             logging.info(f"Users currently online: {list(self.users_currently_online)}")
 
@@ -459,9 +489,10 @@ I           If the token generation is successful, the code removes the JWT toke
                     return send_message(client_name, content, conversation_room)
 
             except redis.exceptions.ConnectionError as e:
-                logging.critical(f"Redis is dead! Killing all! {e}")
-                # global emergency_flag
-                # emergency_flag = True
+                logging.critical(f" Alert! Redis DB is down - {e}")
+                logging.critical(f"Chat server is going down to prevent further data loss")
+                logging.critical(f"Please make sure Redis DB is up and running. "
+                                 f"After that please RESTART the Chat Server instance.")
                 self.socketio.stop()
 
         def send_message(sender, content, conversation_room):
@@ -536,11 +567,15 @@ I           If the token generation is successful, the code removes the JWT toke
                 logging.error(f"Invalid message, missing required fields: {e}")
                 return {"error": f"Invalid message, missing required fields: {e}"}
 
-            # Invalid JWT token in client message
-            if not self.auth_manager.validate_jwt_token(client_name, client_token):
-                logging.warning(f"Caution! An unauthorized disconnection attempt was just "
-                                f"performed for user {client_name}!")
-                return
+            try:
+                # Invalid JWT token in client message
+                if not self.auth_manager.validate_jwt_token(client_name, client_token):
+                    logging.warning(f"Caution! An unauthorized disconnection attempt was just "
+                                    f"performed for user {client_name}!")
+                    return
+
+            except redis.exceptions.ConnectionError as e:
+                self.stop_chat_server_because_redis_down(e)
 
             if client_name in self.users_currently_online:
                 self.users_currently_online.remove(client_name)
@@ -661,7 +696,10 @@ def connection_checker(chat_instance: ChatServer):
 
 if __name__ == '__main__':
     my_chat_server = ChatServer()
-    connection_verification_thread = threading.Thread(target=connection_checker, args=(my_chat_server,))
-    connection_verification_thread.start()
-    my_chat_server.run()
+
+    # Not starting the service if the emergency flag is up.
+    if emergency_flag is False:
+        connection_verification_thread = threading.Thread(target=connection_checker, args=(my_chat_server,))
+        connection_verification_thread.start()
+        my_chat_server.run()
 
