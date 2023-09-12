@@ -234,7 +234,17 @@ The handling for the cases that are supported at the moment is described bellow:
    The user is asked to re login ('Login' button is enabled) and reconnect.
    Note - while the server is down the option to send messages is blocked on the client side to prevent data loss. 
    
-2. <b>Redis DB crash</b> - T.B.D.
+2. <b>Redis DB crash</b> - handled on server side and on the client side.
+   The main goal is to prevent a situation in which the end users sending messages that can't be saved to Redis
+   (when required) and even forwarded, since the sender's identity can't be validated using JWT. 
+   
+   Chat Server won't start if Redis DB is unavailable. In case Redis DB becomes unavailable while Chat Server 
+   is running the Chat Server process is terminated, as a result client fails to send the 'connection_alive' event 
+   via websocket (since the session is terminated). Client notifies the user about the situation with an error message -
+   <b>"Error: Chat Server is temporary down. Please re login and re connect."</b>
+   Once Redis DB is available the Chat Server needs to be restarted.
+    
+    
      
 
 
