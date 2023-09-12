@@ -1,6 +1,7 @@
 import jwt
 import logging
 import secrets
+import redis
 
 
 try:
@@ -54,6 +55,10 @@ class AuthManager:
             else:
                 return {"result": "Invalid credentials"}
 
+        except redis.exceptions.RedisError as e:
+            logging.critical(f"Chat Server: Redis DB is unavailable shutting down the server - {e}")
+            raise e
+
         except Exception as e:
             return {"error": f"Authorization module: failed to generate a JWT - {e}"}
 
@@ -70,8 +75,12 @@ class AuthManager:
         :return: Whether the JWT is valid or not.
         :rtype: bool
         """
+        try:
+            return self.redis_integration.validate_user_token(username, token)
 
-        return self.redis_integration.validate_user_token(username, token)
+        except redis.exceptions.RedisError as e:
+            logging.critical(f"Chat Server: Redis DB is unavailable shutting down the server - {e}")
+            raise e
 
     def validate_credentials_for_jwt_creation(self, username, password):
         """
