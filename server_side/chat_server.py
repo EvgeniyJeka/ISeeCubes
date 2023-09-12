@@ -7,6 +7,8 @@ import logging
 import os
 import configparser
 import redis
+import signal
+
 
 
 try:
@@ -196,6 +198,11 @@ class ChatServer:
         logging.critical(f"Chat server is going down to prevent further data loss")
         logging.critical(f"Please make sure Redis DB is up and running. "
                          f"After that please RESTART the Chat Server instance.")
+
+        # If running in a Docker container - killing the Chat Serer process by process ID
+        if os.getenv("KEEP_ALIVE_DELAY_BETWEEN_EVENTS"):
+            os.kill(1, signal.SIGTERM)
+
         self.socketio.stop()
 
 
@@ -493,6 +500,11 @@ I           If the token generation is successful, the code removes the JWT toke
                 logging.critical(f"Chat server is going down to prevent further data loss")
                 logging.critical(f"Please make sure Redis DB is up and running. "
                                  f"After that please RESTART the Chat Server instance.")
+
+                # If running in a Docker container  - killing the main Chat Server process.
+                if os.getenv("KEEP_ALIVE_DELAY_BETWEEN_EVENTS"):
+                    os.kill(1, signal.SIGTERM)
+
                 self.socketio.stop()
 
         def send_message(sender, content, conversation_room):
