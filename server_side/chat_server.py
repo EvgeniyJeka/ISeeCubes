@@ -17,6 +17,7 @@ try:
     from server_side.chatgpt_integration import ChatGPTIntegration
     from server_side.postgres_integration import PostgresIntegration
     from server_side.redis_integration import RedisIntegration
+    from server_side.local_chatbot_integration import LocalChatBotIntegration
 
 except ModuleNotFoundError:
     # Add 2 variations of import (for Dockerization)
@@ -24,6 +25,7 @@ except ModuleNotFoundError:
     from chatgpt_integration import ChatGPTIntegration
     from postgres_integration import PostgresIntegration
     from redis_integration import RedisIntegration
+    from local_chatbot_integration import LocalChatBotIntegration
 
 
 logging.basicConfig(level=logging.INFO)
@@ -37,6 +39,7 @@ KEEP_ALIVE_LOGGING = os.getenv("KEEP_ALIVE_LOGGING")
 # Special users
 CHAT_GPT_USER = "ChatGPT"
 ADMIN_USER = "Admin"
+LEONID_THE_CHATBOT = "Leonid"
 
 
 class ChatServer:
@@ -50,12 +53,14 @@ class ChatServer:
 
     auth_manager = None
     chatgpt_instance = None
+    chatbot_router = None
 
     def __init__(self):
         self.app = Flask(__name__)
         self.socketio = SocketIO(self.app)
 
         self.chatgpt_instance = ChatGPTIntegration()
+        self.chatbot_router = LocalChatBotIntegration()
 
         global emergency_flag
         emergency_flag = False
@@ -63,6 +68,11 @@ class ChatServer:
         # Verifying the ChatGPT service is available
         if self.chatgpt_instance.is_chatgpt_available():
             self.users_currently_online.add(CHAT_GPT_USER)
+
+        # Verifying Leonid the ChatBot is available, if he is - adding him to the online users list
+        if self.chatbot_router.check_if_bot_available(LEONID_THE_CHATBOT):
+            logging.info(f"Chat Server: adding {LEONID_THE_CHATBOT} to the 'Online Users' list")
+            self.users_currently_online.add(LEONID_THE_CHATBOT)
 
         try:
             self.postgres_integration = PostgresIntegration(config_file_path)
@@ -194,6 +204,13 @@ class ChatServer:
             return False
 
     def stop_chat_server_because_redis_down(self, e):
+        """
+        This method is used for emergency situation handling - it is applied when Redis DB
+        is unreachable. When the Chat Server runs in Docker container it terminates the Chat Server process.
+        When the Chat Server runs locally, it stops the Flask - SocketIO sever.
+        In both cases web socket session is terminated.
+        :param e: Exception raised by RedisIntegration instance.
+        """
         logging.critical(f" Alert! Redis DB is down - {e}")
         logging.critical(f"Chat server is going down to prevent further data loss")
         logging.critical(f"Please make sure Redis DB is up and running. "
