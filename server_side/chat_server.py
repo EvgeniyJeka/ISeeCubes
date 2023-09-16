@@ -41,6 +41,8 @@ CHAT_GPT_USER = "ChatGPT"
 ADMIN_USER = "Admin"
 LEONID_THE_CHATBOT = "Leonid"
 
+LOCAL_CHAT_BOTS_LIST = ["Leonid"]
+
 
 class ChatServer:
     # Will be taken from SQL DB
@@ -463,7 +465,12 @@ I           If the token generation is successful, the code removes the JWT toke
                2. Validates the JWT token for the sender.
                3. If the conversation_room includes the CHAT_GPT_USER, the message is
                   sent to the ChatGPT instance for processing.
-               4. If the conversation_room does not include the CHAT_GPT_USER, the
+
+               4. If the conversation_room includes one of the local chat bots names, the message
+                  is forwarded to the chatbot_router, so it can send it to the relevant chat bot instance
+                  for processing.
+
+               5. If the conversation_room does not include the CHAT_GPT_USER, the
                   message is sent as-is to the intended recipients.
 
                 If the target user is offline at the moment, the message will be cached,
@@ -496,6 +503,12 @@ I           If the token generation is successful, the code removes the JWT toke
                 if CHAT_GPT_USER in conversation_room:
                     chat_gpt_response = self.chatgpt_instance.send_input(content)
                     return send_bot_response(CHAT_GPT_USER, chat_gpt_response, conversation_room)
+
+                # Message sent to one of the local chat bots
+                for bot_name in LOCAL_CHAT_BOTS_LIST:
+                    if bot_name in conversation_room:
+                        local_bot_response = self.chatbot_router.route_incoming_message(bot_name, client_name, content)
+                        return send_bot_response(bot_name, local_bot_response, conversation_room)
 
                 # Extracting message target
                 message_destination = _extract_target_user(conversation_room, client_name)
