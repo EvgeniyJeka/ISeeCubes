@@ -6,6 +6,10 @@ import secrets
 LEONID_AUTH_TOKEN = "%Leonid_Test_Token%"
 LEONID_BASE_URL = "http://localhost:5001"
 
+# TO DO:
+#
+# 1. Add a method that would notify the bot on user disconnection (for each bot)
+
 
 class LocalChatBotIntegration:
 
@@ -35,3 +39,7 @@ class LocalChatBotIntegration:
         response = requests.post(url=bot_prompt_url,json=payload)
 
         return response.text
+
+    def notify_leonid_on_user_disconnection(self, user_name):
+        # TO DO
+        pass

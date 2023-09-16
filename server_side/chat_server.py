@@ -43,6 +43,10 @@ LEONID_THE_CHATBOT = "Leonid"
 
 LOCAL_CHAT_BOTS_LIST = ["Leonid"]
 
+# TO DO:
+#
+# 1. On disconnection - forward user name to the relevant chat bot API via chatbot_router
+
 
 class ChatServer:
     # Will be taken from SQL DB
