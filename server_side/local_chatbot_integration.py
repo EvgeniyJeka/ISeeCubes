@@ -25,7 +25,6 @@ class LocalChatBotIntegration:
 
 
     def send_message_to_leonid(self, user_name, message_content):
-        # content = "Hello there! I'm leonid."
 
         secret_key = secrets.token_hex(16)
 
@@ -40,6 +39,25 @@ class LocalChatBotIntegration:
 
         return response.text
 
-    def notify_leonid_on_user_disconnection(self, user_name):
+    def notify_all_bots_on_user_disconnection(self, user_name, bot_name="Leonid"):
         # TO DO
-        pass
+        secret_key = secrets.token_hex(16)
+
+        # Each bot might have a different procedure for conversation termination
+        # Right now we have only one local chat bot. If more chat bots are to be integrated with
+        # the application more procedures will be added to this method.
+        if bot_name == "Leonid":
+
+            token_content = {"user_name": user_name, "user_token": LEONID_AUTH_TOKEN}
+            encoded_jwt = jwt.encode(token_content, secret_key, algorithm="HS256")
+
+            payload = {"user_data": encoded_jwt}
+
+            bot_prompt_url = LEONID_BASE_URL + '/user_disconnection'
+            logging.info(f"Chat Server: notifying Leonid the chatbot that user {user_name} "
+                         f"has disconnected and left the chat")
+
+            response = requests.post(url=bot_prompt_url, json=payload)
+            logging.info(f"Chat Server: response received from Leonid: {response.text}")
+
+            return response.text

@@ -628,6 +628,8 @@ I           If the token generation is successful, the code removes the JWT toke
                 self.auth_manager.redis_integration.delete_token(client_name)
                 self.socketio.emit('user_has_gone_offline', {"username": client_name})
 
+                self.chatbot_router.notify_all_bots_on_user_disconnection(client_name)
+
             logging.info(f"Users currently online: {list(self.users_currently_online)}")
 
         @self.socketio.on('connection_alive')
@@ -726,6 +728,8 @@ def connection_checker(chat_instance: ChatServer):
                     seconds=KEEP_ALIVE_DELAY_BETWEEN_EVENTS):
                 users_to_disconnect.append(client_name)
 
+        chat_bots_manager = LocalChatBotIntegration()
+
         logging.info(f"Disconnecting users: {users_to_disconnect}")
         for user in users_to_disconnect:
             if user in chat_instance.users_currently_online:
@@ -738,6 +742,8 @@ def connection_checker(chat_instance: ChatServer):
 
             chat_instance.keep_alive_tracking.pop(user)
             chat_instance.socketio.emit('user_has_gone_offline', {"username": user})
+
+            chat_bots_manager.notify_all_bots_on_user_disconnection(user)
 
 
 if __name__ == '__main__':
