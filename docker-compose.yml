@@ -57,6 +57,7 @@ services:
         REDIS_DB_NUMBER: 0
         AUTH_TOKEN_HASHMAP: auth_tokens
         PENDING_CONVERSATIONS_HASHMAP: pending_conversations
+        LEONID_THE_CHAT_BOT: Enabled
 
 
   i_see_cubes_tests_container:

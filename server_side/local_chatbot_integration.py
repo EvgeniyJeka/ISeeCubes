@@ -2,29 +2,55 @@ import requests
 import logging
 import jwt
 import secrets
+import os
 
 LEONID_AUTH_TOKEN = "%Leonid_Test_Token%"
 LEONID_BASE_URL = "http://localhost:5001"
-
-# TO DO:
-#
-# 1. Add a method that would notify the bot on user disconnection (for each bot)
 
 
 class LocalChatBotIntegration:
 
     def check_if_bot_available(self, bot_name: str):
-        # Temporary stab. The method will send a request to verify that bot with given name/ID is available
+        """
+        This method fetches configuration from environmental variables in order to check if given
+        chat bot is available.
+        :param bot_name: str
+        :return: bool
+        """
+        try:
+            if bot_name == 'Leonid':
+                flag = os.getenv("LEONID_THE_CHAT_BOT")
+                if flag == 'Enabled':
+                    return True
+                else:
+                    return False
 
-        return True
-
+        except Exception:
+            return False
 
     def route_incoming_message(self, bot_name, user_name, message_content):
+        """
+        This method redirects user's message and name to the selected local chat bot
+        and returns the response that comes from the bot back to the calling method.
+        :param bot_name: str (must be on the chat bots list)
+        :param user_name: str
+        :param message_content: str
+        :return: str
+        """
         if bot_name == 'Leonid':
             return self.send_message_to_leonid(user_name, message_content)
 
+        else:
+            return {"Error": f"No chat bot with ID {bot_name}"}
 
     def send_message_to_leonid(self, user_name, message_content):
+        """
+        This method redirects user's message and name to Leonid the chat bot
+        and returns the response that comes from the bot back to the calling method
+        :param user_name: str
+        :param message_content: str
+        :return: str
+        """
 
         secret_key = secrets.token_hex(16)
 
@@ -40,7 +66,14 @@ class LocalChatBotIntegration:
         return response.text
 
     def notify_all_bots_on_user_disconnection(self, user_name, bot_name="Leonid"):
-        # TO DO
+        """
+        This method notifies the selected chat bot on user disconnection.
+        Each bot may have a different procedure for this, so the method contains a separate
+        section for each chat bot.
+        :param user_name: str
+        :param bot_name: str  (must be on the chat bots list)
+        :return: str
+        """
         secret_key = secrets.token_hex(16)
 
         # Each bot might have a different procedure for conversation termination
@@ -61,3 +94,6 @@ class LocalChatBotIntegration:
             logging.info(f"Chat Server: response received from Leonid: {response.text}")
 
             return response.text
+
+        else:
+            return {"error": f"The bot {bot_name} is not on the list."}
