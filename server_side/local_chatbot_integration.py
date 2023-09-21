@@ -3,6 +3,7 @@ import logging
 import jwt
 import secrets
 import os
+import configparser
 
 LEONID_AUTH_TOKEN = "%Leonid_Test_Token%"
 LEONID_BASE_URL = "http://localhost:5001"
@@ -10,7 +11,7 @@ LEONID_BASE_URL = "http://localhost:5001"
 
 class LocalChatBotIntegration:
 
-    def check_if_bot_available(self, bot_name: str):
+    def check_if_bot_available(self, config_file_path, bot_name: str):
         """
         This method fetches configuration from environmental variables in order to check if given
         chat bot is available.
@@ -19,6 +20,17 @@ class LocalChatBotIntegration:
         """
         try:
             if bot_name == 'Leonid':
+                # Running on local machine - fetching config from the config file
+                if os.getenv("SQL_USER") is None:
+                    # Reading DB name, host and credentials from config
+                    config = configparser.ConfigParser()
+                    config.read(config_file_path)
+                    bot_status = config.get("CHAT_SERVER_CONFIG", "enable_leonid_chat_bot")
+
+                    if bot_status == 'Enabled':
+                        return True
+
+                # Running in a Docker container - fetching config from env. variable
                 flag = os.getenv("LEONID_THE_CHAT_BOT")
                 if flag == 'Enabled':
                     return True

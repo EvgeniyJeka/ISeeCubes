@@ -72,7 +72,7 @@ class ChatServer:
             self.users_currently_online.add(CHAT_GPT_USER)
 
         # Verifying Leonid the ChatBot is available, if he is - adding him to the online users list
-        if self.chatbot_router.check_if_bot_available(LEONID_THE_CHATBOT):
+        if self.chatbot_router.check_if_bot_available(config_file_path, LEONID_THE_CHATBOT):
             logging.info(f"Chat Server: adding {LEONID_THE_CHATBOT} to the 'Online Users' list")
             self.users_currently_online.add(LEONID_THE_CHATBOT)
 
