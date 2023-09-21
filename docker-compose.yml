@@ -59,6 +59,17 @@ services:
         PENDING_CONVERSATIONS_HASHMAP: pending_conversations
         LEONID_THE_CHAT_BOT: Enabled
 
+  leonid_the_chat_bot:
+    image: leonid_the_chat_bot:latest
+    build: ./Leonid
+    networks:
+      - i_see_cubes_main
+    ports:
+      - 5001:5001
+    environment:
+      - MODEL_PATH=./models/ggml-vicuna-13b-4bit-rev1.bin
+      - MAX_CONTEXT_LENGHT=2500
+
 
   i_see_cubes_tests_container:
     image: i_see_cubes_tests_container:latest

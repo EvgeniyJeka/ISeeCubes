@@ -6,7 +6,12 @@ import os
 import configparser
 
 LEONID_AUTH_TOKEN = "%Leonid_Test_Token%"
-LEONID_BASE_URL = "http://localhost:5001"
+
+if os.getenv("SQL_USER") is None:
+    LEONID_BASE_URL = "http://localhost:5001"
+else:
+    LEONID_BASE_URL = "http://iseecubes_leonid_the_chat_bot_1:5001"
+
 
 
 class LocalChatBotIntegration:
