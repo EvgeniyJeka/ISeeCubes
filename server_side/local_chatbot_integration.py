@@ -9,9 +9,12 @@ LEONID_AUTH_TOKEN = "%Leonid_Test_Token%"
 
 if os.getenv("SQL_USER") is None:
     LEONID_BASE_URL = "http://localhost:5001"
+    
 else:
     LEONID_BASE_URL = "http://iseecubes_leonid_the_chat_bot_1:5001"
 
+LEONID_TEMPORARY_UNAVAILABLE_MESSAGE = "<Leonid is asleep right now, we can't wake him up - " \
+                                       "please try to write him later>"
 
 
 class LocalChatBotIntegration:
@@ -77,10 +80,15 @@ class LocalChatBotIntegration:
         payload = {"user_data":   encoded_jwt,
                    "user_prompt": message_content}
 
-        bot_prompt_url = LEONID_BASE_URL + '/receive_prompt'
-        response = requests.post(url=bot_prompt_url,json=payload)
+        try:
+            bot_prompt_url = LEONID_BASE_URL + '/receive_prompt'
+            response = requests.post(url=bot_prompt_url,json=payload)
 
-        return response.text
+            return response.text
+
+        except requests.exceptions.ConnectionError as e:
+            logging.error(f"Can't contact Leonid the chat bot, please verify the service is available - {e}")
+            return LEONID_TEMPORARY_UNAVAILABLE_MESSAGE
 
     def notify_all_bots_on_user_disconnection(self, user_name, bot_name="Leonid"):
         """

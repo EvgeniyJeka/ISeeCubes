@@ -59,6 +59,7 @@ services:
         PENDING_CONVERSATIONS_HASHMAP: pending_conversations
         LEONID_THE_CHAT_BOT: Enabled
 
+
   leonid_the_chat_bot:
     image: leonid_the_chat_bot:latest
     build: ./Leonid
