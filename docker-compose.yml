@@ -21,7 +21,7 @@ services:
       ports:
         - '5432:5432'
       volumes:
-        - db:/var/lib/postgresql/data
+        - ../volumes/ISeeCubes/SQL_DB_Volumes:/var/lib/postgresql/data
       networks:
         - i_see_cubes_main
 
@@ -57,6 +57,19 @@ services:
         REDIS_DB_NUMBER: 0
         AUTH_TOKEN_HASHMAP: auth_tokens
         PENDING_CONVERSATIONS_HASHMAP: pending_conversations
+        LEONID_THE_CHAT_BOT: Enabled
+
+
+  leonid_the_chat_bot:
+    image: leonid_the_chat_bot:latest
+    build: ./Leonid
+    networks:
+      - i_see_cubes_main
+    ports:
+      - 5001:5001
+    environment:
+      - MODEL_PATH=./models/ggml-vicuna-13b-4bit-rev1.bin
+      - MAX_CONTEXT_LENGHT=2500
 
 
   i_see_cubes_tests_container:

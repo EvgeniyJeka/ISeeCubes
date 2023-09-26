@@ -10,7 +10,7 @@ https://www.youtube.com/watch?v=dk44vgkKfPY
 Chatting with OpenAI model:
 https://www.youtube.com/watch?v=iOxp3ZvDWnw
 
-Version 1.1
+Version 1.2
 
 After the connection is established user is presented with a list that contains 
 all other users and can start a chat with any of them. Users that are currently online are 
@@ -69,6 +69,24 @@ To run the desktop client you must have Python 3.6 or above installed on your ma
    + Now run the client on the second machine - you should be able to log in, connect and send messages 
      to your first user. 
      
+     
+## Chat Bot integration 
+
+I've added an integration with my other project, Leonid the Chat Bot.
+It is based on Vicuna, an Open-Source Large Language Model - now you can 
+chat with it via I See Cubes chat (you just need to download the model) - 
+all the details can be found here: https://github.com/EvgeniyJeka/Leonid_The_Chatbot
+
+If you run the project with docker-compose, the chat bot container will be started
+automatically (unless you comment it out in the yml file).
+
+Messages sent to Leonid The Chat Bot are redirected to it's API as POST requests,
+and the responses are brought back.
+
+<b>Please note:</b> Chat Server code was modified, and you can add integrations 
+with your chat bots in the similar way, in case you are interested. 
+The code is relatively simple, and it may be nice to have an option 
+to chat with several chat bots simultaneously. 
 
 
 ## Server side logic:

@@ -17,6 +17,7 @@ try:
     from server_side.chatgpt_integration import ChatGPTIntegration
     from server_side.postgres_integration import PostgresIntegration
     from server_side.redis_integration import RedisIntegration
+    from server_side.local_chatbot_integration import LocalChatBotIntegration
 
 except ModuleNotFoundError:
     # Add 2 variations of import (for Dockerization)
@@ -24,6 +25,7 @@ except ModuleNotFoundError:
     from chatgpt_integration import ChatGPTIntegration
     from postgres_integration import PostgresIntegration
     from redis_integration import RedisIntegration
+    from local_chatbot_integration import LocalChatBotIntegration
 
 
 logging.basicConfig(level=logging.INFO)
@@ -37,6 +39,9 @@ KEEP_ALIVE_LOGGING = os.getenv("KEEP_ALIVE_LOGGING")
 # Special users
 CHAT_GPT_USER = "ChatGPT"
 ADMIN_USER = "Admin"
+LEONID_THE_CHATBOT = "Leonid"
+
+LOCAL_CHAT_BOTS_LIST = ["Leonid"]
 
 
 class ChatServer:
@@ -50,12 +55,14 @@ class ChatServer:
 
     auth_manager = None
     chatgpt_instance = None
+    chatbot_router = None
 
     def __init__(self):
         self.app = Flask(__name__)
         self.socketio = SocketIO(self.app)
 
         self.chatgpt_instance = ChatGPTIntegration()
+        self.chatbot_router = LocalChatBotIntegration()
 
         global emergency_flag
         emergency_flag = False
@@ -63,6 +70,11 @@ class ChatServer:
         # Verifying the ChatGPT service is available
         if self.chatgpt_instance.is_chatgpt_available():
             self.users_currently_online.add(CHAT_GPT_USER)
+
+        # Verifying Leonid the ChatBot is available, if he is - adding him to the online users list
+        if self.chatbot_router.check_if_bot_available(config_file_path, LEONID_THE_CHATBOT):
+            logging.info(f"Chat Server: adding {LEONID_THE_CHATBOT} to the 'Online Users' list")
+            self.users_currently_online.add(LEONID_THE_CHATBOT)
 
         try:
             self.postgres_integration = PostgresIntegration(config_file_path)
@@ -194,6 +206,13 @@ class ChatServer:
             return False
 
     def stop_chat_server_because_redis_down(self, e):
+        """
+        This method is used for emergency situation handling - it is applied when Redis DB
+        is unreachable. When the Chat Server runs in Docker container it terminates the Chat Server process.
+        When the Chat Server runs locally, it stops the Flask - SocketIO sever.
+        In both cases web socket session is terminated.
+        :param e: Exception raised by RedisIntegration instance.
+        """
         logging.critical(f" Alert! Redis DB is down - {e}")
         logging.critical(f"Chat server is going down to prevent further data loss")
         logging.critical(f"Please make sure Redis DB is up and running. "
@@ -446,7 +465,12 @@ I           If the token generation is successful, the code removes the JWT toke
                2. Validates the JWT token for the sender.
                3. If the conversation_room includes the CHAT_GPT_USER, the message is
                   sent to the ChatGPT instance for processing.
-               4. If the conversation_room does not include the CHAT_GPT_USER, the
+
+               4. If the conversation_room includes one of the local chat bots names, the message
+                  is forwarded to the chatbot_router, so it can send it to the relevant chat bot instance
+                  for processing.
+
+               5. If the conversation_room does not include the CHAT_GPT_USER, the
                   message is sent as-is to the intended recipients.
 
                 If the target user is offline at the moment, the message will be cached,
@@ -479,6 +503,12 @@ I           If the token generation is successful, the code removes the JWT toke
                 if CHAT_GPT_USER in conversation_room:
                     chat_gpt_response = self.chatgpt_instance.send_input(content)
                     return send_bot_response(CHAT_GPT_USER, chat_gpt_response, conversation_room)
+
+                # Message sent to one of the local chat bots
+                for bot_name in LOCAL_CHAT_BOTS_LIST:
+                    if bot_name in conversation_room:
+                        local_bot_response = self.chatbot_router.route_incoming_message(bot_name, client_name, content)
+                        return send_bot_response(bot_name, local_bot_response, conversation_room)
 
                 # Extracting message target
                 message_destination = _extract_target_user(conversation_room, client_name)
@@ -594,6 +624,8 @@ I           If the token generation is successful, the code removes the JWT toke
                 self.auth_manager.redis_integration.delete_token(client_name)
                 self.socketio.emit('user_has_gone_offline', {"username": client_name})
 
+                self.chatbot_router.notify_all_bots_on_user_disconnection(client_name)
+
             logging.info(f"Users currently online: {list(self.users_currently_online)}")
 
         @self.socketio.on('connection_alive')
@@ -692,6 +724,8 @@ def connection_checker(chat_instance: ChatServer):
                     seconds=KEEP_ALIVE_DELAY_BETWEEN_EVENTS):
                 users_to_disconnect.append(client_name)
 
+        chat_bots_manager = LocalChatBotIntegration()
+
         logging.info(f"Disconnecting users: {users_to_disconnect}")
         for user in users_to_disconnect:
             if user in chat_instance.users_currently_online:
@@ -704,6 +738,8 @@ def connection_checker(chat_instance: ChatServer):
 
             chat_instance.keep_alive_tracking.pop(user)
             chat_instance.socketio.emit('user_has_gone_offline', {"username": user})
+
+            chat_bots_manager.notify_all_bots_on_user_disconnection(user)
 
 
 if __name__ == '__main__':
