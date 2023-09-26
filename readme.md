@@ -80,6 +80,9 @@ all the details can be found here: https://github.com/EvgeniyJeka/Leonid_The_Cha
 If you run the project with docker-compose, the chat bot container will be started
 automatically (unless you comment it out in the yml file).
 
+Messages sent to Leonid The Chat Bot are redirected to it's API as POST requests,
+and the responses are brought back.
+
 <b>Please note:</b> Chat Server code was modified, and you can add integrations 
 with your chat bots in the similar way, in case you are interested. 
 The code is relatively simple, and it may be nice to have an option 
