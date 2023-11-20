@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 from tkinter import *
 
 import socketio
@@ -7,12 +8,18 @@ import json
 import threading
 import logging
 
-# Default window size when there are no bookmarks
-from message_box import MessageBox
+from socketio import exceptions
+
 from local_client_config import AppConfig
 from pop_up_window import PopupWindow
 
 logging.basicConfig(level=logging.INFO)
+
+# Check the following scenario - server is down AFTER login but BEFORE connect. Find handling.
+
+
+# Default window size when there are no bookmarks
+from message_box import MessageBox
 
 
 class ClientAppCore:
@@ -161,7 +168,13 @@ class ClientAppCore:
 
                 # The conversation with the given user is going on, and a Chat Room is already open
                 else:
+                    # If the message box is unlocked at the moment - wait 1 sec
+                    if current_messages_box["state"] == "normal":
+                        time.sleep(1)
+
                     current_messages_box.configure(state="normal")
+                    # Get the current index of the insertion cursor
+                    current_messages_box.index(END)
                     current_messages_box.insert(INSERT, "\n")
                     current_messages_box.insert(INSERT, f"{message['sender']}: {message['content']}")
                     current_messages_box.insert(INSERT, "\n")

@@ -168,7 +168,13 @@ class ClientAppCore:
 
                 # The conversation with the given user is going on, and a Chat Room is already open
                 else:
+                    # If the message box is unlocked at the moment - wait 1 sec
+                    if current_messages_box["state"] == "normal":
+                        time.sleep(1)
+
                     current_messages_box.configure(state="normal")
+                    # Get the current index of the insertion cursor
+                    current_messages_box.index(END)
                     current_messages_box.insert(INSERT, "\n")
                     current_messages_box.insert(INSERT, f"{message['sender']}: {message['content']}")
                     current_messages_box.insert(INSERT, "\n")

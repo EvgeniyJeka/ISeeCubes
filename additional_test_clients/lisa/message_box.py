@@ -1,3 +1,4 @@
+import time
 from tkinter import *
 import logging
 import functools
@@ -99,15 +100,19 @@ class MessageBox:
 
         # CLEAR the ENTRY FIELD
         target_entry.delete(0, 'end')
-
         # ADD the message to the TEXT BOX (MESSAGE BOX)
+        # If the message box is unlocked at the moment - wait 1 sec
+        if target_messages_box["state"] == "normal":
+            time.sleep(1)
+        # Unlock the message box before inserting  a new message, move cursor to the END
         target_messages_box.configure(state="normal")
-
+        target_messages_box.index(END)
+        # Insert the new message
         target_messages_box.insert(INSERT, "\n")
         target_messages_box.insert(INSERT, f"Me: {message_content}")
         target_messages_box.insert(INSERT, "\n")
         target_messages_box.see("end")
-
+        # Lock the message box
         target_messages_box.configure(state="disabled")
 
         try:
