@@ -42,6 +42,7 @@ or set the following CMD command in  "i_see_cubes_tests_container" configuration
 
 <b>command: ["pytest", "-v", "-m", "sanity"]</b>
 
+
 #### Available Test Groups (listed in pytest.ini):
     sending_messages: sending messages from one user to other users, caching messages for offline users
     status_updates: getting notifications on other users statuses (online/offline) via web socket
